@@ -24,13 +24,15 @@ jobs:
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_WONDERFUL_ISLAND_0F51C781E }}
+          azure_static_web_apps_api_token: ${{ secrets.SWA_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          app_location: "/frontend"
-          api_location: "/api"
-          output_location: ""
-          skip_app_build: true
+          ###### Updated Locations ######
+          app_location: "/frontend"   # Points to your HTML/JS
+          api_location: "/api"        # Points to your Python API
+          output_location: ""         # Empty for plain HTML
+          skip_app_build: true        # Skips unnecessary Node.js build
+          ###### End of Configuration ######
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
@@ -41,5 +43,5 @@ jobs:
         id: closepullrequest
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_WONDERFUL_ISLAND_0F51C781E }}
+          azure_static_web_apps_api_token: ${{ secrets.SWA_TOKEN }}
           action: "close"
