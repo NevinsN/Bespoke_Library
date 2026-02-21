@@ -16,7 +16,7 @@ collection = db['chapters']
 def get_chapters(req: func.HttpRequest) -> func.HttpResponse:
     try:
         # Fetching all documents, returning only title and _id
-        chapters = list(collection.find({}, {"title": 1, "_id": 1}))
+        chapters = list(collection.find({}, {"title": 1, "_id": 1, "word_count": 1}))
         for doc in chapters:
             doc["_id"] = str(doc["_id"])
         
