@@ -1,19 +1,33 @@
 import os
 import pypandoc
 from pymongo import MongoClient
-from datetime import datetime
+import datetime
+import time
 import re
+from dotenv import load_dotenv
+
+# Load the variables from .env
+load_dotenv()
 
 # --- CONFIGURATION ---
 # 1. Paste your Azure Cosmos Connection String here
-CONNECTION_STRING = "YOUR_COSMOS_CONNECTION_STRING_HERE"
+CONNECTION_STRING = os.getenv("COSMOS_CONNECTION_STRING")
 
 # 2. Path to the MAIN series folder (The one with Book_One inside it)
-SERIES_PATH = "./The_Devious_Adventures_of_Slick_the_Sly"
+SERIES_PATH = "./novels/The_Devious_Adventures_of_Slick_the_Sly"
 
 # 3. Connect to Cosmos DB
 client = MongoClient(CONNECTION_STRING)
-db = client['bespoke_library']
+db = client['bespoke']
+
+# FORCE the collection to exist with minimum throughput before we start
+# This prevents Azure from trying to default to higher, expensive limits
+try:
+    db.create_collection('novels', session=None)
+except Exception:
+    # Collection likely already exists, which is fine
+    pass
+
 collection = db['novels']
 
 def clean_name(text):
@@ -79,7 +93,7 @@ def upload_series():
                 "title": clean_name(filename.replace('.md', '')),
                 "content": html_content,
                 "word_count": word_count,
-                "date_added": datetime.utcnow().isoformat(),
+                "date_added": datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 "order": files.index(filename)
             }
 
@@ -90,6 +104,7 @@ def upload_series():
                 upsert=True
             )
             print(f"   ✅ Saved: {chapter_doc['title']}")
+            time.sleep(0.5) # Wait half a second between chapters
 
 if __name__ == "__main__":
     upload_series()
