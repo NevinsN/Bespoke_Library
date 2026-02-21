@@ -97,27 +97,37 @@
         }
         
         async function loadBookshelf() {
-            const response = await fetch('/api/GetNovels');
-            const novels = await response.json();
-            const list = document.getElementById('chapter-list');
-            
-            document.querySelector('h1').innerText = "Your Digital Bookshelf";
-            // Hide the total words line while on the shelf
-            document.querySelector('.word-count-total').style.display = 'none';
-            
-            if (novels.length === 0) {
-                list.innerHTML = "<li>No manuscripts found. Check your user permissions!</li>";
-                return;
-            }
+            const list = document.getElementById('books-list'); // Or whatever your container ID is
         
-            list.innerHTML = novels.map(n => `
-                <li class="chapter-item">
-                    <a class="chapter-link" href="/?book=${n.id}">
-                        📖 ${n.display_name}
-                    </a>
-                    <div class="ch-metadata">Click to open this manuscript</div>
-                </li>
-            `).join('');
+            // 1. START: Show the Skeleton Loaders immediately
+            // This creates 5 shimmering bars to fill the space
+            list.innerHTML = `
+                <div class="skeleton" style="width: 80%; height: 40px; margin-bottom: 20px;"></div>
+                <div class="skeleton" style="width: 90%; height: 40px; margin-bottom: 20px;"></div>
+                <div class="skeleton" style="width: 70%; height: 40px; margin-bottom: 20px;"></div>
+            `;
+        
+            try {
+                const response = await fetch('/api/GetNovels');
+                const novels = await response.json();
+        
+                // 2. END: Clear the skeletons and inject real data
+                list.innerHTML = ''; 
+        
+                if (novels.length === 0) {
+                    list.innerHTML = "<p>No manuscripts found. Check your user permissions!</p>";
+                    return;
+                }
+        
+                novels.forEach(novel => {
+                    const item = document.createElement('div');
+                    item.innerHTML = `<a href="/reader.html?id=${novel.id}">${novel.display_name}</a>`;
+                    list.appendChild(item);
+                });
+        
+            } catch (err) {
+                list.innerHTML = "<p>Error loading library. Are you logged in?</p>";
+            }
         }
         
         // FIX 2: Added 'bookId' as a parameter
