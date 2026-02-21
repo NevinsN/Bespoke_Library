@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bespoke Library | Azure Edition</title>
+    <style>
+        body { background: #121212; color: #e0e0e0; font-family: sans-serif; max-width: 700px; margin: 0 auto; padding: 40px; }
+        .chapter-link { color: #3498db; text-decoration: none; font-size: 1.2em; display: block; margin: 10px 0; }
+        .metadata { color: #666; font-size: 0.8em; }
+    </style>
+</head>
+<body>
+    <h1>The Devious Adventures of Slick the Sly</h1>
+    <div id="chapter-list">Loading chapters...</div>
+
+    <script>
+        async function loadChapters() {
+            const response = await fetch('/api/GetChapters');
+            const chapters = await response.json();
+            const list = document.getElementById('chapter-list');
+            list.innerHTML = chapters.map(ch => `
+                <div>
+                    <a class="chapter-link" href="/reader.html?id=${ch._id}">${ch.title}</a>
+                    <div class="metadata">${ch.word_count} words</div>
+                </div>
+            `).join('');
+        }
+        loadChapters();
+    </script>
+</body>
+</html>
