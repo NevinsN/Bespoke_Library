@@ -71,34 +71,58 @@
     </div>
 
     <script>
-        const ACCESS_CODE = 'YOUR_SECRET_CODE_HERE'; // Replace with your actual secret
-
         async function init() {
             const urlParams = new URLSearchParams(window.location.search);
+            const bookId = urlParams.get('book');
+        
+            if (!bookId) {
+                await loadBookshelf();
+            } else {
+                // FIX 1: We pass the bookId variable here
+                await loadChapters(bookId);
+            }
+        }
+        
+        async function loadBookshelf() {
+            const response = await fetch('/api/GetNovels');
+            const novels = await response.json();
+            const list = document.getElementById('chapter-list');
             
-            if (urlParams.get('access') !== ACCESS_CODE) {
-                document.getElementById('access-gate').style.display = 'block';
+            document.querySelector('h1').innerText = "Your Digital Bookshelf";
+            // Hide the total words line while on the shelf
+            document.querySelector('.word-count-total').style.display = 'none';
+            
+            if (novels.length === 0) {
+                list.innerHTML = "<li>No manuscripts found. Check your user permissions!</li>";
                 return;
             }
-
-            document.getElementById('content').style.display = 'block';
-            await loadChapters();
+        
+            list.innerHTML = novels.map(n => `
+                <li class="chapter-item">
+                    <a class="chapter-link" href="/?book=${n.id}">
+                        📖 ${n.display_name}
+                    </a>
+                    <div class="ch-metadata">Click to open this manuscript</div>
+                </li>
+            `).join('');
         }
-
-        async function loadChapters() {
+        
+        // FIX 2: Added 'bookId' as a parameter
+        async function loadChapters(bookId) {
             try {
-                const response = await fetch('/api/GetChapters');
+                // FIX 3: Pass the manuscript_id to the API
+                const response = await fetch(`/api/GetChapters?manuscript_id=${bookId}`);
                 const chapters = await response.json();
                 const list = document.getElementById('chapter-list');
                 
                 let totalWords = 0;
+                document.querySelector('.word-count-total').style.display = 'block';
 
                 list.innerHTML = chapters.map(ch => {
                     const words = ch.word_count || 0;
                     totalWords += words;
                     const readTime = Math.ceil(words / 225) || 1;
                     
-                    // Logic for the [New] badge (if date_added exists in DB)
                     let badge = "";
                     if (ch.date_added) {
                         const added = new Date(ch.date_added);
@@ -108,10 +132,12 @@
                         }
                     }
 
+                    // FIX 4: Link directly to reader.html using the chapter _id
+                    // We don't need &access= anymore because the API checks your login!
                     return `
                         <li>
                             <div>
-                                <a class="chapter-link" href="/reader.html?id=${ch._id}&access=${ACCESS_CODE}">
+                                <a class="chapter-link" href="/reader.html?id=${ch._id}">
                                     ${ch.title}${badge}
                                 </a>
                                 <div class="ch-metadata">
@@ -126,11 +152,11 @@
 
             } catch (err) {
                 console.error(err);
-                document.getElementById('chapter-list').innerHTML = "<li>Error loading library.</li>";
+                document.getElementById('chapter-list').innerHTML = "<li>Error loading manuscript.</li>";
             }
         }
 
-        init();
+        window.onload = init;
     </script>
 </body>
 </html>
