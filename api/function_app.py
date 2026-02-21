@@ -10,9 +10,9 @@ app = func.FunctionApp()
 # --- DATABASE SETUP ---
 CONNECTION_STRING = os.getenv("COSMOS_CONNECTION_STRING")
 client = MongoClient(CONNECTION_STRING)
-db = client['bespoke_library']
+db = client['bespoke']
 
-ADMIN_EMAIL = "YOUR_ACTUAL_EMAIL@HERE.COM"
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 
 # --- DOOR 1: THE BOOKSHELF ---
 @app.route(route="GetNovels", methods=["GET"])
