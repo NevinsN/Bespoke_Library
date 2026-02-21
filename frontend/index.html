@@ -69,7 +69,32 @@
             0% { background-position: 200% 0; }
             100% { background-position: -200% 0; }
         }
-
+        /* Progress Bar Container */
+        .goal-container {
+            width: 100%;
+            background-color: #222;
+            border-radius: 4px;
+            height: 8px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        
+        /* The Filling Part */
+        .goal-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71); /* Blue to Green gradient */
+            width: 0%; /* Initial state */
+            transition: width 1s ease-in-out;
+        }
+        
+        /* Label text (e.g., 45%) */
+        .goal-text {
+            font-size: 10px;
+            color: #888;
+            text-align: right;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
         #content
     </style>
 </head>
