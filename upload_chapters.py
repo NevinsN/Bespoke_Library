@@ -2,53 +2,95 @@ import os
 import pypandoc
 from pymongo import MongoClient
 from datetime import datetime
+import re
 
 # --- CONFIGURATION ---
-# 1. Your Azure Cosmos Connection String
+# 1. Paste your Azure Cosmos Connection String here
 CONNECTION_STRING = "YOUR_COSMOS_CONNECTION_STRING_HERE"
-# 2. The ID used in your 'users' collection (e.g., 'slick-the-sly-b1-d2')
-MANUSCRIPT_ID = "slick-the-sly-b1-d2" 
-# 3. Path to your folder full of .md files
-FOLDER_PATH = "./manuscript/draft2"
 
+# 2. Path to the MAIN series folder (The one with Book_One inside it)
+SERIES_PATH = "./The_Devious_Adventures_of_Slick_the_Sly"
+
+# 3. Connect to Cosmos DB
 client = MongoClient(CONNECTION_STRING)
 db = client['bespoke_library']
 collection = db['novels']
 
-def upload_manuscript():
-    print(f"🚀 Starting upload for: {MANUSCRIPT_ID}")
+def clean_name(text):
+    """Turns 'Draft_Two' into 'Draft Two' and 'chapter_01' into 'Chapter 01'"""
+    return text.replace('_', ' ').replace('-', ' ').title()
+
+def get_initials(folder_name):
+    """Turns 'The_Devious_Adventures' into 'tda'"""
+    # Filters out small words like 'the', 'of', 'a' if you want, 
+    # but let's keep it simple: first letter of every word separated by underscore
+    return "".join([word[0].lower() for word in folder_name.split('_') if word])
+
+def upload_series():
+    series_folder_name = os.path.basename(SERIES_PATH)
+    prefix = get_initials(series_folder_name)
     
-    # Optional: Clear old version of this manuscript before uploading new one
-    # collection.delete_many({"manuscript_id": MANUSCRIPT_ID})
+    # Path to Book_One, Book_Two, etc.
+    book_one_path = os.path.join(SERIES_PATH, "Book_One")
+    
+    if not os.path.exists(book_one_path):
+        print(f"❌ Error: Could not find Book_One folder at {book_one_path}")
+        return
 
-    files = sorted([f for f in os.listdir(FOLDER_PATH) if f.endswith('.md')])
+    # 1. Get all folders inside Book_One (Draft_One, Draft_Two, etc.)
+    draft_folders = [f for f in os.listdir(book_one_path) if os.path.isdir(os.path.join(book_one_path, f))]
 
-    for filename in files:
-        full_path = os.path.join(FOLDER_PATH, filename)
+    for folder in draft_folders:
+        # 2. Skip Resources
+        if folder.lower() == "resources":
+            print(f"⏩ Skipping {folder}...")
+            continue
+
+        folder_path = os.path.join(book_one_path, folder)
         
-        # 1. Convert Markdown to Sleek HTML using Pandoc
-        # We use 'fragment' so we don't get <html><body> tags inside the DB
-        html_content = pypandoc.convert_file(full_path, 'html5', extra_args=['--mathjax'])
+        # 3. Generate the Bulletproof ID (e.g., tdaosts-book-one-draft-one)
+        # We use parent folder name 'Book_One' to keep the ID hierarchical
+        parent_name = "Book_One"
+        manuscript_id = f"{prefix}-{parent_name.lower()}-{folder.lower()}".replace('_', '-')
+        
+        # UI Display Name (e.g., Book One: Draft Two)
+        display_name = f"{clean_name(parent_name)}: {clean_name(folder)}"
 
-        # 2. Calculate Word Count
-        with open(full_path, 'r', encoding='utf-8') as f:
-            text = f.read()
-            word_count = len(text.split())
+        print(f"\n🚀 Uploading {display_name} (ID: {manuscript_id})")
 
-        # 3. Create the Database Document
-        chapter_doc = {
-            "manuscript_id": MANUSCRIPT_ID, # The "Shelf" it belongs to
-            "title": filename.replace('.md', '').replace('_', ' ').title(),
-            "content": html_content,
-            "word_count": word_count,
-            "date_added": datetime.utcnow().isoformat(),
-            "order": files.index(filename) # Keeps chapters in sequence
-        }
+        # 4. Process Markdown files
+        files = sorted([f for f in os.listdir(folder_path) if f.endswith('.md')])
 
-        # 4. Push to Azure
-        collection.insert_one(chapter_doc)
-        print(f" ✅ Uploaded: {chapter_doc['title']} ({word_count} words)")
+        for filename in files:
+            full_path = os.path.join(folder_path, filename)
+            
+            # Convert MD to HTML using Pandoc
+            html_content = pypandoc.convert_file(full_path, 'html5', extra_args=['--mathjax'])
+
+            # Calculate Word Count
+            with open(full_path, 'r', encoding='utf-8') as f:
+                text = f.read()
+                word_count = len(text.split())
+
+            # 5. Create the document
+            chapter_doc = {
+                "manuscript_id": manuscript_id,
+                "manuscript_display_name": display_name,
+                "title": clean_name(filename.replace('.md', '')),
+                "content": html_content,
+                "word_count": word_count,
+                "date_added": datetime.utcnow().isoformat(),
+                "order": files.index(filename)
+            }
+
+            # 6. Upsert to Cosmos (Update if title exists in this manuscript, else insert)
+            collection.replace_one(
+                {"manuscript_id": manuscript_id, "title": chapter_doc["title"]},
+                chapter_doc,
+                upsert=True
+            )
+            print(f"   ✅ Saved: {chapter_doc['title']}")
 
 if __name__ == "__main__":
-    upload_manuscript()
-    print("\n✨ Library Updated! Refresh your website to see the changes.")
+    upload_series()
+    print("\n✨ All set! Your bookshelf has been updated.")
