@@ -2,69 +2,199 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Reading...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bespoke Library | Reader</title>
     <style>
-        body { background: #121212; color: #e0e0e0; font-family: serif; line-height: 1.8; max-width: 800px; margin: 0 auto; padding: 50px; }
-        h1 { border-bottom: 1px solid #333; padding-bottom: 20px; }
-        #content { white-space: pre-wrap; font-size: 1.2em; }
-        
-        /* Progress bar container */
+        :root {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --accent-color: #3498db;
+            --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Georgia, serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            margin: 0;
+            padding: 80px 20px 40px; /* Top padding for progress bar */
+            line-height: 1.8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- UI ELEMENTS --- */
         #progress-container {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 4px;
-            background: transparent;
+            background: rgba(255,255,255,0.1);
             z-index: 1000;
         }
-        
-        /* The actual filling bar */
+
         #progress-bar {
             height: 100%;
-            background: #3498db; /* Your signature blue */
+            background: var(--accent-color);
             width: 0%;
             transition: width 0.1s ease-out;
         }
-        
-        /* Author/Admin Badge - Floating in the corner */
+
         .role-badge {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background: rgba(52, 152, 219, 0.2);
-            border: 1px solid #3498db;
-            padding: 5px 12px;
+            background: rgba(52, 152, 219, 0.1);
+            border: 1px solid var(--accent-color);
+            padding: 6px 14px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
+            font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: #3498db;
+            color: var(--accent-color);
             cursor: pointer;
+            backdrop-filter: blur(5px);
+            z-index: 1000;
         }
 
+        /* --- CONTENT AREA --- */
+        #reader-container {
+            max-width: 650px;
+            width: 100%;
+        }
+
+        h1#chapter-title {
+            color: #ffffff;
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+
+        .meta-info {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 40px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 20px;
+        }
+
+        #chapter-content {
+            font-size: 1.15em;
+            letter-spacing: 0.01em;
+        }
+
+        /* Pandoc/Markdown Styling */
+        #chapter-content p { margin-bottom: 1.5em; }
+        #chapter-content blockquote {
+            border-left: 3px solid var(--accent-color);
+            padding-left: 20px;
+            margin-left: 0;
+            color: #bbb;
+            font-style: italic;
+        }
+
+        .nav-links {
+            margin-top: 60px;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid #333;
+            padding-top: 20px;
+        }
+
+        .nav-links a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        /* Author Mode Specifics */
+        .author-mode #chapter-content { border: 1px dashed #444; padding: 10px; }
     </style>
 </head>
 <body>
-    <a href="index.html" style="color: #888; text-decoration: none;">← Back to Library</a>
-    <h1 id="title">Loading...</h1>
-    <div id="content">Fetching your story from the cloud...</div>
+
+    <div id="progress-container">
+        <div id="progress-bar"></div>
+    </div>
+
+    <div id="reader-container">
+        <a href="/" style="color: #666; text-decoration: none; font-size: 0.9em;">← Back to Bookshelf</a>
+        
+        <h1 id="chapter-title">Loading...</h1>
+        <div class="meta-info" id="meta-info">Please wait while we fetch the manuscript...</div>
+
+        <div id="chapter-content">
+            </div>
+
+        <div class="nav-links">
+            <a href="#" id="prev-link" style="visibility: hidden;">&larr; Previous Chapter</a>
+            <a href="#" id="next-link" style="visibility: hidden;">Next Chapter &rarr;</a>
+        </div>
+    </div>
 
     <script>
-        const params = new URLSearchParams(window.location.search);
-        const chapterId = params.get('id');
+        // 1. Progress Bar Logic
+        window.onscroll = function() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        };
 
-        async function loadChapter() {
-            // This calls our backend API
-            const response = await fetch(`/api/GetChapter?id=${chapterId}`);
-            const data = await response.json();
+        // 2. Persona/Role Logic
+        function setupRoleSwitcher() {
+            const currentRole = localStorage.getItem('view_as_role') || 'reader';
+            const badge = document.createElement('div');
+            badge.className = 'role-badge';
+            badge.innerText = `Mode: ${currentRole}`;
             
-            document.getElementById('title').innerText = data.title;
-            document.getElementById('content').innerText = data.content;
-            document.title = data.title + " | The Library";
+            badge.onclick = () => {
+                const nextRole = currentRole === 'reader' ? 'author' : 'reader';
+                localStorage.setItem('view_as_role', nextRole);
+                location.reload();
+            };
+            document.body.appendChild(badge);
+            if (currentRole === 'author') document.body.classList.add('author-mode');
         }
 
-        if (chapterId) { loadChapter(); }
+        // 3. Data Fetching Logic
+        async function loadChapter() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const chapterId = urlParams.get('id');
+
+            if (!chapterId) {
+                document.getElementById('chapter-title').innerText = "No Chapter Selected";
+                return;
+            }
+
+            try {
+                // We call the API. Since we aren't passing &access anymore, 
+                // Azure Auth handles the identity in the background.
+                const response = await fetch(`/api/GetChapterContent?id=${chapterId}`);
+                if (!response.ok) throw new Error("Unauthorized or Not Found");
+                
+                const data = await response.json();
+
+                // Update UI
+                document.title = `${data.title} | Bespoke Library`;
+                document.getElementById('chapter-title').innerText = data.title;
+                document.getElementById('meta-info').innerText = `${data.word_count.toLocaleString()} words • ${data.manuscript_display_name}`;
+                document.getElementById('chapter-content').innerHTML = data.content;
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('chapter-title').innerText = "Access Denied";
+                document.getElementById('chapter-content').innerHTML = "<p>You do not have permission to view this manuscript or the session has expired.</p>";
+            }
+        }
+
+        window.onload = () => {
+            setupRoleSwitcher();
+            loadChapter();
+        };
     </script>
 </body>
 </html>
