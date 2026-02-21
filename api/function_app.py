@@ -10,7 +10,7 @@ app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 CONNECTION_STRING = os.environ.get("COSMOS_CONNECTION_STRING")
 client = MongoClient(CONNECTION_STRING)
 db = client['bespoke_library']
-collection = db['novels']
+collection = db['chapters']
 
 @app.route(route="GetChapters", methods=["GET"])
 def get_chapters(req: func.HttpRequest) -> func.HttpResponse:
