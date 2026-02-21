@@ -3,6 +3,7 @@ import json
 import base64
 import os
 from pymongo import MongoClient
+from bson.objectid import ObjectId
 
 app = func.FunctionApp()
 
@@ -83,3 +84,40 @@ def get_chapters(req: func.HttpRequest) -> func.HttpResponse:
 def clean_name(text):
     """Helper to prettify IDs if display_name is missing"""
     return text.replace('-', ' ').title()
+
+@app.route(route="GetChapterContent", methods=["GET"])
+def get_chapter_content(req: func.HttpRequest) -> func.HttpResponse:
+    auth_header = req.headers.get("x-ms-client-principal")
+    if not auth_header:
+        return func.HttpResponse("Unauthorized", status_code=401)
+
+    payload = json.loads(base64.b64decode(auth_header).decode('utf-8'))
+    user_email = payload['userDetails']
+    
+    chapter_id = req.params.get('id')
+    if not chapter_id:
+        return func.HttpResponse("Missing chapter ID", status_code=400)
+
+    try:
+        # 1. Fetch the specific chapter
+        chapter = db['novels'].find_one({"_id": ObjectId(chapter_id)})
+        if not chapter:
+            return func.HttpResponse("Chapter not found", status_code=404)
+
+        # 2. Permission Check (Admins pass, others checked against 'users' collection)
+        if user_email != "YOUR_ACTUAL_EMAIL@HERE.COM":
+            user_record = db['users'].find_one({"email": user_email})
+            if not user_record:
+                return func.HttpResponse("Access Denied", status_code=403)
+            
+            allowed_ids = [m['id'] for m in user_record.get('authorized_manuscripts', [])]
+            if chapter['manuscript_id'] not in allowed_ids:
+                return func.HttpResponse("Unauthorized for this manuscript", status_code=403)
+
+        # 3. Format and Return
+        chapter['_id'] = str(chapter['_id'])
+        return func.HttpResponse(json.dumps(chapter), mimetype="application/json")
+
+    except Exception as e:
+        return func.HttpResponse(f"Error: {str(e)}", status_code=500)
+
