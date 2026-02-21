@@ -2,30 +2,139 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Bespoke Library | Azure Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Library | Slick the Sly</title>
     <style>
-        body { background: #121212; color: #e0e0e0; font-family: sans-serif; max-width: 700px; margin: 0 auto; padding: 40px; }
-        .chapter-link { color: #3498db; text-decoration: none; font-size: 1.2em; display: block; margin: 10px 0; }
-        .metadata { color: #666; font-size: 0.8em; }
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+        h1 { 
+            color: #ffffff; 
+            border-bottom: 2px solid #333; 
+            padding-bottom: 15px;
+            text-align: center;
+            letter-spacing: -0.5px;
+        }
+        .word-count-total { 
+            color: #888; 
+            font-style: italic; 
+            margin-bottom: 30px; 
+            font-size: 0.95em;
+            text-align: center;
+        }
+        ul { list-style: none; padding: 0; }
+        li { padding: 20px 0; border-bottom: 1px solid #222; }
+        .chapter-link { 
+            color: #3498db; 
+            text-decoration: none; 
+            font-weight: 500; 
+            font-size: 1.2em;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+        .badge-new {
+            background-color: #3498db;
+            color: #fff;
+            font-size: 0.6em;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 10px;
+            vertical-align: middle;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+        .ch-metadata { 
+            color: #666; 
+            font-size: 0.85em; 
+            font-family: monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        #access-gate, #content { display: none; }
     </style>
 </head>
 <body>
-    <h1>The Devious Adventures of Slick the Sly</h1>
-    <div id="chapter-list">Loading chapters...</div>
+    <div id="access-gate" style="text-align: center; margin-top: 100px;">
+        <h1>Restricted Access</h1>
+        <p>Please use your invite link to enter the library.</p>
+    </div>
+
+    <div id="content">
+        <h1>The Devious Adventures of Slick the Sly</h1>
+        <p class="word-count-total">Total Manuscript Progress: <strong id="total-words">Calculating...</strong></p>
+
+        <ul id="chapter-list">
+            </ul>
+    </div>
 
     <script>
-        async function loadChapters() {
-            const response = await fetch('/api/GetChapters');
-            const chapters = await response.json();
-            const list = document.getElementById('chapter-list');
-            list.innerHTML = chapters.map(ch => `
-                <div>
-                    <a class="chapter-link" href="/reader.html?id=${ch._id}">${ch.title}</a>
-                    <div class="metadata">${ch.word_count} words</div>
-                </div>
-            `).join('');
+        const ACCESS_CODE = 'YOUR_SECRET_CODE_HERE'; // Replace with your actual secret
+
+        async function init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.get('access') !== ACCESS_CODE) {
+                document.getElementById('access-gate').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('content').style.display = 'block';
+            await loadChapters();
         }
-        loadChapters();
+
+        async function loadChapters() {
+            try {
+                const response = await fetch('/api/GetChapters');
+                const chapters = await response.json();
+                const list = document.getElementById('chapter-list');
+                
+                let totalWords = 0;
+
+                list.innerHTML = chapters.map(ch => {
+                    const words = ch.word_count || 0;
+                    totalWords += words;
+                    const readTime = Math.ceil(words / 225) || 1;
+                    
+                    // Logic for the [New] badge (if date_added exists in DB)
+                    let badge = "";
+                    if (ch.date_added) {
+                        const added = new Date(ch.date_added);
+                        const now = new Date();
+                        if ((now - added) < (48 * 60 * 60 * 1000)) {
+                            badge = '<span class="badge-new">New</span>';
+                        }
+                    }
+
+                    return `
+                        <li>
+                            <div>
+                                <a class="chapter-link" href="/reader.html?id=${ch._id}&access=${ACCESS_CODE}">
+                                    ${ch.title}${badge}
+                                </a>
+                                <div class="ch-metadata">
+                                    ${words.toLocaleString()} words • ${readTime} min read
+                                </div>
+                            </div>
+                        </li>
+                    `;
+                }).join('');
+
+                document.getElementById('total-words').innerText = `${totalWords.toLocaleString()} words`;
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('chapter-list').innerHTML = "<li>Error loading library.</li>";
+            }
+        }
+
+        init();
     </script>
 </body>
 </html>
