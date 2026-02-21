@@ -1,38 +1,54 @@
 import os
-import pymongo
-from dotenv import load_dotenv
+import pypandoc
+from pymongo import MongoClient
+from datetime import datetime
 
-# Load environment
-load_dotenv()
+# --- CONFIGURATION ---
+# 1. Your Azure Cosmos Connection String
+CONNECTION_STRING = "YOUR_COSMOS_CONNECTION_STRING_HERE"
+# 2. The ID used in your 'users' collection (e.g., 'slick-the-sly-b1-d2')
+MANUSCRIPT_ID = "slick-the-sly-b1-d2" 
+# 3. Path to your folder full of .md files
+FOLDER_PATH = "./manuscript/draft2"
 
-# Setup Connection
-uri = os.getenv("COSMOS_CONNECTION_STRING")
-client = pymongo.MongoClient(uri)
+client = MongoClient(CONNECTION_STRING)
+db = client['bespoke_library']
+collection = db['novels']
 
-# Create and Select Database and Collection
-db = client["bespoke_library"]
-collection = db["chapters"]
+def upload_manuscript():
+    print(f"🚀 Starting upload for: {MANUSCRIPT_ID}")
+    
+    # Optional: Clear old version of this manuscript before uploading new one
+    # collection.delete_many({"manuscript_id": MANUSCRIPT_ID})
 
-def upload_chapters(folder_path):
-    for filename in os.listdir(folder_path):
-        if filename.endswith(".md"):
-            file_path = os.path.join(folder_path, filename)
+    files = sorted([f for f in os.listdir(FOLDER_PATH) if f.endswith('.md')])
 
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+    for filename in files:
+        full_path = os.path.join(FOLDER_PATH, filename)
+        
+        # 1. Convert Markdown to Sleek HTML using Pandoc
+        # We use 'fragment' so we don't get <html><body> tags inside the DB
+        html_content = pypandoc.convert_file(full_path, 'html5', extra_args=['--mathjax'])
 
-            # Create document structure
-            chapter_data = {
-                "title": filename.replace(".md", ""),
-                "content": content,
-                "word_count": len(content.split()),
-                "status": "draft"
-            }
+        # 2. Calculate Word Count
+        with open(full_path, 'r', encoding='utf-8') as f:
+            text = f.read()
+            word_count = len(text.split())
 
-            # Upload to Azure
-            result = collection.insert_one(chapter_data)
-            print(f"Uploaded {filename} with ID: {result.inserted_id}")
+        # 3. Create the Database Document
+        chapter_doc = {
+            "manuscript_id": MANUSCRIPT_ID, # The "Shelf" it belongs to
+            "title": filename.replace('.md', '').replace('_', ' ').title(),
+            "content": html_content,
+            "word_count": word_count,
+            "date_added": datetime.utcnow().isoformat(),
+            "order": files.index(filename) # Keeps chapters in sequence
+        }
+
+        # 4. Push to Azure
+        collection.insert_one(chapter_doc)
+        print(f" ✅ Uploaded: {chapter_doc['title']} ({word_count} words)")
 
 if __name__ == "__main__":
-    upload_chapters("novels\The_Devious_Adventures_of_Slick_the_Sly\Book_One\Draft_Two")
-
+    upload_manuscript()
+    print("\n✨ Library Updated! Refresh your website to see the changes.")
