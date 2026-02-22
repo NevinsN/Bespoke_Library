@@ -1,0 +1,74 @@
+:root {
+    --bg-color: #121212;
+    --card-bg: #1a1a1a;
+    --text-color: #e0e0e0;
+    --accent-color: #3498db;
+    --border-color: #333;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 40px 20px;
+    display: flex;
+    justify-content: center;
+}
+
+#content { max-width: 800px; width: 100%; }
+
+.main-header { text-align: center; margin-bottom: 40px; }
+.main-header h1 { color: #fff; }
+
+.nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.mode-btn {
+    background: rgba(52, 152, 219, 0.1);
+    border: 1px solid var(--accent-color);
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    color: var(--accent-color);
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+.book-card { 
+    margin-bottom: 15px; 
+    padding: 20px; 
+    background: var(--card-bg); 
+    border-radius: 8px; 
+    border: 1px solid var(--border-color);
+}
+
+.book-card a { 
+    font-size: 1.2em; 
+    font-weight: bold; 
+    text-decoration: none; 
+    color: var(--accent-color); 
+    display: block; 
+    margin-bottom: 12px; 
+}
+
+.goal-container { background: #333; border-radius: 4px; height: 8px; width: 100%; overflow: hidden; }
+.goal-fill { background: var(--accent-color); height: 100%; transition: width 0.5s; }
+
+#chapter-list { list-style: none; padding: 0; margin-top: 20px; }
+#chapter-list li {
+    background: var(--card-bg);
+    margin-bottom: 10px;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+.chapter-link { color: var(--accent-color); text-decoration: none; font-weight: 500; }
+.ch-metadata { font-size: 0.85em; color: #888; margin-top: 5px; }
