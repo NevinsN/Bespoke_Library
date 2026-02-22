@@ -1,4 +1,24 @@
 import azure.functions as func
+# Import the handlers from your new modular route file
+from routes.novel_routes import handle_get_novels, handle_get_chapters, handle_get_content
+
+app = func.FunctionApp()
+
+@app.route(route="GetNovels", methods=["GET"])
+def get_novels(req: func.HttpRequest) -> func.HttpResponse:
+    return handle_get_novels(req)
+
+@app.route(route="GetChapters", methods=["GET"])
+def get_chapters(req: func.HttpRequest) -> func.HttpResponse:
+    return handle_get_chapters(req)
+
+@app.route(route="GetChapterContent", methods=["GET"])
+def get_chapter_content(req: func.HttpRequest) -> func.HttpResponse:
+    return handle_get_content(req)
+
+
+'''
+import azure.functions as func
 import json
 import base64
 import os
@@ -83,3 +103,4 @@ def get_chapter_content(req: func.HttpRequest) -> func.HttpResponse:
     chapter['next_id'] = str(next_ch.get('_id')) if next_ch else None
 
     return func.HttpResponse(json.dumps(chapter), mimetype="application/json")
+'''

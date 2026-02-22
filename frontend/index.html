@@ -57,7 +57,8 @@
         
             try {
                 const response = await fetch('/api/GetNovels');
-                const novels = await response.json();
+                const result = await response.json();
+                const novels = result.data;
                 list.innerHTML = '';
         
                 if (novels.length === 0) {
@@ -73,7 +74,7 @@
                     item.className = "book-card"; 
                     item.innerHTML = `
                         <div style="margin-bottom: 15px; padding: 20px; background: #1a1a1a; border-radius: 8px; border: 1px solid #333;">
-                            <a href="/?book=${novel.id}" style="font-size: 1.25em; font-weight: bold; text-decoration: none; color: #3498db; display: block; margin-bottom: 10px;">
+                            <a href="/?book=${novel._id}" style="font-size: 1.25em; font-weight: bold; text-decoration: none; color: #3498db; display: block; margin-bottom: 10px;">
                                 ${novel.display_name}
                             </a>
                             <div class="goal-container"><div class="goal-fill" style="width: ${percent}%;"></div></div>
@@ -93,7 +94,8 @@
         async function loadChapters(bookId) {
             try {
                 const response = await fetch(`/api/GetChapters?manuscript_id=${bookId}`);
-                const chapters = await response.json();
+                const result = await response.json();
+                const chapters = result.data;
                 const list = document.getElementById('chapter-list');
                 
                 let totalWords = 0;

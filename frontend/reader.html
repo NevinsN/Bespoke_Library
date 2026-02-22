@@ -162,34 +162,51 @@
 
         // 3. Data Fetching Logic
         async function loadChapter() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const chapterId = urlParams.get('id');
+        const urlParams = new URLSearchParams(window.location.search);
+        const chapterId = urlParams.get('id');
 
-            if (!chapterId) {
-                document.getElementById('chapter-title').innerText = "No Chapter Selected";
-                return;
-            }
-
-            try {
-                // We call the API. Since we aren't passing &access anymore, 
-                // Azure Auth handles the identity in the background.
-                const response = await fetch(`/api/GetChapterContent?id=${chapterId}`);
-                if (!response.ok) throw new Error("Unauthorized or Not Found");
-                
-                const data = await response.json();
-
-                // Update UI
-                document.title = `${data.title} | Bespoke Library`;
-                document.getElementById('chapter-title').innerText = data.title;
-                document.getElementById('meta-info').innerText = `${data.word_count.toLocaleString()} words • ${data.manuscript_display_name}`;
-                document.getElementById('chapter-content').innerHTML = data.content;
-
-            } catch (err) {
-                console.error(err);
-                document.getElementById('chapter-title').innerText = "Access Denied";
-                document.getElementById('chapter-content').innerHTML = "<p>You do not have permission to view this manuscript or the session has expired.</p>";
-            }
+        if (!chapterId) {
+            document.getElementById('chapter-title').innerText = "No Chapter Selected";
+            return;
         }
+
+        try {
+            const response = await fetch(`/api/GetChapterContent?id=${chapterId}`);
+            if (!response.ok) throw new Error("Unauthorized or Not Found");
+            
+            const result = await response.json(); // 1. Get the full response object
+            const data = result.data;            // 2. Extract the data payload
+
+            // 3. Update Navigation Links
+            const prevLink = document.getElementById('prev-link');
+            const nextLink = document.getElementById('next-link');
+
+            if (data.prev_id) {
+                prevLink.href = `/reader.html?id=${data.prev_id}`;
+                prevLink.style.visibility = 'visible';
+            } else {
+                prevLink.style.visibility = 'hidden';
+            }
+
+            if (data.next_id) {
+                nextLink.href = `/reader.html?id=${data.next_id}`;
+                nextLink.style.visibility = 'visible';
+            } else {
+                nextLink.style.visibility = 'hidden';
+            }
+
+            // 4. Update UI Content
+            document.title = `${data.title} | Bespoke Library`;
+            document.getElementById('chapter-title').innerText = data.title;
+            document.getElementById('meta-info').innerText = `${data.word_count.toLocaleString()} words • ${data.manuscript_display_name}`;
+            document.getElementById('chapter-content').innerHTML = data.content;
+
+        } catch (err) {
+            console.error(err);
+            document.getElementById('chapter-title').innerText = "Access Denied";
+            document.getElementById('chapter-content').innerHTML = "<p>Error loading content.</p>";
+        }
+    }
 
         window.onload = () => {
             setupRoleSwitcher();
