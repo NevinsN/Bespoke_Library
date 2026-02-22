@@ -18,57 +18,29 @@ body {
 
 #content { max-width: 800px; width: 100%; }
 
-.main-header { text-align: center; margin-bottom: 40px; }
-.main-header h1 { color: #fff; }
-
-.nav-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.mode-btn {
-    background: rgba(52, 152, 219, 0.1);
-    border: 1px solid var(--accent-color);
-    padding: 5px 12px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: bold;
-    color: var(--accent-color);
-    cursor: pointer;
-    text-transform: uppercase;
-}
-
-.book-card { 
-    margin-bottom: 15px; 
-    padding: 20px; 
-    background: var(--card-bg); 
-    border-radius: 8px; 
-    border: 1px solid var(--border-color);
-}
-
-.book-card a { 
-    font-size: 1.2em; 
+/* Series & Book Headers */
+.series-container { margin-bottom: 40px; }
+.series-title { font-size: 1.6em; color: #fff; font-weight: 800; margin-bottom: 10px; }
+.book-group-header { 
+    margin: 20px 0 10px 15px; 
+    color: #888; 
     font-weight: bold; 
-    text-decoration: none; 
-    color: var(--accent-color); 
-    display: block; 
-    margin-bottom: 12px; 
+    font-size: 0.85em; 
+    text-transform: uppercase; 
+    letter-spacing: 1px;
 }
 
-.goal-container { background: #333; border-radius: 4px; height: 8px; width: 100%; overflow: hidden; }
+/* Nav Header */
+.nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+.mode-btn { background: rgba(52, 152, 219, 0.1); border: 1px solid var(--accent-color); padding: 5px 12px; border-radius: 4px; font-size: 11px; color: var(--accent-color); cursor: pointer; }
+
+/* Progress Cards */
+.book-card { margin-bottom: 15px; margin-left: 15px; padding: 20px; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+.book-card a { font-size: 1.1em; font-weight: bold; text-decoration: none; color: var(--accent-color); }
+.goal-container { background: #333; border-radius: 4px; height: 6px; width: 100%; overflow: hidden; margin: 12px 0; }
 .goal-fill { background: var(--accent-color); height: 100%; transition: width 0.5s; }
 
-#chapter-list { list-style: none; padding: 0; margin-top: 20px; }
-#chapter-list li {
-    background: var(--card-bg);
-    margin-bottom: 10px;
-    padding: 15px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-}
-.chapter-link { color: var(--accent-color); text-decoration: none; font-weight: 500; }
-.ch-metadata { font-size: 0.85em; color: #888; margin-top: 5px; }
+/* Badges */
+.status-badge { font-size: 9px; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; }
+.status-progress { background: rgba(52, 152, 219, 0.1); color: var(--accent-color); border: 1px solid var(--accent-color); }
+.status-complete { background: rgba(46, 204, 113, 0.1); color: #2ecc71; border: 1px solid #2ecc71; }
