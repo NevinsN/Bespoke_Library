@@ -21,18 +21,19 @@ async function loadBookshelf() {
         const novels = result.data;
         list.innerHTML = '';
 
+        // 1. Grouping based on the new explicit fields
         const groups = {};
         novels.forEach(novel => {
-            const parts = novel.display_name.split(' - ');
-            const series = parts[0]?.trim() || "Standalone";
-            const book = parts[1]?.trim() || "Novel";
-            const draft = parts[2]?.trim() || "Current Draft";
+            const s = novel.series || "Standalone";
+            const b = novel.book || "Novel";
+            const d = novel.draft || "Current Draft";
             
-            if (!groups[series]) groups[series] = {};
-            if (!groups[series][book]) groups[series][book] = [];
-            groups[series][book].push({ ...novel, draft });
+            if (!groups[s]) groups[s] = {};
+            if (!groups[s][b]) groups[s][b] = [];
+            groups[s][b].push({ ...novel, d });
         });
 
+        // 2. Render nested layers
         for (const [series, books] of Object.entries(groups)) {
             const sDiv = document.createElement('div');
             sDiv.className = 'series-container';
@@ -40,29 +41,32 @@ async function loadBookshelf() {
 
             for (const [book, drafts] of Object.entries(books)) {
                 sDiv.innerHTML += `<div class="book-group-header">${book}</div>`;
-                drafts.forEach(novel => {
-                    const count = novel.total_word_count || 0;
-                    const readTime = Math.ceil(count / 225);
-                    const percent = Math.min((count / targetGoal) * 100, 100).toFixed(0);
+                
+                drafts.forEach(n => {
+                    const count = n.total_word_count || 0;
+                    const time = Math.ceil(count / 225);
+                    const pct = Math.min((count / targetGoal) * 100, 100).toFixed(0);
                     const isDone = count >= targetGoal;
 
                     sDiv.innerHTML += `
                         <div class="book-card">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <a href="/?book=${novel._id}">${novel.draft}</a>
-                                <span class="status-badge ${isDone ? 'status-complete' : 'status-progress'}">${isDone ? 'Completed' : 'In Progress'}</span>
+                                <a href="/?book=${n._id}">${n.d}</a>
+                                <span class="status-badge ${isDone ? 'status-complete' : 'status-progress'}">
+                                    ${isDone ? 'Completed' : 'In Progress'}
+                                </span>
                             </div>
-                            <div class="goal-container"><div class="goal-fill" style="width:${percent}%"></div></div>
+                            <div class="goal-container"><div class="goal-fill" style="width:${pct}%"></div></div>
                             <div style="display:flex; justify-content:space-between; font-size:11px; color:#888;">
-                                <span>${count.toLocaleString()} words | ${readTime} min read</span>
-                                <span style="color:#2ecc71;">${percent}%</span>
+                                <span>${count.toLocaleString()} words | ${time} min read</span>
+                                <span>${pct}%</span>
                             </div>
                         </div>`;
                 });
             }
             list.appendChild(sDiv);
         }
-    } catch (err) { list.innerHTML = "Error loading library."; }
+    } catch (e) { list.innerHTML = "Error loading library."; }
 }
 
 async function loadChapters(bookId) {
