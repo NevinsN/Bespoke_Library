@@ -2,23 +2,27 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Bespoke Library</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Bespoke Library</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
     <div id="content">
-        <div id="books-list-view" style="display:none;">
-            <div class="main-header"><h1>Your Bespoke Library</h1></div>
+        <div id="books-list-view" style="display: none;">
+            <div class="main-header">
+                <h1>Your Bespoke Library</h1>
+            </div>
             <div id="books-list"></div>
         </div>
 
-        <div id="chapter-view" style="display:none;">
+        <div id="chapter-view" style="display: none;">
             <div class="nav-header">
-                <a href="/" style="color: #666; text-decoration: none;">← Back to Library</a>
+                <a href="/" class="back-link">← Back to Library</a>
                 <button id="mode-toggle" class="mode-btn">Mode: Reader</button>
             </div>
-            <h1 id="series-title">Loading...</h1>
-            <p>Total Progress: <strong id="total-words">...</strong></p>
+            <h1 id="series-title">Loading Manuscript...</h1>
+            <p class="progress-text">Total Progress: <strong id="total-words">Calculating...</strong></p>
             <ul id="chapter-list"></ul>
         </div>
     </div>
