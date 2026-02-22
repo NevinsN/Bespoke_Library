@@ -2,177 +2,27 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bespoke Library</title>
-    <style>
-        :root {
-            --bg-color: #121212;
-            --card-bg: #1a1a1a;
-            --text-color: #e0e0e0;
-            --accent-color: #3498db;
-            --border-color: #333;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0;
-            padding: 40px 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        #content { max-width: 800px; width: 100%; }
-        h1 { color: #fff; margin-bottom: 30px; }
-
-        /* Hide views by default */
-        #books-list-view, #chapter-view { display: none; }
-
-        /* Bookshelf Cards */
-        .book-card { 
-            cursor: pointer; 
-            transition: transform 0.2s;
-            margin-bottom: 15px; 
-            padding: 20px; 
-            background: var(--card-bg); 
-            border-radius: 8px; 
-            border: 1px solid var(--border-color);
-        }
-        .book-card:hover { transform: translateY(-2px); border-color: var(--accent-color); }
-        .book-card a { 
-            font-size: 1.25em; 
-            font-weight: bold; 
-            text-decoration: none; 
-            color: var(--accent-color); 
-            display: block; 
-            margin-bottom: 10px; 
-        }
-
-        /* Progress Bar */
-        .goal-container { background: #333; border-radius: 4px; height: 8px; width: 100%; overflow: hidden; }
-        .goal-fill { background: var(--accent-color); height: 100%; transition: width 0.5s; }
-
-        /* Chapter List */
-        #chapter-list { list-style: none; padding: 0; }
-        #chapter-list li {
-            background: var(--card-bg);
-            margin-bottom: 10px;
-            padding: 15px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-        }
-        .chapter-link { color: var(--accent-color); text-decoration: none; font-weight: 500; font-size: 1.1em; }
-        .ch-metadata { font-size: 0.85em; color: #888; margin-top: 5px; }
-
-        .badge-new {
-            background: #2ecc71; color: #fff; font-size: 10px; padding: 2px 6px;
-            border-radius: 10px; margin-left: 10px; text-transform: uppercase;
-        }
-    </style>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
     <div id="content">
-        <div id="books-list-view">
-            <h1>My Bespoke Library</h1>
+        <div id="books-list-view" style="display:none;">
+            <div class="main-header"><h1>Your Bespoke Library</h1></div>
             <div id="books-list"></div>
         </div>
 
-        <div id="chapter-view">
-            <a href="/" style="color: #666; text-decoration: none; font-size: 0.9em;">← Back to Library</a>
-            <h1 id="series-title">Loading Manuscript...</h1>
-            <p class="word-count-total">Total Manuscript Progress: <strong id="total-words">Calculating...</strong></p>
+        <div id="chapter-view" style="display:none;">
+            <div class="nav-header">
+                <a href="/" style="color: #666; text-decoration: none;">← Back to Library</a>
+                <button id="mode-toggle" class="mode-btn">Mode: Reader</button>
+            </div>
+            <h1 id="series-title">Loading...</h1>
+            <p>Total Progress: <strong id="total-words">...</strong></p>
             <ul id="chapter-list"></ul>
         </div>
     </div>
 
-    <script>
-        async function init() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const bookId = urlParams.get('book');
-        
-            if (!bookId) {
-                document.getElementById('books-list-view').style.display = 'block';
-                await loadBookshelf();
-            } else {
-                document.getElementById('chapter-view').style.display = 'block';
-                await loadChapters(bookId);
-            }
-        }
-        
-        async function loadBookshelf() {
-            const list = document.getElementById('books-list');
-            const targetGoal = 50000;
-        
-            try {
-                const response = await fetch('/api/GetNovels');
-                const result = await response.json();
-                const novels = result.data; // Accessing the modular wrapper
-                list.innerHTML = '';
-        
-                if (!novels || novels.length === 0) {
-                    list.innerHTML = `<p style="text-align:center; color:#666;">No manuscripts found or access denied.</p>`;
-                    return;
-                }
-        
-                novels.forEach(novel => {
-                    const currentCount = novel.total_word_count || 0;
-                    const percent = Math.min((currentCount / targetGoal) * 100, 100).toFixed(0);
-        
-                    const item = document.createElement('div');
-                    item.className = "book-card"; 
-                    item.innerHTML = `
-                        <a href="/?book=${novel._id}">${novel.display_name}</a>
-                        <div class="goal-container"><div class="goal-fill" style="width: ${percent}%;"></div></div>
-                        <div style="display: flex; justify-content: space-between; margin-top: 8px;">
-                            <span style="font-size: 11px; color: #888;">${currentCount.toLocaleString()} / ${targetGoal.toLocaleString()} WORDS</span>
-                            <span style="font-size: 11px; color: #2ecc71;">${percent}%</span>
-                        </div>
-                    `;
-                    list.appendChild(item);
-                });
-            } catch (err) {
-                list.innerHTML = `<p>Error connecting to library. Check API status.</p>`;
-            }
-        }
-        
-        async function loadChapters(bookId) {
-            try {
-                const response = await fetch(`/api/GetChapters?manuscript_id=${bookId}`);
-                const result = await response.json();
-                const chapters = result.data;
-                const list = document.getElementById('chapter-list');
-                
-                let totalWords = 0;
-                list.innerHTML = chapters.map(ch => {
-                    const words = ch.word_count || 0;
-                    totalWords += words;
-                    const readTime = Math.ceil(words / 225) || 1;
-                    
-                    let badge = "";
-                    if (ch.date_added) {
-                        const added = new Date(ch.date_added);
-                        if ((new Date() - added) < (48 * 60 * 60 * 1000)) badge = '<span class="badge-new">New</span>';
-                    }
-
-                    return `
-                        <li>
-                            <a class="chapter-link" href="/reader.html?id=${ch._id}">${ch.title}${badge}</a>
-                            <div class="ch-metadata">${words.toLocaleString()} words • ${readTime} min read</div>
-                        </li>
-                    `;
-                }).join('');
-
-                document.getElementById('total-words').innerText = `${totalWords.toLocaleString()} words`;
-                if (chapters.length > 0) document.getElementById('series-title').innerText = chapters[0].manuscript_display_name;
-
-            } catch (err) {
-                list.innerHTML = "<li>Error loading chapters.</li>";
-            }
-        }
-        
-        window.onload = init;
-    </script>
+    <script type="module" src="js/bookshelf.js"></script>
 </body>
 </html>
