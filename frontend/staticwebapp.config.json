@@ -26,7 +26,7 @@
     },
     {
       "route": "/*",
-      "allowedRoles": ["authenticated"]
+      "allowedRoles": ["anonymous", "authenticated"]   <-- important!
     }
   ]
 }
