@@ -71,3 +71,38 @@ def save_chapter(col, man_id, order, title, content, published):
         "date_added": datetime.datetime.utcnow().isoformat()
     }
     col.replace_one({"manuscript_id": man_id, "order": order}, doc, upsert=True)
+
+def handle_create_project(req):
+    try:
+        col = db['novels']
+        body = req.get_json()
+        
+        # Build the ID: "the-devious-adventures-book-1-draft-1"
+        series = body.get('series', 'Standalone')
+        book = body.get('book', 'Novel')
+        draft = body.get('draft', 'Draft 1')
+        display_name = f"{series}: {book} ({draft})"
+        
+        # Clean ID string
+        man_id = re.sub(r'[^a-z0-9]', '-', display_name.lower())
+
+        # Create an initial "Introduction" or Placeholder record
+        doc = {
+            "manuscript_id": man_id,
+            "manuscript_display_name": display_name,
+            "series": series,
+            "book": book,
+            "draft": draft,
+            "target_goal": 50000,
+            "order": 0,
+            "title": "Front Matter",
+            "content": "<h1>New Project Created</h1>",
+            "word_count": 0,
+            "published": False,
+            "date_added": datetime.datetime.utcnow().isoformat()
+        }
+        
+        col.insert_one(doc)
+        return func.HttpResponse(json.dumps({"id": man_id}), status_code=200)
+    except Exception as e:
+        return func.HttpResponse(str(e), status_code=500)
