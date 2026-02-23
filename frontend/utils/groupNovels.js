@@ -6,13 +6,14 @@ export function groupNovels(novels) {
   const grouped = {};
 
   novels.forEach(novel => {
-    const seriesName = novel.series_name || "Misc";
-    const bookName = novel.display_name || "Untitled";
+    const series = novel.series_name || "Untitled Series";
+    const book = novel.manuscript_display_name || "Untitled Book";
+    const draft = novel.draft_name || "Main";
 
-    if (!grouped[seriesName]) grouped[seriesName] = {};
-    if (!grouped[seriesName][bookName]) grouped[seriesName][bookName] = [];
+    if (!grouped[series]) grouped[series] = {};
+    if (!grouped[series][book]) grouped[series][book] = [];
 
-    grouped[seriesName][bookName].push(novel);
+    grouped[series][book].push(novel);
   });
 
   return grouped;
