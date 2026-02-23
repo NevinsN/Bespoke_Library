@@ -4,8 +4,13 @@
     --text-color: #e0e0e0;
     --accent-color: #3498db;
     --border-color: #333;
+    --success-color: #2ecc71;
+    --error-color: #e74c3c;
 }
 
+/* -------------------------
+   Global & Body
+------------------------- */
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
@@ -16,66 +21,228 @@ body {
     justify-content: center;
 }
 
-#content { max-width: 800px; width: 100%; }
-
-/* Series & Book Headers */
-.series-container { margin-bottom: 40px; }
-.series-title { font-size: 1.6em; color: #fff; font-weight: 800; margin-bottom: 10px; }
-.book-group-header { 
-    margin: 20px 0 10px 15px; 
-    color: #888; 
-    font-weight: bold; 
-    font-size: 0.85em; 
-    text-transform: uppercase; 
-    letter-spacing: 1px;
-}
-
-/* Nav Header */
-.nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
-.mode-btn { background: rgba(52, 152, 219, 0.1); border: 1px solid var(--accent-color); padding: 5px 12px; border-radius: 4px; font-size: 11px; color: var(--accent-color); cursor: pointer; }
-
-/* Progress Cards */
-.book-card { margin-bottom: 15px; margin-left: 15px; padding: 20px; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
-.book-card a { font-size: 1.1em; font-weight: bold; text-decoration: none; color: var(--accent-color); }
-.goal-container { background: #333; border-radius: 4px; height: 6px; width: 100%; overflow: hidden; margin: 12px 0; }
-.goal-fill { background: var(--accent-color); height: 100%; transition: width 0.5s; }
-
-/* Badges */
-.status-badge { font-size: 9px; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; }
-.status-progress { background: rgba(52, 152, 219, 0.1); color: var(--accent-color); border: 1px solid var(--accent-color); }
-.status-complete { background: rgba(46, 204, 113, 0.1); color: #2ecc71; border: 1px solid #2ecc71; }
-
-.author-card { background: #1a1a1a; border: 1px solid var(--accent-color); padding: 25px; border-radius: 12px; margin-bottom: 30px; }
-.studio-input { width: 100%; padding: 10px; background: #222; border: 1px solid #444; color: white; border-radius: 6px; margin: 10px 0; }
-.scroll-list { max-height: 150px; overflow-y: auto; background: #111; border-radius: 6px; margin: 10px 0; border: 1px solid #333; }
-.project-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #222; font-size: 0.9em; }
-.project-item:hover { background: #222; }
-.project-item.selected { border-left: 4px solid var(--accent-color); background: #222; }
-.studio-btn { width: 100%; padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-.studio-btn.small { width: auto; padding: 5px 15px; font-size: 0.8em; margin-top: 5px; }
-
-/* Visual cue for drafts only author can see */
-.book-card.draft-mode {
-    border: 1px dashed #e74c3c;
-    background: rgba(231, 76, 60, 0.05);
-}
-
-/* Studio container styling */
-#author-studio-container {
+#content {
+    max-width: 900px;
     width: 100%;
-    max-width: 800px;
-    margin-bottom: 20px;
 }
 
+/* -------------------------
+   Series & Book Headers
+------------------------- */
+.series-title {
+    font-size: 1.6em;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.book-title {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-left: 15px;
+    margin-bottom: 10px;
+}
+
+/* -------------------------
+   Auth Menu
+------------------------- */
 .auth-menu {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  z-index: 1000;
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
 }
 
 .auth-button {
-  padding: 6px 12px;
-  font-size: 14px;
-  cursor: pointer;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    border: 1px solid var(--accent-color);
+    background: rgba(52, 152, 219, 0.1);
+    color: var(--accent-color);
+    border-radius: 4px;
+}
+
+/* -------------------------
+   Book Cards
+------------------------- */
+.book-card {
+    margin: 15px;
+    padding: 20px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.book-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.book-card a {
+    font-size: 1.1em;
+    font-weight: bold;
+    text-decoration: none;
+    color: var(--accent-color);
+}
+
+.goal-container {
+    background: #333;
+    border-radius: 4px;
+    height: 6px;
+    width: 100%;
+    overflow: hidden;
+    margin: 12px 0;
+}
+
+.goal-fill {
+    background: var(--accent-color);
+    height: 100%;
+    width: 0%;
+    transition: width 0.5s;
+}
+
+/* Book meta info inside card */
+.book-meta {
+    font-size: 11px;
+    color: #888;
+    margin-left: 8px;
+}
+
+/* Draft Mode Styling */
+.book-card.draft-mode {
+    border: 1px dashed var(--error-color);
+    background: rgba(231, 76, 60, 0.05);
+}
+
+/* -------------------------
+   Chapter Items
+------------------------- */
+.chapter-item {
+    margin: 10px 0;
+    padding: 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.chapter-item:hover {
+    background: #222;
+}
+
+.chapter-item a {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 1.05em;
+}
+
+.chapter-item .badge-new {
+    background: var(--success-color);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    margin-left: 8px;
+}
+
+/* -------------------------
+   Empty / Error Library
+------------------------- */
+.empty-library {
+    padding: 20px;
+    background: #1a1a1a;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1.1em;
+}
+
+/* -------------------------
+   Author Studio / Forms
+------------------------- */
+.author-card {
+    background: var(--card-bg);
+    border: 1px solid var(--accent-color);
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+}
+
+.studio-input {
+    width: 100%;
+    padding: 10px;
+    background: #222;
+    border: 1px solid #444;
+    color: white;
+    border-radius: 6px;
+    margin: 10px 0;
+}
+
+.scroll-list {
+    max-height: 150px;
+    overflow-y: auto;
+    background: #111;
+    border-radius: 6px;
+    margin: 10px 0;
+    border: 1px solid #333;
+}
+
+.project-item {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #222;
+    font-size: 0.9em;
+}
+
+.project-item:hover {
+    background: #222;
+}
+
+.project-item.selected {
+    border-left: 4px solid var(--accent-color);
+    background: #222;
+}
+
+.studio-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.studio-btn.small {
+    width: auto;
+    padding: 5px 15px;
+    font-size: 0.8em;
+    margin-top: 5px;
+}
+
+/* -------------------------
+   Misc
+------------------------- */
+.scrollable {
+    overflow-y: auto;
+}
+
+a {
+    text-decoration: none;
+}
+
+button {
+    font-family: inherit;
+}
+
+h2, h3 {
+    margin-top: 20px;
+    margin-bottom: 10px;
 }
