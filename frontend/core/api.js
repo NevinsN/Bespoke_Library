@@ -2,19 +2,31 @@ const BASE_URL = '/api';
 
 export async function apiFetch(endpoint, options = {}) {
     try {
-        const response = await fetch(`${BASE_URL}${endpoint}`, options);
-        
+        const url = `${BASE_URL}${endpoint}`;
+        console.log("API CALL:", url);
+
+        const response = await fetch(url, options);
+
+        const text = await response.text();
+        console.log("RAW RESPONSE:", text);
+
         if (!response.ok) {
-            throw new Error(`API Error: ${response.status}`);
+            throw new Error(`API Error: ${response.status} - ${text}`);
         }
 
-        const result = await response.json();
+        let result;
+        try {
+            result = JSON.parse(text);
+        } catch (e) {
+            throw new Error("Invalid JSON response");
+        }
 
         if (!result.success) {
             throw new Error(result.error || "Unknown API Error");
         }
 
-        return result.data; // Return just the data part to the services
+        return result.data;
+
     } catch (err) {
         console.error("Fetch failed:", err);
         throw err;
