@@ -8,11 +8,12 @@ from repositories.author_repo import (
     get_chapters_for_draft
 )
 from bson.objectid import ObjectId
+import datetime
 
 def process_uploaded_chapters(manuscript_id, draft_name, files, sequential=True):
     """
     Process uploaded files for a draft.
-    
+
     Args:
         manuscript_id (str): The ID of the manuscript/book.
         draft_name (str): Name of the draft (e.g., 'Draft One').
@@ -25,7 +26,7 @@ def process_uploaded_chapters(manuscript_id, draft_name, files, sequential=True)
             }
         sequential (bool): Whether to append chapters in order (True)
                            or use provided 'slot' values (False).
-    
+
     Returns:
         dict: {
             "added": [chapter_ids],
@@ -35,7 +36,7 @@ def process_uploaded_chapters(manuscript_id, draft_name, files, sequential=True)
     """
     result = {"added": [], "updated": [], "skipped": []}
 
-    # Current order pointer for sequential uploads
+    # Determine starting order for sequential uploads
     current_order = get_next_order(manuscript_id, draft_name) if sequential else None
 
     for file in files:
@@ -43,6 +44,7 @@ def process_uploaded_chapters(manuscript_id, draft_name, files, sequential=True)
         title = file.get("title") or filename
         content = file.get("content", "")
         slot = file.get("slot") if not sequential else current_order
+        word_count = len(content.split())
 
         # Check for duplicates by filename in this draft
         existing = find_chapter_by_filename(draft_name, filename, manuscript_id)
@@ -53,7 +55,9 @@ def process_uploaded_chapters(manuscript_id, draft_name, files, sequential=True)
             "title": title,
             "content": content,
             "order": slot,
-            "filename": filename
+            "filename": filename,
+            "word_count": word_count,
+            "date_added": datetime.datetime.utcnow().isoformat()
         }
 
         if existing:
