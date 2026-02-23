@@ -1,16 +1,13 @@
 import { apiFetch } from '../core/api.js';
 
 export async function getNovels() {
-  const res = await apiFetch('/GetNovels'); 
-  return res; // returns { success, data, meta }
+  return await apiFetch('/GetNovels', {}, { returnFull: true });
 }
 
 export async function getChapters(bookId) {
-  const res = await apiFetch(`/GetChapters?manuscript_id=${bookId}`);
-  return res; // returns { success, data }
+  return await apiFetch(`/GetChapters?manuscript_id=${bookId}`, {}, { returnFull: true });
 }
 
 export async function getChapter(chapterId) {
-  const res = await apiFetch(`/GetChapterContent?id=${chapterId}`);
-  return res; // returns { success, data }
+  return await apiFetch(`/GetChapterContent?id=${chapterId}`, {}, { returnFull: true });
 }
