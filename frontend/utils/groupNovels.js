@@ -3,13 +3,17 @@
  * groups them (e.g., by series or status).
  */
 export function groupNovels(novels) {
-    return novels.reduce((groups, novel) => {
-        const series = novel.series_name || "Standalone Manuscripts";
-        
-        if (!groups[series]) {
-            groups[series] = [];
-        }
-        groups[series].push(novel);
-        return groups;
-    }, {});
+  const grouped = {};
+
+  novels.forEach(novel => {
+    const seriesName = novel.series_name || "Misc";
+    const bookName = novel.display_name || "Untitled";
+
+    if (!grouped[seriesName]) grouped[seriesName] = {};
+    if (!grouped[seriesName][bookName]) grouped[seriesName][bookName] = [];
+
+    grouped[seriesName][bookName].push(novel);
+  });
+
+  return grouped;
 }
