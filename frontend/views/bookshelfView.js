@@ -1,71 +1,52 @@
+// bookshelfView.js
 import { getNovels, getChapters } from '../services/novelService.js';
 import { groupNovels } from '../utils/groupNovels.js';
-import { getClientPrincipal } from '../core/state.js';
+import { bookCard } from '../components/bookCard.js';
+import { chapterItem } from '../components/chapterItem.js';
+import { getClientPrincipal } from './core/state.js';
 
 const containerId = 'main-content';
-const authContainerId = 'auth-container';
+const headerId = 'bookshelf-header';
 
-// -------------------
-// Render Auth Button
-// -------------------
-async function renderAuthButton() {
-  const container = document.getElementById(authContainerId);
-  if (!container) return;
+export async function renderBookshelf(bookId = null) {
+  const container = document.getElementById(containerId);
+  const header = document.getElementById(headerId);
+  container.innerHTML = '';
+  header.innerHTML = '';
 
-  container.innerHTML = ''; // clear old
-
+  // --- LOGIN / LOGOUT BUTTON ---
   const user = await getClientPrincipal();
-  const btn = document.createElement('button');
-  btn.className = 'auth-button';
-
+  const loginBtn = document.createElement('button');
+  loginBtn.className = 'login-button';
   if (user) {
-    btn.textContent = `Logout (${user.userDetails})`;
-    btn.onclick = () => {
+    loginBtn.textContent = 'Logout';
+    loginBtn.onclick = () => {
       window.location.href = "/.auth/logout?post_logout_redirect_uri=/";
     };
   } else {
-    btn.textContent = 'Login';
-    btn.onclick = () => {
+    loginBtn.textContent = 'Login';
+    loginBtn.onclick = () => {
       window.location.href = "/.auth/login/github?post_login_redirect_uri=/";
     };
   }
+  header.appendChild(loginBtn);
 
-  container.appendChild(btn);
-}
-
-// Call auth button render on page load
-window.addEventListener('load', renderAuthButton);
-
-// -------------------
-// Render Bookshelf
-// -------------------
-export async function renderBookshelf(bookId = null) {
-  const container = document.getElementById(containerId);
-  container.innerHTML = '';
-
-  // --- Show chapters if a book is selected ---
+  // -------------------
+  // Show chapters if a book is selected
+  // -------------------
   if (bookId) {
     try {
       const chapters = await getChapters(bookId) || [];
-
       if (!chapters.length) {
         container.innerHTML = `<div class="empty-library">No chapters available for this book.</div>`;
         return;
       }
 
-      const title = document.createElement('h2');
-      title.textContent = 'Chapters';
-      container.appendChild(title);
-
+      const listEl = document.createElement('ul');
       chapters.forEach(ch => {
-        const el = document.createElement('div');
-        el.textContent = ch.title || 'Untitled Chapter';
-        el.className = 'chapter-item';
-        el.onclick = () => {
-          window.location.search = `?chapter=${ch._id || ch.id}`;
-        };
-        container.appendChild(el);
+        listEl.innerHTML += chapterItem(ch);
       });
+      container.appendChild(listEl);
     } catch (err) {
       container.innerHTML = `<div class="empty-library">Failed to load chapters.</div>`;
       console.error(err);
@@ -73,7 +54,9 @@ export async function renderBookshelf(bookId = null) {
     return;
   }
 
-  // --- Show library ---
+  // -------------------
+  // Show library
+  // -------------------
   let novels = [];
   let meta = {};
 
@@ -91,7 +74,7 @@ export async function renderBookshelf(bookId = null) {
     return;
   }
 
-  // --- Handle empty library ---
+  // Handle empty library
   if (!novels.length) {
     const containerMessage = document.createElement('div');
     containerMessage.className = 'empty-library';
@@ -101,13 +84,13 @@ export async function renderBookshelf(bookId = null) {
       msg.textContent = "Sign in to view your library.";
       containerMessage.appendChild(msg);
 
-      const loginBtn = document.createElement('button');
-      loginBtn.textContent = "Sign In";
-      loginBtn.className = "login-button";
-      loginBtn.onclick = () => {
+      const btn = document.createElement('button');
+      btn.textContent = "Sign In";
+      btn.className = "login-button";
+      btn.onclick = () => {
         window.location.href = "/.auth/login/github?post_login_redirect_uri=/";
       };
-      containerMessage.appendChild(loginBtn);
+      containerMessage.appendChild(btn);
     } else if (meta.empty_reason === 'no_access') {
       containerMessage.textContent = "You don't have access to any manuscripts.";
     } else {
@@ -118,7 +101,9 @@ export async function renderBookshelf(bookId = null) {
     return;
   }
 
-  // --- Render grouped library ---
+  // -------------------
+  // Render grouped library with cards
+  // -------------------
   const grouped = groupNovels(novels) || {};
 
   Object.entries(grouped).forEach(([seriesName, books]) => {
@@ -128,28 +113,9 @@ export async function renderBookshelf(bookId = null) {
     container.appendChild(seriesEl);
 
     Object.entries(books).forEach(([bookName, items]) => {
-      const bookEl = document.createElement('h3');
-      bookEl.textContent = bookName || 'Untitled Book';
-      bookEl.className = 'book-title';
-      container.appendChild(bookEl);
-
       if (Array.isArray(items)) {
         items.forEach(novel => {
-          const el = document.createElement('div');
-          el.className = 'book-item';
-          el.textContent = novel.display_name || 'Untitled Book';
-
-          if (novel.total_word_count) {
-            const metaEl = document.createElement('span');
-            metaEl.className = 'book-meta';
-            metaEl.textContent = ` — ${novel.total_word_count.toLocaleString()} words`;
-            el.appendChild(metaEl);
-          }
-
-          el.onclick = () => {
-            window.location.search = `?book=${novel._id || novel.id}`;
-          };
-          container.appendChild(el);
+          container.innerHTML += bookCard(novel);
         });
       }
     });
