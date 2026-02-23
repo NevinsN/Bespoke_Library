@@ -38,30 +38,43 @@ def get_visibility_filter(user):
 def handle_get_novels(req: func.HttpRequest) -> func.HttpResponse:
     try:
         user = extract_user(req)
-        filter_query = get_visibility_filter(user)
 
-        # Aggregate books by manuscript_id
+        if user:
+            if user.get("is_admin"):
+                match_filter = {}
+            else:
+                match_filter = {
+                    "$or": [
+                        {"allowed_readers": user.get("email")},
+                        {"is_public": True}
+                    ]
+                }
+        else:
+            match_filter = {"is_public": True}
+
         pipeline = [
-            {"$match": filter_query},
-            {"$group": {
-                "_id": "$manuscript_id",
-                "display_name": {"$first": "$manuscript_display_name"},
-                "series_name": {"$first": "$series"},
-                "total_word_count": {"$sum": "$word_count"},
-                "is_public": {"$first": "$is_public"}
-            }}
+            {"$match": match_filter},
+            {
+                "$group": {
+                    "_id": "$manuscript_id",
+                    "display_name": {"$first": "$manuscript_display_name"},
+                    "series_name": {"$first": "$series"},
+                    "total_word_count": {"$sum": "$word_count"}
+                }
+            },
+            {"$sort": {"series_name": 1, "display_name": 1}}
         ]
 
         novels = list(db['novels'].aggregate(pipeline))
 
         meta = {}
         if not novels:
-            meta['empty_reason'] = "not_logged_in" if not user else "no_access"
+            meta["empty_reason"] = "not_logged_in" if not user else "no_access"
 
         return ok(novels, meta=meta)
+
     except Exception as e:
         return error(f"Failed to fetch library: {str(e)}", code=500)
-
 
 # -------------------------------
 # /api/GetChapters
