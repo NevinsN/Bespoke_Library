@@ -1,11 +1,15 @@
 {
   "routes": [
     {
-      "route": "/api/*",
+      "route": "/api/GetNovels",
       "allowedRoles": ["anonymous", "authenticated"]
     },
     {
-      "route": "/",
+      "route": "/api/GetChapters",
+      "allowedRoles": ["anonymous", "authenticated"]
+    },
+    {
+      "route": "/api/GetChapterContent",
       "allowedRoles": ["anonymous", "authenticated"]
     },
     {
