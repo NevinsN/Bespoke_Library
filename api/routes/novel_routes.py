@@ -22,7 +22,7 @@ def handle_get_novels(req):
             else:
                 match_filter = {"allowed_readers": user['email']}
         else:  # anonymous user
-            match_filter = {"is_public": True}  # optional: only show public books
+            match_filter = {"is_public": True}  # optional public demo books
 
         # --- Aggregation to group chapters into a "Book" view ---
         pipeline = [
@@ -40,15 +40,13 @@ def handle_get_novels(req):
         # --- Return meta info for frontend if empty ---
         meta = {}
         if not novels:
-            if not user:
-                meta['empty_reason'] = "not_logged_in"
-            else:
-                meta['empty_reason'] = "no_access"
+            meta['empty_reason'] = "not_logged_in" if not user else "no_access"
 
         return ok(novels, meta=meta)
 
     except Exception as e:
         return error(f"Failed to fetch library: {str(e)}", code=500)
+        
 def handle_get_chapters(req):
     """Returns the Table of Contents for a specific book if permitted."""
     try:
