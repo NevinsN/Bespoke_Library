@@ -3,43 +3,10 @@ import { getNovels } from '../services/novelService.js';
 import { groupNovels } from '../utils/groupNovels.js';
 import { bookCard } from '../components/bookCard.js';
 import { renderChapterList } from './chapterListView.js';
-import { getClientPrincipal } from '../core/state.js'; // assumes this fetches SWA auth info
 
 const containerId = 'main-content';
 
-async function renderAuthMenu() {
-  // Create or select persistent auth menu container
-  let menu = document.querySelector('.auth-menu');
-  if (!menu) {
-    menu = document.createElement('div');
-    menu.className = 'auth-menu';
-    document.body.prepend(menu);
-  }
-  menu.innerHTML = '';
-
-  const user = await getClientPrincipal();
-
-  const btn = document.createElement('button');
-  btn.className = 'auth-button';
-
-  if (user) {
-    btn.textContent = 'Logout';
-    btn.onclick = () => {
-      window.location.href = '/.auth/logout?post_logout_redirect_uri=/';
-    };
-  } else {
-    btn.textContent = 'Login';
-    btn.onclick = () => {
-      window.location.href = '/.auth/login/aad?post_login_redirect_uri=/';
-    };
-  }
-
-  menu.appendChild(btn);
-}
-
 export async function renderBookshelf() {
-  await renderAuthMenu(); // always render auth menu first
-
   const container = document.getElementById(containerId);
   container.innerHTML = '';
 
@@ -94,10 +61,15 @@ export async function renderBookshelf() {
           const wrapper = document.createElement('div');
           wrapper.innerHTML = cardHtml;
 
+          const cardElement = wrapper.querySelector('.book-card');
+
           // Attach click listener to show chapters for this draft
-          wrapper.querySelector('.book-card').onclick = () => {
-            renderChapterList(draft._id);
+          cardElement.onclick = async () => {
+            await renderChapterList(draft._id);
           };
+
+          // Update the card when new chapters are uploaded
+          cardElement.dataset.manuscriptId = draft._id;
 
           bookContainer.appendChild(wrapper);
         });
@@ -107,5 +79,17 @@ export async function renderBookshelf() {
     });
 
     container.appendChild(seriesContainer);
+  });
+
+  // --- Listen for Author Studio uploads ---
+  document.addEventListener('chaptersUploaded', async (e) => {
+    const { manuscript_id } = e.detail;
+
+    // Find the draft card
+    const card = container.querySelector(`.book-card[data-manuscript-id="${manuscript_id}"]`);
+    if (card) {
+      // Refresh the chapters immediately under this draft
+      await renderChapterList(manuscript_id);
+    }
   });
 }
