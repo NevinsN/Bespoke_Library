@@ -7,9 +7,9 @@ export async function renderBookshelf(bookId = null) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
 
-  // 📖 If a book is selected → show chapters
+  // --- Chapters view ---
   if (bookId) {
-    const chapters = await getChapters(bookId);
+    const { data: chapters } = await getChapters(bookId);
 
     if (!chapters || chapters.length === 0) {
       container.innerHTML = `<div class="empty-library">No chapters available for this book.</div>`;
@@ -33,26 +33,23 @@ export async function renderBookshelf(bookId = null) {
     return;
   }
 
-  // 📚 Otherwise → show library
-  const novels = await getNovels();
-  const reason = novels.meta?.empty_reason;
+  // --- Library view ---
+  const { data: novels, meta } = await getNovels();
+  const reason = meta?.empty_reason;
 
   if (!novels || novels.length === 0) {
     const containerMessage = document.createElement('div');
     containerMessage.className = 'empty-library';
 
     if (reason === "not_logged_in") {
-      // Message
       const msg = document.createElement('p');
       msg.textContent = "Sign in to view your library.";
       containerMessage.appendChild(msg);
 
-      // Login button
       const loginBtn = document.createElement('button');
       loginBtn.textContent = "Sign In";
       loginBtn.className = "login-button";
       loginBtn.onclick = () => {
-        // Use the Azure SWA login endpoint for your provider (GitHub here)
         window.location.href = "/.auth/login/github?post_login_redirect_uri=/";
       };
 
@@ -67,7 +64,7 @@ export async function renderBookshelf(bookId = null) {
     return;
   }
 
-  // 📦 Normal library rendering
+  // --- Normal library rendering ---
   const grouped = groupNovels(novels);
 
   Object.entries(grouped).forEach(([series, books]) => {
