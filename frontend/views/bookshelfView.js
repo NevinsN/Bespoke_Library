@@ -73,14 +73,6 @@ export async function renderBookshelf(selectedBookId = null) {
       msg.textContent = "Sign in to view your library.";
       containerMessage.appendChild(msg);
 
-      const loginBtn = document.createElement('button');
-      loginBtn.textContent = "Sign In";
-      loginBtn.className = "auth-button";
-      loginBtn.onclick = () => {
-        window.location.href = "/.auth/login/aad?post_login_redirect_uri=/";
-      };
-      containerMessage.appendChild(loginBtn);
-
     } else if (meta.empty_reason === 'no_access') {
       containerMessage.textContent = "You don't have access to any manuscripts.";
     } else {
