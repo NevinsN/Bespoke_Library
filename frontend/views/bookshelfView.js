@@ -2,7 +2,7 @@
 import { getNovels } from '../services/novelService.js';
 import { groupNovels } from '../utils/groupNovels.js';
 import { bookCard } from '../components/bookCard.js';
-import { renderChapterList } from './renderChapterList.js';
+import { renderChapterList } from './chapterListView.js';
 
 const containerId = 'main-content';
 
