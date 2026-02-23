@@ -1,14 +1,21 @@
-// frontend/views/bookshelfView.js
 import { getNovels } from '../services/novelService.js';
 import { groupNovels } from '../utils/groupNovels.js';
 import { bookCard } from '../components/bookCard.js';
 import { renderChapterList } from './chapterListView.js';
+import { renderAuthButton } from '../components/authButton.js'; // <-- new
 
 const containerId = 'main-content';
 
 export async function renderBookshelf() {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
+
+  // --- LOGIN / LOGOUT BUTTON ---
+  const authWrapper = document.createElement('div');
+  authWrapper.id = 'auth-container';
+  authWrapper.style.marginBottom = '20px';
+  authWrapper.appendChild(renderAuthButton()); // assumes this returns a button element
+  container.appendChild(authWrapper);
 
   let novels = [];
   let meta = {};
@@ -22,13 +29,13 @@ export async function renderBookshelf() {
       meta = res.meta || {};
     }
   } catch (err) {
-    container.innerHTML = `<div class="empty-library">Failed to load library.</div>`;
+    container.innerHTML += `<div class="empty-library">Failed to load library.</div>`;
     console.error(err);
     return;
   }
 
   if (!novels.length) {
-    container.innerHTML = `<div class="empty-library">No books available.</div>`;
+    container.innerHTML += `<div class="empty-library">No books available.</div>`;
     return;
   }
 
@@ -68,7 +75,7 @@ export async function renderBookshelf() {
             await renderChapterList(draft._id);
           };
 
-          // Update the card when new chapters are uploaded
+          // Add dataset for refresh after uploads
           cardElement.dataset.manuscriptId = draft._id;
 
           bookContainer.appendChild(wrapper);
