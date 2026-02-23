@@ -11,6 +11,11 @@ export async function renderBookshelf(bookId = null) {
   if (bookId) {
     const chapters = await getChapters(bookId);
 
+    if (!chapters || chapters.length === 0) {
+      container.innerHTML = `<div class="empty-library">No chapters available for this book.</div>`;
+      return;
+    }
+
     const title = document.createElement('h2');
     title.textContent = 'Chapters';
     container.appendChild(title);
@@ -32,6 +37,13 @@ export async function renderBookshelf(bookId = null) {
 
   // 📚 Otherwise → show library
   const novels = await getNovels();
+
+  // --- Handle empty library gracefully ---
+  if (!novels || novels.length === 0) {
+    container.innerHTML = `<div class="empty-library">No books available. Sign in to view your library.</div>`;
+    return;
+  }
+
   const grouped = groupNovels(novels);
 
   Object.entries(grouped).forEach(([series, books]) => {
