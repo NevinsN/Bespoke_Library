@@ -4,102 +4,114 @@ import { groupNovels } from '../utils/groupNovels.js';
 
 const containerId = 'main-content';
 
+/**
+ * Renders the bookshelf or chapters view.
+ * @param {string|null} bookId - Optional book ID to show chapters for.
+ */
 export async function renderBookshelf(bookId = null) {
   const container = document.getElementById(containerId);
-  container.innerHTML = '';
+  container.innerHTML = ''; // clear content
 
-  // --- Chapters view ---
+  // --- If a book is selected → show chapters ---
   if (bookId) {
-    try {
-      const { data: chapters } = await getChapters(bookId);
+    const chapters = await getChapters(bookId);
 
-      if (!chapters || chapters.length === 0) {
-        container.innerHTML = `<div class="empty-library">No chapters available for this book.</div>`;
-        return;
-      }
-
-      const title = document.createElement('h2');
-      title.textContent = 'Chapters';
-      title.className = 'chapters-title';
-      container.appendChild(title);
-
-      chapters.forEach(ch => {
-        const el = document.createElement('div');
-        el.textContent = ch.title;
-        el.className = 'chapter-item';
-        el.onclick = () => {
-          window.location.search = `?chapter=${ch._id || ch.id}`;
-        };
-        container.appendChild(el);
-      });
-    } catch (e) {
-      container.innerHTML = `<div class="error-message">Failed to load chapters: ${e.message}</div>`;
+    if (!chapters || chapters.length === 0) {
+      container.innerHTML = `<div class="empty-library">No chapters available for this book.</div>`;
+      return;
     }
+
+    const title = document.createElement('h2');
+    title.textContent = 'Chapters';
+    container.appendChild(title);
+
+    chapters.forEach(ch => {
+      const el = document.createElement('div');
+      el.textContent = ch.title;
+      el.className = 'chapter-item';
+      el.onclick = () => {
+        window.location.search = `?chapter=${ch._id || ch.id}`;
+      };
+      container.appendChild(el);
+    });
 
     return;
   }
 
-  // --- Library view ---
+  // --- Otherwise → show library ---
+
+  // Attempt to fetch novels
+  let novels = [];
+  let meta = {};
   try {
-    const { data: novels, meta } = await getNovels();
-    const reason = meta?.empty_reason;
+    const result = await getNovels();
+    if (result && Array.isArray(result)) {
+      novels = result;
+    } else if (result?.data) {
+      novels = result.data;
+      meta = result.meta || {};
+    }
+  } catch (err) {
+    console.error("Failed to load library:", err);
+  }
 
-    // Empty library / not logged in / no access
-    if (!novels || novels.length === 0) {
-      const containerMessage = document.createElement('div');
-      containerMessage.className = 'empty-library';
+  // --- Determine empty state ---
+  if (!novels || novels.length === 0) {
+    const containerMessage = document.createElement('div');
+    containerMessage.className = 'empty-library';
 
-      if (reason === "not_logged_in") {
-        const msg = document.createElement('p');
-        msg.textContent = "Sign in to view your library.";
-        containerMessage.appendChild(msg);
+    // Anonymous user, no public books
+    if (meta.empty_reason === "not_logged_in") {
+      const msg = document.createElement('p');
+      msg.textContent = "Sign in to view your library.";
+      containerMessage.appendChild(msg);
 
-        const loginBtn = document.createElement('button');
-        loginBtn.textContent = "Sign In";
-        loginBtn.className = "login-button";
-        loginBtn.onclick = () => {
-          // Azure SWA login (GitHub provider example)
-          window.location.href = "/.auth/login/github?post_login_redirect_uri=/";
-        };
+      const loginBtn = document.createElement('button');
+      loginBtn.textContent = "Sign In";
+      loginBtn.className = "login-button";
+      loginBtn.onclick = () => {
+        // Redirect to Azure login (GitHub provider here)
+        window.location.href = "/.auth/login/github?post_login_redirect_uri=/";
+      };
 
-        containerMessage.appendChild(loginBtn);
-      } else if (reason === "no_access") {
-        containerMessage.textContent = "You don't have access to any manuscripts.";
-      } else {
-        containerMessage.textContent = "No books available.";
-      }
-
-      container.appendChild(containerMessage);
-      return;
+      containerMessage.appendChild(loginBtn);
+    } else if (meta.empty_reason === "no_access") {
+      containerMessage.textContent = "You don't have access to any manuscripts.";
+    } else {
+      containerMessage.textContent = "No books available.";
     }
 
-    // --- Normal library rendering ---
-    const grouped = groupNovels(novels);
+    container.appendChild(containerMessage);
+    return;
+  }
 
-    Object.entries(grouped).forEach(([series, books]) => {
-      const seriesEl = document.createElement('h2');
-      seriesEl.textContent = series;
-      seriesEl.className = 'series-title';
-      container.appendChild(seriesEl);
+  // --- Normal library rendering ---
+  const grouped = groupNovels(novels);
 
-      Object.entries(books).forEach(([book, items]) => {
-        const bookEl = document.createElement('h3');
-        bookEl.textContent = book;
-        bookEl.className = 'book-title';
-        container.appendChild(bookEl);
+  Object.entries(grouped).forEach(([series, books]) => {
+    const seriesEl = document.createElement('h2');
+    seriesEl.textContent = series;
+    container.appendChild(seriesEl);
 
-        items.forEach(novel => {
-          const el = document.createElement('div');
-          el.textContent = novel.display_name;
-          el.className = 'book-item';
-          el.onclick = () => {
-            window.location.search = `?book=${novel._id || novel.id}`;
-          };
-          container.appendChild(el);
-        });
+    Object.entries(books).forEach(([book, items]) => {
+      const bookEl = document.createElement('h3');
+      bookEl.textContent = book;
+      container.appendChild(bookEl);
+
+      if (!Array.isArray(items)) {
+        console.warn("Unexpected items for book:", book, items);
+        return;
+      }
+
+      items.forEach(novel => {
+        const el = document.createElement('div');
+        el.textContent = novel.display_name;
+        el.className = 'book-item';
+        el.onclick = () => {
+          window.location.search = `?book=${novel._id || novel.id}`;
+        };
+        container.appendChild(el);
       });
     });
-  } catch (e) {
-    container.innerHTML = `<div class="error-message">Failed to load library: ${e.message}</div>`;
-  }
+  });
 }
