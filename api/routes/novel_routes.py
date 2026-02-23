@@ -6,28 +6,30 @@ from bson.objectid import ObjectId
 from utils.response import ok, error
 from utils.auth import extract_user
 
-# Database Connection
+# --- DATABASE CONNECTION ---
 client = MongoClient(os.getenv("COSMOS_CONNECTION_STRING"))
 db = client['bespoke']
 
-# -----------------------------
-# --- NOVEL / READER HANDLERS ---
-# -----------------------------
-def handle_get_novels(req: func.HttpRequest):
-    """Returns all novels the user has permission to see."""
+# --- READER / GENERAL ROUTES ---
+def handle_get_novels(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    Returns all novels the user has permission to see.
+    - Anonymous users: only books where is_public=True
+    - Logged-in users: their allowed books
+    - Admins: all books
+    """
     try:
         user = extract_user(req)
 
-        # Determine filter
-        if user:  # logged in
-            if user['is_admin']:
-                match_filter = {}  # admin sees everything
+        # Determine visibility filter
+        if user:
+            if user.get("is_admin"):
+                match_filter = {}  # admin sees all
             else:
-                match_filter = {"allowed_readers": user['email']}
-        else:  # anonymous
-            match_filter = {"is_public": True}  # only public/demo books
+                match_filter = {"allowed_readers": user.get("email")}
+        else:
+            match_filter = {"is_public": True}  # only public books
 
-        # Aggregation: group chapters into "Book" view
         pipeline = [
             {"$match": match_filter},
             {"$group": {
@@ -40,7 +42,6 @@ def handle_get_novels(req: func.HttpRequest):
 
         novels = list(db['novels'].aggregate(pipeline))
 
-        # Meta info for frontend if empty
         meta = {}
         if not novels:
             meta['empty_reason'] = "not_logged_in" if not user else "no_access"
@@ -51,31 +52,36 @@ def handle_get_novels(req: func.HttpRequest):
         return error(f"Failed to fetch library: {str(e)}", code=500)
 
 
-def handle_get_chapters(req: func.HttpRequest):
-    """Returns the Table of Contents for a specific book if permitted."""
+def handle_get_chapters(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    Returns the Table of Contents for a specific book.
+    - Anonymous users: only if is_public=True
+    - Logged-in users: only if allowed_readers contains their email
+    - Admins: can access all
+    """
     try:
         user = extract_user(req)
-        m_id = req.params.get('manuscript_id')
+        m_id = req.params.get("manuscript_id")
 
         if not m_id:
             return error("Missing manuscript_id", code=400)
 
-        # Permission filter
+        # Base query
         query = {"manuscript_id": m_id}
-        if user and not user['is_admin']:
-            query["allowed_readers"] = user['email']
-        elif not user:
-            query["is_public"] = True  # allow public chapters
 
-        # Fetch chapters, exclude full content
+        if user:
+            if not user.get("is_admin"):
+                query["$or"] = [
+                    {"allowed_readers": user.get("email")},
+                    {"is_public": True}
+                ]
+        else:
+            query["is_public"] = True
+
         chapters = list(db['novels'].find(query, {"content": 0}).sort("order", 1))
 
-        if not chapters:
-            return error("No chapters available or access denied", code=403)
-
-        # Convert ObjectIds to strings
-        for c in chapters:
-            c['_id'] = str(c['_id'])
+        for ch in chapters:
+            ch["_id"] = str(ch["_id"])
 
         return ok(chapters)
 
@@ -83,14 +89,19 @@ def handle_get_chapters(req: func.HttpRequest):
         return error(str(e), code=500)
 
 
-def handle_get_content(req: func.HttpRequest):
-    """Returns the full text of a chapter if the user is permitted."""
+def handle_get_content(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    Returns full text of a chapter.
+    - Anonymous users: only if parent book is_public=True
+    - Logged-in users: only if allowed_readers contains their email
+    - Admins: can access all
+    """
     try:
         user = extract_user(req)
-        ch_id = req.params.get('id')
+        ch_id = req.params.get("id")
 
         if not ch_id:
-            return error("Missing chapter ID", code=400)
+            return error("Missing chapter id", code=400)
 
         chapter = db['novels'].find_one({"_id": ObjectId(ch_id)})
 
@@ -99,56 +110,14 @@ def handle_get_content(req: func.HttpRequest):
 
         # Permission check
         if user:
-            if not user['is_admin'] and user['email'] not in chapter.get('allowed_readers', []) and not chapter.get('is_public', False):
+            if not user.get("is_admin") and user.get("email") not in chapter.get("allowed_readers", []) and not chapter.get("is_public", False):
                 return error("Access denied", code=403)
         else:
-            if not chapter.get('is_public', False):
+            if not chapter.get("is_public", False):
                 return error("Access denied", code=403)
 
-        chapter['_id'] = str(chapter['_id'])
+        chapter["_id"] = str(chapter["_id"])
         return ok(chapter)
-
-    except Exception as e:
-        return error(str(e), code=500)
-
-
-# -----------------------------
-# --- AUTHOR / ADMIN HANDLERS ---
-# -----------------------------
-def handle_upload_draft(req: func.HttpRequest):
-    try:
-        user = extract_user(req)
-        if not user:
-            return error("Unauthorized", code=401)
-
-        # TODO: implement actual draft upload
-        return ok({"message": "Draft uploaded successfully"})
-
-    except Exception as e:
-        return error(str(e), code=500)
-
-
-def handle_update_meta(req: func.HttpRequest):
-    try:
-        user = extract_user(req)
-        if not user:
-            return error("Unauthorized", code=401)
-
-        # TODO: implement actual metadata update
-        return ok({"message": "Metadata updated successfully"})
-
-    except Exception as e:
-        return error(str(e), code=500)
-
-
-def handle_create_project(req: func.HttpRequest):
-    try:
-        user = extract_user(req)
-        if not user:
-            return error("Unauthorized", code=401)
-
-        # TODO: implement actual project creation
-        return ok({"message": "Project created successfully"})
 
     except Exception as e:
         return error(str(e), code=500)
