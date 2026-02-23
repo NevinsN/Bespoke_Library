@@ -14,18 +14,17 @@ def handle_get_novels(req):
     """Returns all novels the user has permission to see."""
     try:
         user = extract_user(req)
-        if not user:
-            return error("Authentication Required", code=401)
 
-        # 1. Define visibility filter
-        # Admins see everything. Readers see only what they are allowed to.
-        if user['is_admin']:
-            match_filter = {}
-        else:
-            # ONLY return documents where the user's email exists in the allowed_readers list
-            match_filter = {"allowed_readers": user['email']}
+        # --- Determine filter based on user ---
+        if user:  # logged in
+            if user['is_admin']:
+                match_filter = {}  # admin sees all
+            else:
+                match_filter = {"allowed_readers": user['email']}
+        else:  # anonymous user
+            match_filter = {"is_public": True}  # optional: only show public books
 
-        # 2. Aggregation to group chapters into a "Book" view
+        # --- Aggregation to group chapters into a "Book" view ---
         pipeline = [
             {"$match": match_filter},
             {"$group": {
@@ -35,13 +34,21 @@ def handle_get_novels(req):
                 "total_word_count": {"$sum": "$word_count"}
             }}
         ]
-        
+
         novels = list(db['novels'].aggregate(pipeline))
-        return ok(novels)
+
+        # --- Return meta info for frontend if empty ---
+        meta = {}
+        if not novels:
+            if not user:
+                meta['empty_reason'] = "not_logged_in"
+            else:
+                meta['empty_reason'] = "no_access"
+
+        return ok(novels, meta=meta)
 
     except Exception as e:
         return error(f"Failed to fetch library: {str(e)}", code=500)
-
 def handle_get_chapters(req):
     """Returns the Table of Contents for a specific book if permitted."""
     try:
