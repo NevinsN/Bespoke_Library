@@ -1,34 +1,35 @@
 const BASE_URL = '/api';
 
-export async function apiFetch(endpoint, options = {}) {
-    try {
-        const url = `${BASE_URL}${endpoint}`;
-        console.log("API CALL:", url);
+export async function apiFetch(endpoint, options = {}, { returnFull = false } = {}) {
+  try {
+    const url = `${BASE_URL}${endpoint}`;
+    console.log("API CALL:", url);
 
-        const response = await fetch(url, options);
-        const text = await response.text();
-        console.log("RAW RESPONSE:", text);
+    const response = await fetch(url, options);
 
-        if (!response.ok) {
-            throw new Error(`API Error: ${response.status} - ${text}`);
-        }
+    const text = await response.text();
+    console.log("RAW RESPONSE:", text);
 
-        let result;
-        try {
-            result = JSON.parse(text);
-        } catch (e) {
-            throw new Error("Invalid JSON response");
-        }
-
-        if (!result.success) {
-            throw new Error(result.error || "Unknown API Error");
-        }
-
-        // ← Return the whole object, not just data
-        return result; 
-
-    } catch (err) {
-        console.error("Fetch failed:", err);
-        throw err;
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} - ${text}`);
     }
+
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (e) {
+      throw new Error("Invalid JSON response");
+    }
+
+    if (!result.success) {
+      throw new Error(result.error || "Unknown API Error");
+    }
+
+    // Return either full { data, meta } or just data
+    return returnFull ? result : result.data;
+
+  } catch (err) {
+    console.error("Fetch failed:", err);
+    throw err;
+  }
 }
