@@ -1,28 +1,8 @@
 {
   "routes": [
     {
-      "route": "/api/GetNovels",
+      "route": "/api/*",
       "allowedRoles": ["anonymous", "authenticated"]
-    },
-    {
-      "route": "/api/GetChapters",
-      "allowedRoles": ["anonymous", "authenticated"]
-    },
-    {
-      "route": "/api/GetChapterContent",
-      "allowedRoles": ["anonymous", "authenticated"]
-    },
-    {
-      "route": "/api/UploadDraft",
-      "allowedRoles": ["authenticated"]
-    },
-    {
-      "route": "/api/UpdateNovelMeta",
-      "allowedRoles": ["authenticated"]
-    },
-    {
-      "route": "/api/CreateProject",
-      "allowedRoles": ["authenticated"]
     },
     {
       "route": "/*",
