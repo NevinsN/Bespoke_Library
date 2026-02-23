@@ -1,7 +1,7 @@
 import { getChapter, getChapters } from '../services/novelService.js';
 import { toggleRole } from '../core/state.js';
 
-const containerId = 'app';
+const containerId = 'main-content';
 
 export async function renderReader(chapterId) {
   const container = document.getElementById(containerId);

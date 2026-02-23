@@ -1,6 +1,6 @@
 import { getNovels } from '../services/novelService.js';
 
-const containerId = 'app';
+const containerId = 'main-content';
 
 export async function renderAuthorStudio() {
   const container = document.getElementById(containerId);

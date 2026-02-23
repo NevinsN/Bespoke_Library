@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bespoke Library</title>
+    <style>
+        /* ... Keep your existing CSS styles ... */
+        
+        #books-list, #chapter-view { display: none; } /* Hidden by default, init() will show the right one */
+        .book-card { cursor: pointer; transition: transform 0.2s; }
+        .book-card:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+
+    <div id="content">
+        <div id="books-list-view">
+            <h1>My Bespoke Library</h1>
+            <div id="books-list"></div>
+        </div>
+
+        <div id="chapter-view">
+            <a href="/" style="color: #666; text-decoration: none; font-size: 0.9em;">← Back to Library</a>
+            <h1 id="series-title">The Devious Adventures of Slick the Sly</h1>
+            <p class="word-count-total">Total Manuscript Progress: <strong id="total-words">Calculating...</strong></p>
+            <ul id="chapter-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        async function init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const bookId = urlParams.get('book');
+        
+            if (!bookId) {
+                // Show Bookshelf, Hide Chapters
+                document.getElementById('books-list-view').style.display = 'block';
+                document.getElementById('chapter-view').style.display = 'none';
+                await loadBookshelf();
+            } else {
+                // Hide Bookshelf, Show Chapters
+                document.getElementById('books-list-view').style.display = 'none';
+                document.getElementById('chapter-view').style.display = 'block';
+                await loadChapters(bookId);
+            }
+        }
+        
+        async function loadBookshelf() {
+            const list = document.getElementById('books-list');
+            const targetGoal = 50000;
+        
+            list.innerHTML = `
+                <div class="skeleton" style="height: 100px; margin-bottom: 20px;"></div>
+                <div class="skeleton" style="height: 100px; margin-bottom: 20px;"></div>
+            `;
+        
+            try {
+                const response = await fetch('/api/GetNovels');
+                const novels = await response.json();
+                list.innerHTML = '';
+        
+                if (novels.length === 0) {
+                    list.innerHTML = `<p style="text-align:center; color:#666;">No manuscripts found.</p>`;
+                    return;
+                }
+        
+                novels.forEach(novel => {
+                    const currentCount = novel.total_word_count || 0;
+                    const percent = Math.min((currentCount / targetGoal) * 100, 100).toFixed(0);
+        
+                    const item = document.createElement('div');
+                    item.className = "book-card"; 
+                    item.innerHTML = `
+                        <div style="margin-bottom: 15px; padding: 20px; background: #1a1a1a; border-radius: 8px; border: 1px solid #333;">
+                            <a href="/?book=${novel.id}" style="font-size: 1.25em; font-weight: bold; text-decoration: none; color: #3498db; display: block; margin-bottom: 10px;">
+                                ${novel.display_name}
+                            </a>
+                            <div class="goal-container"><div class="goal-fill" style="width: ${percent}%;"></div></div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                                <span style="font-size: 11px; color: #888;">${currentCount.toLocaleString()} / ${targetGoal.toLocaleString()} WORDS</span>
+                                <span style="font-size: 11px; color: #2ecc71;">${percent}%</span>
+                            </div>
+                        </div>
+                    `;
+                    list.appendChild(item);
+                });
+            } catch (err) {
+                list.innerHTML = `<p>Error connecting to library.</p>`;
+            }
+        }
+        
+        async function loadChapters(bookId) {
+            try {
+                const response = await fetch(`/api/GetChapters?manuscript_id=${bookId}`);
+                const chapters = await response.json();
+                const list = document.getElementById('chapter-list');
+                
+                let totalWords = 0;
+                list.innerHTML = chapters.map(ch => {
+                    const words = ch.word_count || 0;
+                    totalWords += words;
+                    const readTime = Math.ceil(words / 225) || 1;
+                    
+                    let badge = "";
+                    if (ch.date_added) {
+                        const added = new Date(ch.date_added);
+                        if ((new Date() - added) < (48 * 60 * 60 * 1000)) badge = '<span class="badge-new">New</span>';
+                    }
+
+                    return `
+                        <li>
+                            <a class="chapter-link" href="/reader.html?id=${ch._id}">${ch.title}${badge}</a>
+                            <div class="ch-metadata">${words.toLocaleString()} words • ${readTime} min read</div>
+                        </li>
+                    `;
+                }).join('');
+
+                document.getElementById('total-words').innerText = `${totalWords.toLocaleString()} words`;
+                // Set the header title based on the first chapter's manuscript name
+                if (chapters.length > 0) document.getElementById('series-title').innerText = chapters[0].manuscript_display_name;
+
+            } catch (err) {
+                list.innerHTML = "<li>Error loading manuscript.</li>";
+            }
+        }
+        
+        window.onload = init; // Only one entry point
+    </script>
+</body>
+</html>
