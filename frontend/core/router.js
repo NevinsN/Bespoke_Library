@@ -7,7 +7,7 @@ export function route() {
   const params = new URLSearchParams(window.location.search);
 
   const bookId = params.get('book');
-  const chapterId = params.get('chapter');
+  const chapterId = params.get('id');
 
   // Author mode overrides everything
   if (state.role === 'author') {
