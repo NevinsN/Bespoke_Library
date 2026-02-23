@@ -1,7 +1,7 @@
 import { getNovels, getChapters } from '../services/novelService.js';
 import { groupNovels } from '../utils/groupNovels.js';
 
-const containerId = 'app';
+const containerId = 'main-content';
 
 export async function renderBookshelf(bookId = null) {
   const container = document.getElementById(containerId);

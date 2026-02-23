@@ -1,7 +1,7 @@
 import { apiFetch } from '../core/api.js';
 
 export async function getNovels() {
-  const res = await apiFetch('/api/GetMyNovels');
+  const res = await apiFetch('/api/GetNovels');
   return res.data ?? [];
 }
 
