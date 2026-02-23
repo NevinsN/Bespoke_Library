@@ -5,12 +5,13 @@ window.addEventListener('load', async () => {
     const user = await getClientPrincipal();
 
     if (!user) {
-        // This is the Microsoft-specific login route for Azure SWA
-        window.location.href = "/.auth/login/aad?post_login_redirect_uri=" + window.location.href;
+        // Anonymous user: don't auto-login
+        console.log("Anonymous user detected, showing public content.");
+        route(); // render bookshelfView for anonymous/public content
         return;
     }
 
-    // If we have a user, start the app
+    // Logged-in user: start app as usual
     console.log(`Logged in as: ${user.userDetails}`);
     route();
 });
