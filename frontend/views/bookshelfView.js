@@ -3,10 +3,43 @@ import { getNovels } from '../services/novelService.js';
 import { groupNovels } from '../utils/groupNovels.js';
 import { bookCard } from '../components/bookCard.js';
 import { renderChapterList } from './chapterListView.js';
+import { getClientPrincipal } from '../core/state.js'; // assumes this fetches SWA auth info
 
 const containerId = 'main-content';
 
+async function renderAuthMenu() {
+  // Create or select persistent auth menu container
+  let menu = document.querySelector('.auth-menu');
+  if (!menu) {
+    menu = document.createElement('div');
+    menu.className = 'auth-menu';
+    document.body.prepend(menu);
+  }
+  menu.innerHTML = '';
+
+  const user = await getClientPrincipal();
+
+  const btn = document.createElement('button');
+  btn.className = 'auth-button';
+
+  if (user) {
+    btn.textContent = 'Logout';
+    btn.onclick = () => {
+      window.location.href = '/.auth/logout?post_logout_redirect_uri=/';
+    };
+  } else {
+    btn.textContent = 'Login';
+    btn.onclick = () => {
+      window.location.href = '/.auth/login/aad?post_login_redirect_uri=/';
+    };
+  }
+
+  menu.appendChild(btn);
+}
+
 export async function renderBookshelf() {
+  await renderAuthMenu(); // always render auth menu first
+
   const container = document.getElementById(containerId);
   container.innerHTML = '';
 
