@@ -44,3 +44,12 @@ body {
 .status-badge { font-size: 9px; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; }
 .status-progress { background: rgba(52, 152, 219, 0.1); color: var(--accent-color); border: 1px solid var(--accent-color); }
 .status-complete { background: rgba(46, 204, 113, 0.1); color: #2ecc71; border: 1px solid #2ecc71; }
+
+.author-card { background: #1a1a1a; border: 1px solid var(--accent-color); padding: 25px; border-radius: 12px; margin-bottom: 30px; }
+.studio-input { width: 100%; padding: 10px; background: #222; border: 1px solid #444; color: white; border-radius: 6px; margin: 10px 0; }
+.scroll-list { max-height: 150px; overflow-y: auto; background: #111; border-radius: 6px; margin: 10px 0; border: 1px solid #333; }
+.project-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #222; font-size: 0.9em; }
+.project-item:hover { background: #222; }
+.project-item.selected { border-left: 4px solid var(--accent-color); background: #222; }
+.studio-btn { width: 100%; padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+.studio-btn.small { width: auto; padding: 5px 15px; font-size: 0.8em; margin-top: 5px; }
