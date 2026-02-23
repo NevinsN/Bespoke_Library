@@ -14,7 +14,9 @@ async function init() {
 
 async function loadBookshelf() {
     const list = document.getElementById('books-list');
-    const targetGoal = 50000;
+    const targetGoal = novel.target_goal || 50000; // Fallback to 50k if not set
+    const percent = Math.min((currentCount / targetGoal) * 100, 100).toFixed(0);
+
 
     try {
         const result = await apiFetch('/api/GetNovels');
