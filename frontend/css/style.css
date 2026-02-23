@@ -246,3 +246,16 @@ h2, h3 {
     margin-top: 20px;
     margin-bottom: 10px;
 }
+
+.series-card {
+  margin-bottom: 30px;
+  padding: 15px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: #111;
+}
+
+.book-card-wrapper {
+  margin-left: 20px;
+  margin-bottom: 20px;
+}
