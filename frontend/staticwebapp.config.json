@@ -5,6 +5,10 @@
       "allowedRoles": ["anonymous", "authenticated"]
     },
     {
+      "route": "/",
+      "allowedRoles": ["anonymous", "authenticated"]
+    },
+    {
       "route": "/*",
       "allowedRoles": ["anonymous", "authenticated"]
     }
