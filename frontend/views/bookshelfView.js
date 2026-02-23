@@ -77,7 +77,7 @@ export async function renderBookshelf(selectedBookId = null) {
       loginBtn.textContent = "Sign In";
       loginBtn.className = "auth-button";
       loginBtn.onclick = () => {
-        window.location.href = "/.auth/login/github?post_login_redirect_uri=/";
+        window.location.href = "/.auth/login/aad?post_login_redirect_uri=/";
       };
       containerMessage.appendChild(loginBtn);
 
