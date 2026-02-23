@@ -1,81 +1,104 @@
-// frontend/views/authorStudioView.js
 import { getNovels } from '../services/novelService.js';
+import { processUpload } from '../services/authorService.js'; // new service for uploading
+import JSZip from 'jszip'; // npm package for zip preview
 
 const containerId = 'main-content';
 
 export async function renderAuthorStudio() {
-  const container = document.getElementById(containerId);
-  container.innerHTML = '';
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
 
-  const title = document.createElement('h1');
-  title.textContent = 'Author Studio';
-  container.appendChild(title);
+    const title = document.createElement('h1');
+    title.textContent = 'Author Studio';
+    container.appendChild(title);
 
-  const novels = await getNovels();
+    // Load existing novels/projects
+    const novels = await getNovels();
+    novels.forEach(novel => {
+        const el = document.createElement('div');
+        el.textContent = novel.display_name;
+        el.className = 'studio-item';
+        container.appendChild(el);
+    });
 
-  novels.forEach(novel => {
-    const el = document.createElement('div');
-    el.textContent = novel.display_name;
-    el.className = 'studio-item';
+    // File upload UI
+    const uploadInput = document.createElement('input');
+    uploadInput.type = 'file';
+    uploadInput.multiple = true;
+    uploadInput.accept = '.md,.docx,.zip';
+    container.appendChild(uploadInput);
 
-    // Future: edit click
-    container.appendChild(el);
-  });
+    const modeRadios = document.createElement('div');
+    modeRadios.innerHTML = `
+        <label><input type="radio" name="uploadMode" value="sequential" checked> Sequential Upload</label>
+        <label><input type="radio" name="uploadMode" value="non-sequential"> Non-Sequential Upload</label>
+    `;
+    container.appendChild(modeRadios);
 
-  // ➕ New project button
-  const newBtn = document.createElement('button');
-  newBtn.textContent = 'New Project';
-  newBtn.className = 'studio-btn';
-  newBtn.onclick = () => {
-    console.log('Create new project');
-    // Could open modal to enter series/book/draft info
-  };
-  container.appendChild(newBtn);
+    const previewContainer = document.createElement('div');
+    previewContainer.id = 'upload-preview';
+    container.appendChild(previewContainer);
 
-  // ➕ Upload files section
-  const uploadInput = document.createElement('input');
-  uploadInput.type = 'file';
-  uploadInput.multiple = true;
-  uploadInput.className = 'studio-input';
-  container.appendChild(uploadInput);
+    uploadInput.addEventListener('change', async (event) => {
+        previewContainer.innerHTML = '';
+        const files = Array.from(event.target.files);
+        let previewFiles = [];
 
-  const uploadBtn = document.createElement('button');
-  uploadBtn.textContent = 'Upload Chapters';
-  uploadBtn.className = 'studio-btn';
-  container.appendChild(uploadBtn);
+        for (const file of files) {
+            if (file.name.endsWith('.zip')) {
+                // Preview ZIP contents
+                const zipData = await file.arrayBuffer();
+                const zip = await JSZip.loadAsync(zipData);
+                for (const [filename, f] of Object.entries(zip.files)) {
+                    if (!f.dir) {
+                        previewFiles.push({ filename, content: await f.async('text') });
+                    }
+                }
+            } else if (file.name.endsWith('.md') || file.name.endsWith('.docx')) {
+                const text = await file.text();
+                previewFiles.push({ filename: file.name, content: text });
+            }
+        }
 
-  uploadBtn.onclick = async () => {
-    const files = Array.from(uploadInput.files);
-    if (!files.length) return alert('Select files to upload');
+        // Render preview
+        previewFiles.forEach((f, idx) => {
+            const div = document.createElement('div');
+            div.textContent = f.filename;
+            div.className = 'upload-preview-item';
 
-    // FormData for backend
-    const formData = new FormData();
-    const manuscriptId = prompt('Enter the manuscript ID for this upload:');
-    formData.append('manuscript_id', manuscriptId);
-    formData.append('mode', 'sequential'); // Could let user choose sequential/non-sequential
+            // Non-sequential slot selector
+            if (document.querySelector('input[name="uploadMode"]:checked').value === 'non-sequential') {
+                const slotSelect = document.createElement('select');
+                for (let i = 0; i <= 30; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = `Slot ${i}`;
+                    slotSelect.appendChild(option);
+                }
+                div.appendChild(slotSelect);
+                f.slotSelect = slotSelect; // attach for backend use
+            }
 
-    files.forEach(f => formData.append('files', f));
+            previewContainer.appendChild(div);
+        });
 
-    try {
-      const res = await fetch('/api/UploadChapters', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
-
-      const data = await res.json();
-      console.log('Upload result:', data);
-
-      // --- Dispatch event to refresh bookshelf ---
-      document.dispatchEvent(new CustomEvent('chaptersUploaded', {
-        detail: { manuscript_id: manuscriptId }
-      }));
-
-      alert('Upload successful! Check the bookshelf for new chapters.');
-    } catch (err) {
-      console.error(err);
-      alert('Upload failed. See console for details.');
-    }
-  };
+        // Commit Upload Button
+        const commitBtn = document.createElement('button');
+        commitBtn.textContent = 'Upload Chapters';
+        commitBtn.onclick = async () => {
+            const sequential = document.querySelector('input[name="uploadMode"]:checked').value === 'sequential';
+            // Map files for backend
+            const uploadData = previewFiles.map(f => ({
+                filename: f.filename,
+                content: f.content,
+                slot: f.slotSelect?.value
+            }));
+            const manuscriptId = prompt("Enter manuscript ID to upload to:");
+            const result = await processUpload(manuscriptId, uploadData, sequential);
+            console.log(result);
+            alert(`Upload complete: ${result.added.length} added, ${result.updated.length} updated`);
+            previewContainer.innerHTML = '';
+        };
+        previewContainer.appendChild(commitBtn);
+    });
 }
