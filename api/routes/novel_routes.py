@@ -1,3 +1,5 @@
+# routes/novel_routes.py
+
 import azure.functions as func
 import json
 import os
@@ -10,33 +12,43 @@ from utils.auth import extract_user
 client = MongoClient(os.getenv("COSMOS_CONNECTION_STRING"))
 db = client['bespoke']
 
-# --- READER / GENERAL ROUTES ---
+
+# -------------------------------
+# Helper: Determine visibility
+# -------------------------------
+def get_visibility_filter(user):
+    """
+    Returns a MongoDB filter dict based on the user's access level:
+    - Admin: sees everything
+    - Logged-in user: only allowed_readers books
+    - Anonymous: only public books
+    """
+    if user:
+        if user.get("is_admin"):
+            return {}  # all books
+        else:
+            return {"$or": [{"allowed_readers": user.get("email")}, {"is_public": True}]}
+    else:
+        return {"is_public": True}
+
+
+# -------------------------------
+# /api/GetNovels
+# -------------------------------
 def handle_get_novels(req: func.HttpRequest) -> func.HttpResponse:
-    """
-    Returns all novels the user has permission to see.
-    - Anonymous users: only books where is_public=True
-    - Logged-in users: their allowed books
-    - Admins: all books
-    """
     try:
         user = extract_user(req)
+        filter_query = get_visibility_filter(user)
 
-        # Determine visibility filter
-        if user:
-            if user.get("is_admin"):
-                match_filter = {}  # admin sees all
-            else:
-                match_filter = {"allowed_readers": user.get("email")}
-        else:
-            match_filter = {"is_public": True}  # only public books
-
+        # Aggregate books by manuscript_id
         pipeline = [
-            {"$match": match_filter},
+            {"$match": filter_query},
             {"$group": {
                 "_id": "$manuscript_id",
                 "display_name": {"$first": "$manuscript_display_name"},
                 "series_name": {"$first": "$series"},
-                "total_word_count": {"$sum": "$word_count"}
+                "total_word_count": {"$sum": "$word_count"},
+                "is_public": {"$first": "$is_public"}
             }}
         ]
 
@@ -47,64 +59,43 @@ def handle_get_novels(req: func.HttpRequest) -> func.HttpResponse:
             meta['empty_reason'] = "not_logged_in" if not user else "no_access"
 
         return ok(novels, meta=meta)
-
     except Exception as e:
         return error(f"Failed to fetch library: {str(e)}", code=500)
 
 
+# -------------------------------
+# /api/GetChapters
+# -------------------------------
 def handle_get_chapters(req: func.HttpRequest) -> func.HttpResponse:
-    """
-    Returns the Table of Contents for a specific book.
-    - Anonymous users: only if is_public=True
-    - Logged-in users: only if allowed_readers contains their email
-    - Admins: can access all
-    """
     try:
         user = extract_user(req)
-        m_id = req.params.get("manuscript_id")
-
-        if not m_id:
+        manuscript_id = req.params.get("manuscript_id")
+        if not manuscript_id:
             return error("Missing manuscript_id", code=400)
 
-        # Base query
-        query = {"manuscript_id": m_id}
+        filter_query = get_visibility_filter(user)
+        filter_query["manuscript_id"] = manuscript_id
 
-        if user:
-            if not user.get("is_admin"):
-                query["$or"] = [
-                    {"allowed_readers": user.get("email")},
-                    {"is_public": True}
-                ]
-        else:
-            query["is_public"] = True
-
-        chapters = list(db['novels'].find(query, {"content": 0}).sort("order", 1))
-
+        chapters = list(db['novels'].find(filter_query, {"content": 0}).sort("order", 1))
         for ch in chapters:
             ch["_id"] = str(ch["_id"])
 
         return ok(chapters)
-
     except Exception as e:
-        return error(str(e), code=500)
+        return error(f"Failed to fetch chapters: {str(e)}", code=500)
 
 
+# -------------------------------
+# /api/GetChapterContent
+# -------------------------------
 def handle_get_content(req: func.HttpRequest) -> func.HttpResponse:
-    """
-    Returns full text of a chapter.
-    - Anonymous users: only if parent book is_public=True
-    - Logged-in users: only if allowed_readers contains their email
-    - Admins: can access all
-    """
     try:
         user = extract_user(req)
         ch_id = req.params.get("id")
-
         if not ch_id:
             return error("Missing chapter id", code=400)
 
         chapter = db['novels'].find_one({"_id": ObjectId(ch_id)})
-
         if not chapter:
             return error("Chapter not found", code=404)
 
@@ -118,6 +109,5 @@ def handle_get_content(req: func.HttpRequest) -> func.HttpResponse:
 
         chapter["_id"] = str(chapter["_id"])
         return ok(chapter)
-
     except Exception as e:
-        return error(str(e), code=500)
+        return error(f"Failed to fetch chapter content: {str(e)}", code=500)
