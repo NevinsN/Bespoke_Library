@@ -53,3 +53,16 @@ body {
 .project-item.selected { border-left: 4px solid var(--accent-color); background: #222; }
 .studio-btn { width: 100%; padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
 .studio-btn.small { width: auto; padding: 5px 15px; font-size: 0.8em; margin-top: 5px; }
+
+/* Visual cue for drafts only author can see */
+.book-card.draft-mode {
+    border: 1px dashed #e74c3c;
+    background: rgba(231, 76, 60, 0.05);
+}
+
+/* Studio container styling */
+#author-studio-container {
+    width: 100%;
+    max-width: 800px;
+    margin-bottom: 20px;
+}
