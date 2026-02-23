@@ -1,64 +1,57 @@
+# routes/author_routes.py
+
 import azure.functions as func
-import json
-import os
-import re
-import markdown
-import datetime
-from pymongo import MongoClient
-from utils.response import ok, error # <--- Use your standard helpers
+from utils.response import ok, error
+from services.author_service import create_new_project, process_uploaded_chapters
 
-client = MongoClient(os.getenv("COSMOS_CONNECTION_STRING"))
-db = client['bespoke']
+app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
-def handle_create_project(req):
+
+# -------------------------
+# Create a new author project
+# -------------------------
+@app.route(route="CreateProject", methods=["POST"])
+def create_project(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    Expects JSON body:
+    {
+        "series": "Series Name",
+        "book": "Book Name",
+        "draft": "Draft Name",
+        "display_name": "Optional Display Name"
+    }
+    Returns the newly created manuscript ID and metadata.
+    """
     try:
         body = req.get_json()
-        series = body.get('series', 'Standalone')
-        book = body.get('book', 'Novel')
-        draft = body.get('draft', 'Draft 1')
-        display_name = body.get('display_name', f"{series}: {book}")
-        
-        man_id = re.sub(r'[^a-z0-9]', '-', display_name.lower())
-
-        doc = {
-            "manuscript_id": man_id,
-            "manuscript_display_name": display_name,
-            "series": series,
-            "book": book,
-            "draft": draft,
-            "target_goal": 50000,
-            "order": 0,
-            "title": "Front Matter",
-            "content": "<h1>New Project Created</h1>",
-            "word_count": 0,
-            "published": False,
-            "date_added": datetime.datetime.utcnow().isoformat()
-        }
-        
-        db['novels'].insert_one(doc)
-        return ok({"message": "Project created", "manuscript_id": man_id})
-        
+        project = create_new_project(body)
+        return ok(project)
     except Exception as e:
-        return error(str(e))
+        return error(f"Failed to create project: {str(e)}")
 
-def handle_upload_draft(req):
+
+# -------------------------
+# Upload chapters/files to a manuscript
+# -------------------------
+@app.route(route="UploadChapters", methods=["POST"])
+def upload_chapters(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    Expects form-data:
+    - manuscript_id: ID of the project
+    - mode: "sequential" or "non-sequential"
+    - files[]: array of files to upload
+    - optional slots mapping for non-sequential mode
+    """
     try:
-        col = db['novels']
-        man_id = req.form.get('manuscript_id')
-        
-        file = req.files.get('file')
-        raw_content = file.stream.read().decode('utf-8')
-
-        # Simple logic to save the chapter
-        doc = {
-            "manuscript_id": man_id,
-            "title": file.name.replace('.md', ''),
-            "content": markdown.markdown(raw_content),
-            "word_count": len(raw_content.split()),
-            "date_added": datetime.datetime.utcnow().isoformat()
-        }
-        
-        col.insert_one(doc)
-        return ok("Upload successful")
+        result = process_uploaded_chapters(req)
+        return ok(result)
     except Exception as e:
-        return error(str(e))
+        return error(f"Failed to upload chapters: {str(e)}")
+
+
+# -------------------------
+# Optional: ping route to confirm SWA detection
+# -------------------------
+@app.route(route="DemoPing", methods=["GET"])
+def demo_ping(req: func.HttpRequest) -> func.HttpResponse:
+    return func.HttpResponse("Author routes active!", status_code=200)
