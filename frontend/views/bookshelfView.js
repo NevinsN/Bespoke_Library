@@ -50,7 +50,7 @@ export async function renderBookshelf(bookId = null) {
         el.className = 'book-item';
 
         el.onclick = () => {
-          window.location.search = `?book=${novel.id}`;
+          window.location.search = `?book=${novel._id || novel.id}`;
         };
 
         container.appendChild(el);
