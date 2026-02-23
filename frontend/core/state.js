@@ -25,3 +25,9 @@ export function toggleRole() {
   setState({ role: newRole });
   location.reload();
 }
+
+export async function getClientPrincipal() {
+    const res = await fetch('/.auth/me');
+    const data = await res.json();
+    return data.clientPrincipal; // Will be null if not logged in
+}
