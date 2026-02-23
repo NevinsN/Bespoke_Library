@@ -46,7 +46,7 @@ export async function renderBookshelf(bookId = null) {
 
       items.forEach(novel => {
         const el = document.createElement('div');
-        el.textContent = novel.title;
+        el.textContent = novel.display_name;
         el.className = 'book-item';
 
         el.onclick = () => {
