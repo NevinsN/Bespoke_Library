@@ -7,7 +7,9 @@ export async function renderBookshelf(bookId = null) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
 
-  // --- Show chapters if a book is selected ---
+  // -------------------
+  // Show chapters if a book is selected
+  // -------------------
   if (bookId) {
     try {
       const chapters = await getChapters(bookId) || [];
@@ -37,21 +39,28 @@ export async function renderBookshelf(bookId = null) {
     return;
   }
 
-  // --- Show library ---
-  let novels;
+  // -------------------
+  // Show library
+  // -------------------
+  let novels = [];
   let meta = {};
+
   try {
     const res = await getNovels();
     // Ensure we always have an array
-    novels = Array.isArray(res) ? res : res?.data || [];
-    meta = res?.meta || {};
+    if (Array.isArray(res)) {
+      novels = res;
+    } else if (res?.data) {
+      novels = res.data;
+      meta = res.meta || {};
+    }
   } catch (err) {
     container.innerHTML = `<div class="empty-library">Failed to load library.</div>`;
     console.error(err);
     return;
   }
 
-  // --- Handle empty library ---
+  // Handle empty library
   if (!novels.length) {
     const containerMessage = document.createElement('div');
     containerMessage.className = 'empty-library';
@@ -68,6 +77,7 @@ export async function renderBookshelf(bookId = null) {
         window.location.href = "/.auth/login/github?post_login_redirect_uri=/";
       };
       containerMessage.appendChild(loginBtn);
+
     } else if (meta.empty_reason === 'no_access') {
       containerMessage.textContent = "You don't have access to any manuscripts.";
     } else {
@@ -78,25 +88,40 @@ export async function renderBookshelf(bookId = null) {
     return;
   }
 
-  // --- Render library ---
+  // -------------------
+  // Render grouped library
+  // -------------------
   const grouped = groupNovels(novels) || {};
 
-  Object.entries(grouped).forEach(([series, books]) => {
+  Object.entries(grouped).forEach(([seriesName, books]) => {
+    // Series heading
     const seriesEl = document.createElement('h2');
-    seriesEl.textContent = series;
+    seriesEl.textContent = seriesName || 'Untitled Series';
+    seriesEl.className = 'series-title';
     container.appendChild(seriesEl);
 
-    Object.entries(books).forEach(([book, items]) => {
+    Object.entries(books).forEach(([bookName, items]) => {
+      // Book heading
       const bookEl = document.createElement('h3');
-      bookEl.textContent = book;
+      bookEl.textContent = bookName || 'Untitled Book';
+      bookEl.className = 'book-title';
       container.appendChild(bookEl);
 
-      // Defensive: ensure items is always an array
+      // Book items
       if (Array.isArray(items)) {
         items.forEach(novel => {
           const el = document.createElement('div');
-          el.textContent = novel.display_name || 'Untitled Book';
           el.className = 'book-item';
+          el.textContent = novel.display_name || 'Untitled Book';
+
+          // Optional metadata
+          if (novel.total_word_count) {
+            const metaEl = document.createElement('span');
+            metaEl.className = 'book-meta';
+            metaEl.textContent = ` — ${novel.total_word_count.toLocaleString()} words`;
+            el.appendChild(metaEl);
+          }
+
           el.onclick = () => {
             window.location.search = `?book=${novel._id || novel.id}`;
           };
