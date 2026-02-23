@@ -6,7 +6,6 @@ export async function apiFetch(endpoint, options = {}) {
         console.log("API CALL:", url);
 
         const response = await fetch(url, options);
-
         const text = await response.text();
         console.log("RAW RESPONSE:", text);
 
@@ -25,7 +24,8 @@ export async function apiFetch(endpoint, options = {}) {
             throw new Error(result.error || "Unknown API Error");
         }
 
-        return result.data;
+        // ← Return the whole object, not just data
+        return result; 
 
     } catch (err) {
         console.error("Fetch failed:", err);
