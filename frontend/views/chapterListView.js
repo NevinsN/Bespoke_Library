@@ -1,4 +1,7 @@
 import { getChapters } from '../services/novelService.js';
+import { getNovelsCache } from '../core/appState.js';
+import { getNovels } from '../services/novelService.js';
+import { getProgressPercent } from '../core/appState.js';
 
 export async function renderChapterList(draftId) {
   const container = document.getElementById('main-content');
@@ -13,19 +16,18 @@ export async function renderChapterList(draftId) {
     errEl.className = 'empty-library';
     errEl.textContent = 'Failed to load chapters.';
     container.appendChild(errEl);
-    console.error(err);
     return;
   }
 
   container.innerHTML = '';
 
-  // ── Floating back button → library ──
+  // ── Floating back → library ──
+  document.querySelector('.floating-back')?.remove();
   const backBtn = document.createElement('a');
   backBtn.href = '/';
   backBtn.className = 'floating-back';
   backBtn.textContent = '← Library';
   document.body.appendChild(backBtn);
-
   window.addEventListener('popstate', () => backBtn.remove(), { once: true });
 
   if (!chapters.length) {
@@ -36,20 +38,53 @@ export async function renderChapterList(draftId) {
     return;
   }
 
+  // ── Resolve display name from novels cache ──
+  let displayName = 'Untitled Manuscript';
+  let draftName = '';
+  try {
+    const novels = await getNovelsCache(async () => {
+      const res = await getNovels();
+      return Array.isArray(res) ? res : (res?.data || []);
+    });
+    for (const m of novels) {
+      const draft = (m.drafts || []).find(d => d._id === draftId);
+      if (draft) {
+        displayName = m.display_name || m.book || 'Untitled';
+        draftName   = draft.name || '';
+        break;
+      }
+    }
+  } catch {}
+
   const wrap = document.createElement('div');
   wrap.className = 'chapter-list-wrap';
 
+  // Title + draft name
   const titleEl = document.createElement('h1');
   titleEl.className = 'chapter-list-title';
-  titleEl.textContent = chapters[0]?.manuscript_display_name || 'Untitled Manuscript';
+  titleEl.textContent = displayName;
   wrap.appendChild(titleEl);
 
-  const totalWords = chapters.reduce((sum, ch) => sum + (ch.word_count || 0), 0);
-  const progressEl = document.createElement('p');
-  progressEl.className = 'chapter-list-meta';
-  progressEl.textContent = `${totalWords.toLocaleString()} words across ${chapters.length} chapter${chapters.length !== 1 ? 's' : ''}`;
-  wrap.appendChild(progressEl);
+  if (draftName) {
+    const draftEl = document.createElement('p');
+    draftEl.className = 'chapter-list-draft';
+    draftEl.textContent = draftName;
+    wrap.appendChild(draftEl);
+  }
 
+  // Progress summary
+  const totalWords = chapters.reduce((sum, ch) => sum + (ch.word_count || 0), 0);
+  const progressPct = getProgressPercent(draftId, chapters.length);
+
+  const metaEl = document.createElement('p');
+  metaEl.className = 'chapter-list-meta';
+  metaEl.textContent = `${totalWords.toLocaleString()} words · ${chapters.length} chapter${chapters.length !== 1 ? 's' : ''}`;
+  if (progressPct > 0) {
+    metaEl.textContent += ` · ${Math.round(progressPct * 100)}% read`;
+  }
+  wrap.appendChild(metaEl);
+
+  // Chapter list
   const ul = document.createElement('ul');
   ul.className = 'chapter-list';
 

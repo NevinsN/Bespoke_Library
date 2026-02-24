@@ -659,3 +659,302 @@ h2, h3 {
     flex-shrink: 0;
     margin-left: 16px;
 }
+
+
+/* -------------------------
+   Continue Reading Banner
+------------------------- */
+.continue-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    margin-bottom: 32px;
+    background: rgba(52, 152, 219, 0.07);
+    border: 1px solid rgba(52, 152, 219, 0.25);
+    border-radius: 8px;
+    flex-wrap: wrap;
+}
+
+.continue-label {
+    font-size: 0.8em;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #666;
+}
+
+.continue-title {
+    font-size: 0.95em;
+    color: var(--text-color);
+    font-weight: 500;
+    flex: 1;
+}
+
+/* -------------------------
+   Book Card (updated)
+------------------------- */
+.book-card {
+    margin: 8px 0;
+    padding: 16px 20px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.book-card:hover {
+    border-color: #444;
+    transform: translateY(-1px);
+}
+
+.book-card-title {
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 10px;
+}
+
+.book-card-meta {
+    font-size: 0.78em;
+    color: #666;
+    margin-top: 6px;
+    margin-bottom: 8px;
+}
+
+.book-card-action {
+    display: inline-block;
+    font-size: 0.82em;
+    color: var(--accent-color);
+    text-decoration: none;
+    margin-top: 8px;
+    opacity: 0.85;
+    transition: opacity 0.15s;
+}
+
+.book-card-action:hover {
+    opacity: 1;
+}
+
+/* -------------------------
+   Chapter List (updated)
+------------------------- */
+.chapter-list-draft {
+    font-size: 0.85em;
+    color: #666;
+    margin-top: -8px;
+    margin-bottom: 24px;
+    font-style: italic;
+}
+
+
+/* -------------------------
+   Invite Modal
+------------------------- */
+.invite-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(3px);
+}
+
+.invite-modal {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 28px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    animation: fadeIn 0.15s ease;
+}
+
+.invite-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 1em;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: color 0.15s;
+}
+
+.invite-modal-close:hover {
+    color: var(--text-color);
+}
+
+/* -------------------------
+   Invite Tabs (series / manuscript / draft)
+------------------------- */
+.invite-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0;
+}
+
+.invite-tab {
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 0.85em;
+    padding: 7px 14px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+    border-radius: 0;
+}
+
+.invite-tab:hover {
+    color: var(--text-color);
+}
+
+.invite-tab.active {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+}
+
+/* -------------------------
+   Invite Panel
+------------------------- */
+.invite-panel {
+    width: 100%;
+}
+
+.invite-scope-label {
+    font-size: 0.85em;
+    color: #888;
+    margin-bottom: 16px;
+}
+
+.invite-scope-type {
+    color: #555;
+    font-size: 0.9em;
+}
+
+.invite-form {
+    margin-bottom: 20px;
+}
+
+.invite-form-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    gap: 12px;
+}
+
+.invite-form-label {
+    font-size: 0.85em;
+    color: #aaa;
+    white-space: nowrap;
+}
+
+.invite-select,
+.invite-uses-input {
+    flex: 1;
+    max-width: 160px;
+}
+
+.invite-result {
+    margin-top: 14px;
+    padding: 12px;
+    background: #111;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.invite-url-input {
+    font-size: 0.8em;
+    color: #aaa;
+    cursor: text;
+}
+
+.invite-error {
+    color: var(--error-color);
+    font-size: 0.85em;
+}
+
+/* -------------------------
+   Active Invites List
+------------------------- */
+.invite-list-heading {
+    font-size: 0.78em;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #555;
+    margin: 20px 0 10px;
+}
+
+.invite-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-top: 1px solid #1e1e1e;
+}
+
+.invite-row-info {
+    display: flex;
+    gap: 16px;
+    font-size: 0.82em;
+}
+
+.invite-uses {
+    color: var(--text-color);
+}
+
+.invite-expiry {
+    color: #666;
+}
+
+/* -------------------------
+   Invite Redemption Card
+------------------------- */
+.invite-card {
+    max-width: 420px;
+    margin: 80px auto;
+    padding: 40px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.invite-spinner {
+    color: #666;
+    font-size: 0.95em;
+    animation: pulse 1.2s ease-in-out infinite;
+}
+
+.invite-icon {
+    font-size: 2.5em;
+    margin-bottom: 16px;
+}
+
+.invite-icon.success { color: var(--success-color); }
+.invite-icon.error   { color: var(--error-color); }
+
+.invite-msg {
+    color: #aaa;
+    font-size: 0.95em;
+    line-height: 1.6;
+    margin-bottom: 8px;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+}

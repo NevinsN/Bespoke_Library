@@ -64,3 +64,54 @@ export async function uploadChapters(draftId, files, sequential = true, onProgre
     xhr.send(formData);
   });
 }
+
+
+/**
+ * Get only manuscripts where the current user is owner or author.
+ * This is the exclusive data source for Author Studio — never use
+ * getNovels() inside the studio as it includes read-only manuscripts.
+ */
+export async function getAuthoredManuscripts() {
+  return await apiFetch('/GetAuthoredManuscripts');
+}
+
+
+/**
+ * Create an invite link for a scope.
+ */
+export async function createInvite({ scope_type, scope_id, expires_days = 7, max_uses = 1 }) {
+  return await apiFetch('/CreateInvite', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ scope_type, scope_id, expires_days, max_uses }),
+  });
+}
+
+/**
+ * Redeem an invite token (called after login).
+ */
+export async function redeemInvite(token) {
+  return await apiFetch('/RedeemInvite', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+  });
+}
+
+/**
+ * Revoke an invite link.
+ */
+export async function revokeInvite(token) {
+  return await apiFetch('/RevokeInvite', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+  });
+}
+
+/**
+ * List active invites for a scope.
+ */
+export async function listInvites(scope_type, scope_id) {
+  return await apiFetch(`/ListInvites?scope_type=${scope_type}&scope_id=${scope_id}`);
+}

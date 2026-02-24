@@ -1,4 +1,5 @@
-import { getNovels } from '../services/novelService.js';
+import { getAuthoredManuscripts } from '../services/authorService.js';
+import { renderInvitePanel } from '../components/invitePanel.js';
 import { createProject, getDrafts, uploadChapters } from '../services/authorService.js';
 
 // Load JSZip from CDN on demand
@@ -46,8 +47,7 @@ export async function renderAuthorStudio() {
 
   // Load manuscripts
   try {
-    const res = await getNovels();
-    state.manuscripts = Array.isArray(res) ? res : (res?.data || []);
+    state.manuscripts = await getAuthoredManuscripts();
   } catch (e) {
     showBanner(studio, 'Failed to load projects.', 'error');
     return;
@@ -177,6 +177,82 @@ function renderDraftSection(container, manuscript) {
   }
 
   container.appendChild(list);
+
+  // ── Invite button (shown when a draft or manuscript is selected) ──
+  if (state.selectedManuscript) {
+    const inviteBtn = document.createElement('button');
+    inviteBtn.className = 'studio-btn small';
+    inviteBtn.style.marginTop = '16px';
+    inviteBtn.style.width = '100%';
+    inviteBtn.textContent = '✉ Invite Readers';
+    inviteBtn.onclick = () => showInviteModal(state.selectedManuscript, state.selectedDraft);
+    container.appendChild(inviteBtn);
+  }
+}
+
+// ─── Invite modal ─────────────────────────────────────────────────────────────
+async function showInviteModal(manuscript, draft) {
+  // Remove existing modal if open
+  document.querySelector('.invite-modal-overlay')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'invite-modal-overlay';
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+  const modal = document.createElement('div');
+  modal.className = 'invite-modal';
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'invite-modal-close';
+  closeBtn.textContent = '✕';
+  closeBtn.onclick = () => overlay.remove();
+  modal.appendChild(closeBtn);
+
+  // Scope selector tabs
+  const tabs = document.createElement('div');
+  tabs.className = 'invite-tabs';
+
+  const scopes = [
+    { type: 'manuscript', id: manuscript._id, label: manuscript.display_name },
+  ];
+  if (draft) {
+    scopes.push({ type: 'draft', id: draft._id, label: `${manuscript.display_name} / ${draft.name}` });
+  }
+  if (manuscript.series_id) {
+    scopes.unshift({ type: 'series', id: manuscript.series_id, label: manuscript.series_name || 'Series' });
+  }
+
+  const panelWrap = document.createElement('div');
+  panelWrap.className = 'invite-panel-wrap';
+
+  let activeScope = scopes[0];
+
+  async function activateTab(scope, tabEl) {
+    tabs.querySelectorAll('.invite-tab').forEach(t => t.classList.remove('active'));
+    tabEl.classList.add('active');
+    activeScope = scope;
+    panelWrap.innerHTML = '';
+    const panel = await renderInvitePanel(scope);
+    panelWrap.appendChild(panel);
+  }
+
+  scopes.forEach((scope, i) => {
+    const tab = document.createElement('button');
+    tab.className = 'invite-tab' + (i === 0 ? ' active' : '');
+    tab.textContent = scope.type.charAt(0).toUpperCase() + scope.type.slice(1);
+    tab.onclick = () => activateTab(scope, tab);
+    tabs.appendChild(tab);
+  });
+
+  modal.appendChild(tabs);
+  modal.appendChild(panelWrap);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  // Load first tab
+  const firstTab = tabs.querySelector('.invite-tab');
+  const panel = await renderInvitePanel(scopes[0]);
+  panelWrap.appendChild(panel);
 }
 
 // ─── Right panel: upload zone + file list ────────────────────────────────────
@@ -528,8 +604,7 @@ function showCreateProjectForm(panel) {
     try {
       await createProject(body);
       // Reload manuscripts
-      const res = await getNovels();
-      state.manuscripts = Array.isArray(res) ? res : (res?.data || []);
+      state.manuscripts = await getAuthoredManuscripts();
       form.remove();
       renderStudio(panel.closest('.studio-wrap'));
     } catch (err) {

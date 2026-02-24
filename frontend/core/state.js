@@ -1,33 +1,12 @@
-const STORAGE_KEY = 'app_state';
+/**
+ * state.js — Backwards-compatible shim.
+ * All new code should import from appState.js directly.
+ * This file remains so existing imports don't break.
+ */
+export { getUser as getClientPrincipal } from './appState.js';
 
-export const state = {
-  role: 'reader',
-  user: null,
-  novels: [],
-  currentBook: null,
-  currentChapter: null
-};
-
-export function loadState() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    Object.assign(state, JSON.parse(saved));
-  }
-}
-
-export function setState(partial) {
-  Object.assign(state, partial);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
-export function toggleRole() {
-  const newRole = state.role === 'reader' ? 'author' : 'reader';
-  setState({ role: newRole });
-  location.reload();
-}
-
-export async function getClientPrincipal() {
-    const res = await fetch('/.auth/me');
-    const data = await res.json();
-    return data.clientPrincipal; // Will be null if not logged in
-}
+// Legacy no-ops — role is now derived from API grants, not localStorage
+export function loadState() {}
+export function setState() {}
+export function toggleRole() {}
+export const state = { role: 'reader' };

@@ -27,13 +27,18 @@ def ensure_indexes():
     db["chapters"].create_index([("draft_id", ASCENDING), ("order", ASCENDING)])
     db["chapters"].create_index([("manuscript_id", ASCENDING)])
 
-    # access — the most query-critical collection
+    # access
     db["access"].create_index([("email", ASCENDING), ("scope_type", ASCENDING)])
     db["access"].create_index([("scope_id", ASCENDING)])
     db["access"].create_index([("email", ASCENDING), ("role", ASCENDING)])
 
     # users
     db["users"].create_index([("email", ASCENDING)], unique=True)
+
+    # invites
+    db["invites"].create_index([("token", ASCENDING)], unique=True)
+    db["invites"].create_index([("scope_type", ASCENDING), ("scope_id", ASCENDING)])
+    db["invites"].create_index([("expires_at", ASCENDING)])  # for TTL cleanup
 
 
 ensure_indexes()

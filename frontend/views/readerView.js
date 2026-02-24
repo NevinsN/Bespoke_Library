@@ -1,6 +1,17 @@
 import { getChapter } from '../services/novelService.js';
+import {
+  markChapterRead,
+  saveScrollPosition,
+  getScrollPosition
+} from '../core/appState.js';
 
 const containerId = 'main-content';
+
+// Debounce helper
+function debounce(fn, ms) {
+  let timer;
+  return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
+}
 
 export async function renderReader(chapterId) {
   const container = document.getElementById(containerId);
@@ -17,17 +28,22 @@ export async function renderReader(chapterId) {
     return;
   }
 
-  // ── Floating back button → chapter list ──
+  const draftId = chapter.draft_id;
+
+  // ── Mark as read immediately on open ──
+  markChapterRead(draftId, chapterId);
+
+  // ── Floating back → chapter list ──
+  // Remove any existing floating back button first
+  document.querySelector('.floating-back')?.remove();
   const backBtn = document.createElement('a');
-  backBtn.href = `/?book=${chapter.draft_id}`;
+  backBtn.href = `/?book=${draftId}`;
   backBtn.className = 'floating-back';
   backBtn.textContent = '← Chapters';
   document.body.appendChild(backBtn);
-
-  // Remove when navigating away
   window.addEventListener('popstate', () => backBtn.remove(), { once: true });
 
-  // ── Chapter content ──
+  // ── Article ──
   const article = document.createElement('article');
   article.className = 'reader-article';
 
@@ -66,4 +82,31 @@ export async function renderReader(chapterId) {
   }
 
   container.appendChild(article);
+
+  // ── Restore scroll position ──
+  const savedPct = getScrollPosition(draftId, chapterId);
+  if (savedPct !== null) {
+    // Wait for layout to settle before scrolling
+    requestAnimationFrame(() => {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      window.scrollTo({ top: savedPct * maxScroll, behavior: 'smooth' });
+    });
+  } else {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+
+  // ── Save scroll position on scroll (debounced) ──
+  const onScroll = debounce(() => {
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    if (maxScroll <= 0) return;
+    const pct = window.scrollY / maxScroll;
+    saveScrollPosition(draftId, chapterId, pct);
+  }, 300);
+
+  window.addEventListener('scroll', onScroll);
+
+  // Clean up scroll listener when navigating away
+  window.addEventListener('popstate', () => {
+    window.removeEventListener('scroll', onScroll);
+  }, { once: true });
 }
