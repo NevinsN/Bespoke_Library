@@ -21,6 +21,10 @@ ADMIN = os.environ.get("ADMIN_EMAIL", "")
 if not CONN:
     raise RuntimeError("COSMOS_CONNECTION_STRING not set")
 
+DRY_RUN = os.environ.get("DRY_RUN", "").lower() in ("1", "true", "yes")
+if DRY_RUN:
+    print("⚠ DRY RUN MODE — no writes will be made.\n")
+
 client = MongoClient(CONN)
 db = client.get_database("bespoke")
 
@@ -46,7 +50,8 @@ for doc in old_docs:
         if existing:
             series_map[series_name] = existing["_id"]
         else:
-            res = db["series"].insert_one({
+            if DRY_RUN: print(f"  [dry-run] Would create series: {series_name}"); series_map[series_name] = "dry-run-id"; continue
+    res = db["series"].insert_one({
                 "name": series_name,
                 "owner": owner,
                 "created_at": datetime.utcnow(),

@@ -6,6 +6,7 @@ import {
   getUser, isAuthor, getNovelsCache, invalidateNovels,
   getProgressPercent, getLastChapter
 } from '../core/appState.js';
+import { renderSkeleton } from '../components/loading.js';
 
 const containerId = 'main-content';
 
@@ -18,6 +19,9 @@ export async function renderBookshelf() {
   authWrapper.id = 'auth-container';
   authWrapper.appendChild(await renderAuthButton());
   container.appendChild(authWrapper);
+
+  // ── Skeleton while loading ──
+  renderSkeleton(container, 'bookshelf');
 
   // ── Load novels (from cache if available) ──
   let novels = [];
@@ -34,6 +38,8 @@ export async function renderBookshelf() {
     console.error(err);
     return;
   }
+
+  container.querySelector('.skeleton-wrap')?.remove();
 
   if (!novels.length) {
     const empty = document.createElement('div');

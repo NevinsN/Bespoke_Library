@@ -4,6 +4,8 @@ import {
   saveScrollPosition,
   getScrollPosition
 } from '../core/appState.js';
+import { renderMarkdown } from '../utils/markdown.js';
+import { renderSkeleton } from '../components/loading.js';
 
 const containerId = 'main-content';
 
@@ -16,6 +18,7 @@ function debounce(fn, ms) {
 export async function renderReader(chapterId) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
+  renderSkeleton(container, 'reader');
 
   let chapter;
   try {
@@ -27,6 +30,8 @@ export async function renderReader(chapterId) {
     container.appendChild(errEl);
     return;
   }
+
+  container.querySelector('.skeleton-wrap')?.remove();
 
   const draftId = chapter.draft_id;
 
@@ -54,7 +59,7 @@ export async function renderReader(chapterId) {
 
   const content = document.createElement('div');
   content.className = 'reader-content';
-  content.innerHTML = chapter.content;
+  content.innerHTML = await renderMarkdown(chapter.content);
   article.appendChild(content);
 
   // ── Bottom nav ──

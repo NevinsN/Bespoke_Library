@@ -2,10 +2,12 @@ import { getChapters } from '../services/novelService.js';
 import { getNovelsCache } from '../core/appState.js';
 import { getNovels } from '../services/novelService.js';
 import { getProgressPercent } from '../core/appState.js';
+import { renderSkeleton } from '../components/loading.js';
 
 export async function renderChapterList(draftId) {
   const container = document.getElementById('main-content');
-  container.innerHTML = '<div class="loading">Loading table of contents...</div>';
+  container.innerHTML = '';
+  renderSkeleton(container, 'chapters');
 
   let chapters = [];
   try {
@@ -19,7 +21,7 @@ export async function renderChapterList(draftId) {
     return;
   }
 
-  container.innerHTML = '';
+  container.querySelector('.skeleton-wrap')?.remove();
 
   // ── Floating back → library ──
   document.querySelector('.floating-back')?.remove();
