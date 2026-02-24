@@ -27,7 +27,14 @@ export function toggleRole() {
 }
 
 export async function getClientPrincipal() {
-    const res = await fetch('/.auth/me');
-    const data = await res.json();
-    return data.clientPrincipal; // Will be null if not logged in
+    try {
+        const res = await fetch('/.auth/me');
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.clientPrincipal ?? null; // null if not logged in
+    } catch {
+        // /.auth/me only exists in Azure SWA environments.
+        // Return null gracefully in local dev or if the endpoint is unreachable.
+        return null;
+    }
 }
