@@ -7,13 +7,16 @@ import { renderSkeleton } from '../components/loading.js';
 export async function renderChapterList(draftId) {
   const container = document.getElementById('main-content');
   container.innerHTML = '';
-  renderSkeleton(container, 'chapters');
+  const skeletonWrapper = document.createElement('div');
+  skeletonWrapper.id = 'skeleton-wrapper';
+  container.appendChild(skeletonWrapper);
+  renderSkeleton(skeletonWrapper, 'chapters');
 
   let chapters = [];
   try {
     chapters = await getChapters(draftId) || [];
   } catch (err) {
-    container.innerHTML = '';
+    document.getElementById('skeleton-wrapper')?.remove();
     const errEl = document.createElement('div');
     errEl.className = 'empty-library';
     errEl.textContent = 'Failed to load chapters.';
@@ -21,7 +24,7 @@ export async function renderChapterList(draftId) {
     return;
   }
 
-  container.querySelector('.skeleton-wrap')?.remove();
+  document.getElementById('skeleton-wrapper')?.remove();
 
   // ── Floating back → library ──
   document.querySelector('.floating-back')?.remove();

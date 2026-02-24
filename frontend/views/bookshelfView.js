@@ -1,12 +1,11 @@
 import { getNovels } from '../services/novelService.js';
 import { groupNovels } from '../utils/groupNovels.js';
-import { renderChapterList } from './chapterListView.js';
 import { renderAuthButton } from '../components/authButton.js';
+import { renderSkeleton } from '../components/loading.js';
 import {
   getUser, isAuthor, getNovelsCache, invalidateNovels,
   getProgressPercent, getLastChapter
 } from '../core/appState.js';
-import { renderSkeleton } from '../components/loading.js';
 
 const containerId = 'main-content';
 
@@ -14,16 +13,19 @@ export async function renderBookshelf() {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
 
-  // ── Auth button ──
+  // ── Auth button — in its own wrapper, never cleared ──
   const authWrapper = document.createElement('div');
   authWrapper.id = 'auth-container';
   authWrapper.appendChild(await renderAuthButton());
   container.appendChild(authWrapper);
 
-  // ── Skeleton while loading ──
-  renderSkeleton(container, 'bookshelf');
+  // ── Skeleton — in its own wrapper below auth ──
+  const skeletonWrapper = document.createElement('div');
+  skeletonWrapper.id = 'skeleton-wrapper';
+  container.appendChild(skeletonWrapper);
+  renderSkeleton(skeletonWrapper, 'bookshelf');
 
-  // ── Load novels (from cache if available) ──
+  // ── Load novels ──
   let novels = [];
   try {
     novels = await getNovelsCache(async () => {
@@ -31,15 +33,16 @@ export async function renderBookshelf() {
       return Array.isArray(res) ? res : (res?.data || []);
     });
   } catch (err) {
+    skeletonWrapper.remove();
     const errEl = document.createElement('div');
     errEl.className = 'empty-library';
-    errEl.textContent = 'Failed to load library.';
+    errEl.textContent = 'Failed to load library. Please try again.';
     container.appendChild(errEl);
     console.error(err);
     return;
   }
 
-  container.querySelector('.skeleton-wrap')?.remove();
+  skeletonWrapper.remove();
 
   if (!novels.length) {
     const empty = document.createElement('div');
@@ -49,7 +52,7 @@ export async function renderBookshelf() {
     return;
   }
 
-  // ── Continue Reading banner (most recently read draft) ──
+  // ── Continue Reading banner ──
   const continueEntry = getMostRecentRead(novels);
   if (continueEntry) {
     container.appendChild(renderContinueBanner(continueEntry));
@@ -95,9 +98,9 @@ export async function renderBookshelf() {
   }, { once: true });
 }
 
-// ─── Draft card with progress bar ─────────────────────────────────────────────
+// ─── Draft card ───────────────────────────────────────────────────────────────
 function renderDraftCard(draft) {
-  const totalChapters = draft.chapter_count || draft.drafts?.length || 0;
+  const totalChapters = draft.chapter_count || 0;
   const progressPct   = getProgressPercent(draft._id, totalChapters);
   const lastChapter   = getLastChapter(draft._id);
   const hasStarted    = progressPct > 0;
@@ -107,17 +110,14 @@ function renderDraftCard(draft) {
   card.className = 'book-card';
   card.dataset.draftId = draft._id;
 
-  // Title row
   const titleRow = document.createElement('div');
   titleRow.className = 'book-card-title';
   titleRow.textContent = draft.display_name || draft.name || 'Untitled';
   card.appendChild(titleRow);
 
-  // Progress bar (only shown if user has started)
   if (hasStarted) {
     const barWrap = document.createElement('div');
     barWrap.className = 'goal-container';
-
     const bar = document.createElement('div');
     bar.className = 'goal-fill';
     bar.style.width = `${Math.round(progressPct * 100)}%`;
@@ -127,14 +127,11 @@ function renderDraftCard(draft) {
 
     const barMeta = document.createElement('div');
     barMeta.className = 'book-card-meta';
-    barMeta.textContent = isComplete
-      ? '✓ Finished'
-      : `${Math.round(progressPct * 100)}% read`;
+    barMeta.textContent = isComplete ? '✓ Finished' : `${Math.round(progressPct * 100)}% read`;
     if (isComplete) barMeta.style.color = 'var(--success-color)';
     card.appendChild(barMeta);
   }
 
-  // Continue / Start link
   const actionLink = document.createElement('a');
   actionLink.className = 'book-card-action';
   if (hasStarted && lastChapter && !isComplete) {
@@ -149,16 +146,15 @@ function renderDraftCard(draft) {
   }
   card.appendChild(actionLink);
 
-  // Whole card also navigates to chapter list
   card.onclick = (e) => {
-    if (e.target === actionLink) return; // let the link handle it
+    if (e.target === actionLink) return;
     window.location.href = `/?book=${draft._id}`;
   };
 
   return card;
 }
 
-// ─── Continue reading banner ───────────────────────────────────────────────────
+// ─── Continue reading banner ──────────────────────────────────────────────────
 function renderContinueBanner({ draft, chapterId }) {
   const banner = document.createElement('div');
   banner.className = 'continue-banner';
@@ -182,19 +178,20 @@ function renderContinueBanner({ draft, chapterId }) {
   return banner;
 }
 
-// ─── Find most recently read draft across all novels ──────────────────────────
+// ─── Most recently read ───────────────────────────────────────────────────────
 function getMostRecentRead(novels) {
   let best = null;
   let bestTime = null;
+  const progress = JSON.parse(localStorage.getItem('bespoke_reading_progress') || '{}');
 
   novels.forEach(manuscript => {
     (manuscript.drafts || []).forEach(draft => {
-      const progress = JSON.parse(localStorage.getItem('bespoke_reading_progress') || '{}')[draft._id];
-      if (!progress?.chapter_id) return;
-      const t = new Date(progress.last_read || 0);
+      const entry = progress[draft._id];
+      if (!entry?.chapter_id) return;
+      const t = new Date(entry.last_read || 0);
       if (!bestTime || t > bestTime) {
         bestTime = t;
-        best = { draft, chapterId: progress.chapter_id };
+        best = { draft, chapterId: entry.chapter_id };
       }
     });
   });

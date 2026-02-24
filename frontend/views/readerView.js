@@ -18,12 +18,16 @@ function debounce(fn, ms) {
 export async function renderReader(chapterId) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
-  renderSkeleton(container, 'reader');
+  const skeletonWrapper = document.createElement('div');
+  skeletonWrapper.id = 'skeleton-wrapper';
+  container.appendChild(skeletonWrapper);
+  renderSkeleton(skeletonWrapper, 'reader');
 
   let chapter;
   try {
     chapter = await getChapter(chapterId);
   } catch (err) {
+    document.getElementById('skeleton-wrapper')?.remove();
     const errEl = document.createElement('div');
     errEl.className = 'empty-library';
     errEl.textContent = 'Failed to load chapter.';
@@ -31,7 +35,7 @@ export async function renderReader(chapterId) {
     return;
   }
 
-  container.querySelector('.skeleton-wrap')?.remove();
+  document.getElementById('skeleton-wrapper')?.remove();
 
   const draftId = chapter.draft_id;
 

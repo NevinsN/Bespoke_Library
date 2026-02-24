@@ -7,7 +7,7 @@
  */
 
 export function renderSkeleton(container, type = 'bookshelf') {
-  container.innerHTML = '';
+  // Appends into container — does NOT clear it. Caller controls surrounding content.
   const wrap = document.createElement('div');
   wrap.className = 'skeleton-wrap';
 
