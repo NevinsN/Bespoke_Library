@@ -1,5 +1,5 @@
 import { getNovels } from '../services/novelService.js';
-import { processUpload } from '../services/authorService.js'; // new service for uploading
+import { processUpload } from '../services/author_service.js'; // new service for uploading
 import JSZip from 'jszip'; // npm package for zip preview
 
 const containerId = 'main-content';
