@@ -4,8 +4,8 @@ export async function getNovels() {
   return await apiFetch('/GetNovels', {}, { returnFull: true });
 }
 
-export async function getChapters(bookId) {
-  return await apiFetch(`/GetChapters?manuscript_id=${bookId}`, {}, { returnFull: true });
+export async function getChapters(draftId) {
+  return await apiFetch(`/GetChapters?draft_id=${draftId}`, {}, { returnFull: true });
 }
 
 export async function getChapter(chapterId) {

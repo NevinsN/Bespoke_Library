@@ -1,64 +1,76 @@
-// frontend/views/renderChapterList.js
 import { getChapters } from '../services/novelService.js';
 
-export async function renderChapterList(bookId) {
+export async function renderChapterList(draftId) {
   const container = document.getElementById('main-content');
-  container.innerHTML = `<div class="loading">Loading table of contents...</div>`;
+  container.innerHTML = '<div class="loading">Loading table of contents...</div>';
 
   let chapters = [];
   try {
-    chapters = await getChapters(bookId) || [];
+    chapters = await getChapters(draftId) || [];
   } catch (err) {
-    container.innerHTML = `<div class="empty-library">Failed to load chapters.</div>`;
+    container.innerHTML = '';
+    const errEl = document.createElement('div');
+    errEl.className = 'empty-library';
+    errEl.textContent = 'Failed to load chapters.';
+    container.appendChild(errEl);
     console.error(err);
     return;
   }
 
+  container.innerHTML = '';
+
+  // ── Floating back button → library ──
+  const backBtn = document.createElement('a');
+  backBtn.href = '/';
+  backBtn.className = 'floating-back';
+  backBtn.textContent = '← Library';
+  document.body.appendChild(backBtn);
+
+  window.addEventListener('popstate', () => backBtn.remove(), { once: true });
+
   if (!chapters.length) {
-    container.innerHTML = `<div class="empty-library">No chapters found for this draft.</div>`;
+    const empty = document.createElement('div');
+    empty.className = 'empty-library';
+    empty.textContent = 'No chapters found for this draft.';
+    container.appendChild(empty);
     return;
   }
 
-  const manuscriptName = chapters[0].manuscript_display_name || 'Untitled Manuscript';
-  const totalWords = chapters.reduce((sum, ch) => sum + (ch.word_count || 0), 0);
-
-  const chapterListEl = document.createElement('div');
-  chapterListEl.id = 'chapter-view';
-
-  const backLink = document.createElement('a');
-  backLink.href = '/';
-  backLink.textContent = '← Back to Library';
-  backLink.className = 'back-link';
-  chapterListEl.appendChild(backLink);
+  const wrap = document.createElement('div');
+  wrap.className = 'chapter-list-wrap';
 
   const titleEl = document.createElement('h1');
-  titleEl.textContent = manuscriptName;
-  chapterListEl.appendChild(titleEl);
+  titleEl.className = 'chapter-list-title';
+  titleEl.textContent = chapters[0]?.manuscript_display_name || 'Untitled Manuscript';
+  wrap.appendChild(titleEl);
 
+  const totalWords = chapters.reduce((sum, ch) => sum + (ch.word_count || 0), 0);
   const progressEl = document.createElement('p');
-  progressEl.innerHTML = `Total Progress: <strong>${totalWords.toLocaleString()} words</strong>`;
-  chapterListEl.appendChild(progressEl);
+  progressEl.className = 'chapter-list-meta';
+  progressEl.textContent = `${totalWords.toLocaleString()} words across ${chapters.length} chapter${chapters.length !== 1 ? 's' : ''}`;
+  wrap.appendChild(progressEl);
 
   const ul = document.createElement('ul');
   ul.className = 'chapter-list';
 
   chapters.forEach(ch => {
     const li = document.createElement('li');
+    li.className = 'chapter-list-item';
 
     const a = document.createElement('a');
     a.href = `/?id=${ch._id}`;
+    a.className = 'chapter-list-link';
     a.textContent = ch.title || 'Untitled Chapter';
     li.appendChild(a);
 
-    const metaSpan = document.createElement('span');
-    metaSpan.className = 'ch-metadata';
-    metaSpan.textContent = `${(ch.word_count || 0).toLocaleString()} words`;
-    li.appendChild(metaSpan);
+    const meta = document.createElement('span');
+    meta.className = 'ch-metadata';
+    meta.textContent = `${(ch.word_count || 0).toLocaleString()} words`;
+    li.appendChild(meta);
 
     ul.appendChild(li);
   });
 
-  chapterListEl.appendChild(ul);
-  container.innerHTML = ''; // clear loading
-  container.appendChild(chapterListEl);
+  wrap.appendChild(ul);
+  container.appendChild(wrap);
 }

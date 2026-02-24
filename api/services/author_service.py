@@ -1,120 +1,131 @@
-# services/author_service.py
-
-import re
-from repositories.novel_repo import (
+from services.permission_service import can_write, can_manage
+from repositories.series_repo import create_series, get_series_by_name
+from repositories.manuscript_repo import create_manuscript, get_manuscript_by_id
+from repositories.draft_repo import (
+    create_draft,
+    get_draft_by_id,
+    get_drafts_for_manuscript,
+)
+from repositories.chapter_repo import (
     insert_chapter,
     update_chapter,
-    find_chapter_by_filename,
+    get_chapter_by_filename,
     get_next_order,
     get_chapters_for_draft,
-    get_drafts_for_book,
+    delete_chapters_for_draft,
 )
-from bson.objectid import ObjectId
-from datetime import datetime
+from repositories.access_repo import grant_access
 
-# -----------------------------
-# Project / Draft Creation
-# -----------------------------
-def create_new_project(body):
+
+def create_new_project(body, owner_email):
     """
-    Create a new manuscript/project with its initial draft.
-    Expects body to include:
-      - series
-      - book
-      - draft
-      - display_name (optional)
-      - owner
-      - authors (list)
-      - readers (list)
+    Create a new series (if needed) + manuscript + initial draft.
+    Automatically grants the creator owner access at the series level.
+
+    Body fields:
+      - series_name   (str) — will reuse existing series if name matches
+      - book          (str)
+      - draft_name    (str) — name of the first draft, defaults to "Draft One"
+      - display_name  (str) — optional, defaults to book name
     """
-    series = body.get("series", "Standalone")
+    series_name = body.get("series_name", "Standalone")
     book = body.get("book", "Novel")
-    draft_name = body.get("draft", "Draft One")
-    display_name = body.get("display_name") or f"{series}: {book}"
-    owner = body.get("owner")
-    authors = body.get("authors", [owner])
-    readers = body.get("readers", [])
+    draft_name = body.get("draft_name", "Draft One")
+    display_name = body.get("display_name") or book
 
-    # manuscript_id derived from display_name
-    man_id = re.sub(r"[^a-z0-9]", "-", display_name.lower())
+    # Reuse existing series by name, or create a new one
+    existing_series = get_series_by_name(series_name)
+    if existing_series:
+        series_id = str(existing_series["_id"])
+        # Verify the creator has owner rights on this series
+        if not can_manage(owner_email, series_id=series_id):
+            raise PermissionError(f"You do not own the series '{series_name}'.")
+    else:
+        series_id = str(create_series(series_name, owner_email))
+        # Grant owner access on the new series
+        grant_access(
+            email=owner_email,
+            scope_type="series",
+            scope_id=series_id,
+            role="owner",
+            granted_by=owner_email,
+        )
 
-    # Initial chapter (front matter)
-    chapter_doc = {
-        "manuscript_id": man_id,
-        "manuscript_display_name": display_name,
-        "series": series,
-        "book": book,
-        "draft_name": draft_name,
-        "title": "Front Matter",
-        "content": "<h1>New Project Created</h1>",
-        "word_count": 0,
-        "order": 0,
-        "date_added": datetime.utcnow(),
-        "owner": owner,
-        "authors": authors,
-        "readers": readers,
-        "filename": "front_matter.md",
-    }
+    manuscript_id = str(create_manuscript(series_id, book, display_name, owner_email))
+    draft_id = str(create_draft(manuscript_id, draft_name))
 
-    chapter_id = insert_chapter(chapter_doc)
+    # Grant owner access on the manuscript too (for direct manuscript checks)
+    grant_access(
+        email=owner_email,
+        scope_type="manuscript",
+        scope_id=manuscript_id,
+        role="owner",
+        granted_by=owner_email,
+    )
 
     return {
-        "manuscript_id": man_id,
+        "series_id": series_id,
+        "manuscript_id": manuscript_id,
+        "draft_id": draft_id,
         "draft_name": draft_name,
-        "chapter_id": str(chapter_id),
         "display_name": display_name,
     }
 
-# -----------------------------
-# Chapter Upload Handling
-# -----------------------------
-def process_uploaded_chapters(manuscript_id, draft_name, files, sequential=True):
+
+def process_uploaded_chapters(user_email, draft_id, files, sequential=True):
     """
-    Process uploaded files for a draft.
+    Upsert chapters into a draft. Enforces write permission.
 
     Args:
-        manuscript_id (str)
-        draft_name (str)
-        files (list of dicts):
-            {
-                "filename": "Chapter1.docx",
-                "title": "Chapter 1",
-                "content": "...text...",
-                "slot": int (optional, for non-sequential)
-            }
-        sequential (bool): append sequentially (True) or use provided slots (False)
+        user_email (str)
+        draft_id (str)
+        files (list of dicts): {filename, title, content, slot?}
+        sequential (bool)
 
     Returns:
-        dict: {"added": [], "updated": [], "skipped": []}
+        {"added": [...ids], "updated": [...ids]}
     """
-    result = {"added": [], "updated": [], "skipped": []}
+    draft = get_draft_by_id(draft_id)
+    if not draft:
+        raise ValueError("Draft not found.")
 
-    current_order = get_next_order(manuscript_id, draft_name) if sequential else None
+    manuscript_id = draft["manuscript_id"]
+    manuscript = get_manuscript_by_id(manuscript_id)
+    if not manuscript:
+        raise ValueError("Manuscript not found.")
+
+    series_id = manuscript.get("series_id")
+
+    if not can_write(user_email, series_id=series_id, manuscript_id=manuscript_id):
+        raise PermissionError("You do not have write access to this draft.")
+
+    result = {"added": [], "updated": []}
+    current_order = get_next_order(draft_id) if sequential else None
 
     for file in files:
         filename = file.get("filename")
         title = file.get("title") or filename
         content = file.get("content", "")
-        slot = file.get("slot") if not sequential else current_order
+        order = current_order if sequential else int(file.get("slot", 0))
 
-        # Check for duplicates in this draft
-        existing = find_chapter_by_filename(draft_name, filename, manuscript_id)
-
-        chapter_doc = {
-            "manuscript_id": manuscript_id,
-            "draft_name": draft_name,
-            "title": title,
-            "content": content,
-            "order": slot,
-            "filename": filename,
-            "date_added": datetime.utcnow(),
-        }
+        existing = get_chapter_by_filename(draft_id, filename)
 
         if existing:
-            update_chapter(existing["_id"], chapter_doc)
+            update_chapter(existing["_id"], {
+                "title": title,
+                "content": content,
+                "order": order,
+            })
             result["updated"].append(str(existing["_id"]))
         else:
-            new_id = insert_chapter(chapter_doc)
+            new_id = insert_chapter(
+                draft_id=draft_id,
+                manuscript_id=manuscript_id,
+                title=title,
+                filename=filename,
+                content=content,
+                order=order,
+            )
             result["added"].append(str(new_id))
 
         if sequential:
@@ -122,23 +133,38 @@ def process_uploaded_chapters(manuscript_id, draft_name, files, sequential=True)
 
     return result
 
-# -----------------------------
-# Fetch Chapters for UI
-# -----------------------------
-def get_draft_chapters(manuscript_id, draft_name):
-    """
-    Returns all chapters for a draft (excluding content for listing).
-    """
-    chapters = get_chapters_for_draft(manuscript_id, draft_name)
+
+def get_draft_chapters(user_email, draft_id):
+    """Returns chapter list for a draft. Enforces write access (author view)."""
+    draft = get_draft_by_id(draft_id)
+    if not draft:
+        raise ValueError("Draft not found.")
+
+    manuscript = get_manuscript_by_id(draft["manuscript_id"])
+    series_id = manuscript.get("series_id") if manuscript else None
+
+    if not can_write(user_email, series_id=series_id, manuscript_id=draft["manuscript_id"]):
+        raise PermissionError("Access denied.")
+
+    chapters = get_chapters_for_draft(draft_id, include_content=False)
     for ch in chapters:
         ch["_id"] = str(ch["_id"])
+        ch["draft_id"] = str(ch["draft_id"])
     return chapters
 
-# -----------------------------
-# Draft Utilities
-# -----------------------------
-def list_drafts(manuscript_id):
-    """
-    Returns list of draft names for a manuscript
-    """
-    return get_drafts_for_book(manuscript_id)
+
+def list_drafts(user_email, manuscript_id):
+    """All drafts for a manuscript. Authors and owners see everything."""
+    manuscript = get_manuscript_by_id(manuscript_id)
+    if not manuscript:
+        raise ValueError("Manuscript not found.")
+
+    series_id = manuscript.get("series_id")
+
+    if not can_write(user_email, series_id=series_id, manuscript_id=manuscript_id):
+        raise PermissionError("Access denied.")
+
+    drafts = get_drafts_for_manuscript(manuscript_id)
+    for d in drafts:
+        d["_id"] = str(d["_id"])
+    return drafts

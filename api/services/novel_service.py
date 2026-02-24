@@ -1,44 +1,77 @@
-# services/novel_service.py
+from services.permission_service import get_visible_manuscripts, can_read
+from repositories.series_repo import get_series_by_id
+from repositories.chapter_repo import (
+    get_chapters_for_draft,
+    get_chapter_by_id,
+    get_neighboring_chapter,
+)
+from repositories.draft_repo import get_draft_by_id
 
-import os
-import logging
-from repositories.novel_repo import get_aggregated_novels, get_user_record, get_chapters_by_manuscript, get_chapter_by_id, get_neighboring_chapter
-
-ADMIN_EMAILS = [e.strip() for e in os.getenv("ADMIN_EMAIL", "").split(",") if e]
 
 def get_authorized_novels(user):
-    user_email = user.get('email')
-    all_novels = get_aggregated_novels()
-    
-    # Admin bypass
-    if user_email in ADMIN_EMAILS:
-        return all_novels
+    """
+    Returns the full library view for a user — series → manuscripts → drafts.
+    Enriches each manuscript with its series name for display.
+    """
+    email = user.get("email")
+    manuscripts = get_visible_manuscripts(email)
 
-    # Standard User filtering
-    user_record = get_user_record(user_email)
-    if not user_record:
-        return []
-    
-    allowed_ids = [m['id'] for m in user_record.get('authorized_manuscripts', [])]
-    return [n for n in all_novels if n['_id'] in allowed_ids]
+    # Attach series name to each manuscript for the frontend grouping
+    series_cache = {}
+    for m in manuscripts:
+        sid = m.get("series_id")
+        if sid and sid not in series_cache:
+            s = get_series_by_id(sid)
+            series_cache[sid] = s["name"] if s else "Standalone"
+        m["series_name"] = series_cache.get(sid, "Standalone")
 
-def get_manuscript_toc(m_id):
-    chapters = get_chapters_by_manuscript(m_id)
-    for c in chapters: 
-        c['_id'] = str(c['_id'])
-    return chapters
+    return manuscripts
 
-def get_full_chapter(ch_id):
-    chapter = get_chapter_by_id(ch_id)
+
+def get_manuscript_toc(user, draft_id):
+    """
+    Returns the chapter list for a draft the user can read.
+    Enforces read permission before returning content.
+    """
+    draft = get_draft_by_id(draft_id)
+    if not draft:
+        return None, "Draft not found"
+
+    manuscript_id = draft["manuscript_id"]
+
+    if not can_read(user.get("email"), manuscript_id=manuscript_id, draft_id=draft_id):
+        return None, "Forbidden"
+
+    chapters = get_chapters_for_draft(draft_id, include_content=False)
+    for c in chapters:
+        c["_id"] = str(c["_id"])
+        c["draft_id"] = str(c["draft_id"])
+    return chapters, None
+
+
+def get_full_chapter(user, chapter_id):
+    """
+    Returns a chapter with prev/next navigation IDs.
+    Enforces read permission.
+    """
+    chapter = get_chapter_by_id(chapter_id)
     if not chapter:
-        return None
+        return None, "Chapter not found"
 
-    # Logic for navigation IDs
-    prev_ch = get_neighboring_chapter(chapter['manuscript_id'], chapter['order'] - 1)
-    next_ch = get_neighboring_chapter(chapter['manuscript_id'], chapter['order'] + 1)
+    draft_id = str(chapter["draft_id"])
+    manuscript_id = str(chapter["manuscript_id"])
 
-    chapter['_id'] = str(chapter['_id'])
-    chapter['prev_id'] = str(prev_ch.get('_id')) if prev_ch else None
-    chapter['next_id'] = str(next_ch.get('_id')) if next_ch else None
-    
-    return chapter
+    if not can_read(user.get("email"), manuscript_id=manuscript_id, draft_id=draft_id):
+        return None, "Forbidden"
+
+    order = chapter["order"]
+    prev_ch = get_neighboring_chapter(manuscript_id, draft_id, order - 1)
+    next_ch = get_neighboring_chapter(manuscript_id, draft_id, order + 1)
+
+    chapter["_id"] = str(chapter["_id"])
+    chapter["draft_id"] = draft_id
+    chapter["manuscript_id"] = manuscript_id
+    chapter["prev_id"] = str(prev_ch["_id"]) if prev_ch else None
+    chapter["next_id"] = str(next_ch["_id"]) if next_ch else None
+
+    return chapter, None

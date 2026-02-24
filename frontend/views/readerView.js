@@ -1,5 +1,4 @@
-import { getChapter, getChapters } from '../services/novelService.js';
-import { toggleRole } from '../core/state.js';
+import { getChapter } from '../services/novelService.js';
 
 const containerId = 'main-content';
 
@@ -7,46 +6,64 @@ export async function renderReader(chapterId) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
 
-  const chapter = await getChapter(chapterId);
+  let chapter;
+  try {
+    chapter = await getChapter(chapterId);
+  } catch (err) {
+    const errEl = document.createElement('div');
+    errEl.className = 'empty-library';
+    errEl.textContent = 'Failed to load chapter.';
+    container.appendChild(errEl);
+    return;
+  }
+
+  // ── Floating back button → chapter list ──
+  const backBtn = document.createElement('a');
+  backBtn.href = `/?book=${chapter.draft_id}`;
+  backBtn.className = 'floating-back';
+  backBtn.textContent = '← Chapters';
+  document.body.appendChild(backBtn);
+
+  // Remove when navigating away
+  window.addEventListener('popstate', () => backBtn.remove(), { once: true });
+
+  // ── Chapter content ──
+  const article = document.createElement('article');
+  article.className = 'reader-article';
 
   const title = document.createElement('h1');
+  title.className = 'reader-title';
   title.textContent = chapter.title;
+  article.appendChild(title);
 
   const content = document.createElement('div');
+  content.className = 'reader-content';
   content.innerHTML = chapter.content;
+  article.appendChild(content);
 
-  // 🔁 Role toggle button
-  const toggleBtn = document.createElement('button');
-  toggleBtn.textContent = 'Switch Role';
-  toggleBtn.onclick = toggleRole;
+  // ── Bottom nav ──
+  if (chapter.prev_id || chapter.next_id) {
+    const bottomNav = document.createElement('div');
+    bottomNav.className = 'reader-bottom-nav';
 
-  container.appendChild(toggleBtn);
-  container.appendChild(title);
-  container.appendChild(content);
+    if (chapter.prev_id) {
+      const prev = document.createElement('a');
+      prev.href = `/?id=${chapter.prev_id}`;
+      prev.className = 'reader-nav-btn';
+      prev.textContent = '← Previous Chapter';
+      bottomNav.appendChild(prev);
+    }
 
-  // ⬅️➡️ Navigation
-  const chapters = await getChapters(chapter.manuscript_id);
-  const index = chapters.findIndex(c => c._id === chapterId);
+    if (chapter.next_id) {
+      const next = document.createElement('a');
+      next.href = `/?id=${chapter.next_id}`;
+      next.className = 'reader-nav-btn';
+      next.textContent = 'Next Chapter →';
+      bottomNav.appendChild(next);
+    }
 
-  const nav = document.createElement('div');
-
-  if (index > 0) {
-    const prev = document.createElement('button');
-    prev.textContent = 'Previous';
-    prev.onclick = () => {
-      window.location.search = `?id=${chapters[index - 1]._id}`;
-    };
-    nav.appendChild(prev);
+    article.appendChild(bottomNav);
   }
 
-  if (index < chapters.length - 1) {
-    const next = document.createElement('button');
-    next.textContent = 'Next';
-    next.onclick = () => {
-      window.location.search = `?id=${chapters[index + 1]._id}`;
-    };
-    nav.appendChild(next);
-  }
-
-  container.appendChild(nav);
+  container.appendChild(article);
 }

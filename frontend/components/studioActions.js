@@ -1,21 +1,12 @@
-import { createManuscript } from '../services/novelService.js';
+// studioActions.js
+// Retained for any inline upload button usage outside the studio view.
 
-export function renderCreateModal(onSuccess) {
-    const name = prompt("Enter the name of the new manuscript:");
-    if (!name) return;
-
-    createManuscript({ display_name: name })
-        .then(() => {
-            alert("Manuscript created successfully!");
-            onSuccess(); // Refresh the view
-        })
-        .catch(err => alert("Error: " + err.message));
-}
-
-export function uploadButton(manuscriptId) {
-    return `
-        <button class="btn-upload" onclick="triggerUpload('${manuscriptId}')">
-            ↑ Upload Chapters
-        </button>
-    `;
+export function uploadButton(draftId, label = '↑ Upload Chapters') {
+    const btn = document.createElement('button');
+    btn.className = 'studio-btn small';
+    btn.textContent = label;
+    btn.onclick = () => {
+        import('../views/authorStudioView.js').then(mod => mod.renderAuthorStudio());
+    };
+    return btn;
 }

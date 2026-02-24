@@ -29,19 +29,13 @@ export async function renderBookshelf() {
       meta = res.meta || {};
     }
   } catch (err) {
-    const errEl = document.createElement('div');
-    errEl.className = 'empty-library';
-    errEl.textContent = 'Failed to load library.';
-    container.appendChild(errEl);
+    container.innerHTML += `<div class="empty-library">Failed to load library.</div>`;
     console.error(err);
     return;
   }
 
   if (!novels.length) {
-    const emptyEl = document.createElement('div');
-    emptyEl.className = 'empty-library';
-    emptyEl.textContent = 'No books available.';
-    container.appendChild(emptyEl);
+    container.innerHTML += `<div class="empty-library">No books available.</div>`;
     return;
   }
 

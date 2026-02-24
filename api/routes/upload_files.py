@@ -1,63 +1,53 @@
-# routes/upload_files.py
 import azure.functions as func
-import json
 from services.author_service import process_uploaded_chapters
+from repositories.draft_repo import get_draft_by_id
 from utils.auth import extract_user
+from utils.response import ok, error
 
-app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
-@app.route(route="UploadFiles", methods=["POST"])
-def upload_files_route(req: func.HttpRequest) -> func.HttpResponse:
+def handle_upload_files(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    Expects multipart/form-data:
+      - files[]      one or more uploaded files
+      - draft_id     target draft _id
+      - sequential   "true" | "false"
+      - slot_<filename>  (optional, for non-sequential uploads)
+    """
     try:
         user = extract_user(req)
         if not user:
-            return func.HttpResponse(
-                json.dumps({"success": False, "error": "Unauthorized"}),
-                status_code=401,
-                mimetype="application/json"
-            )
+            return error("Unauthorized", 401)
 
-        # Retrieve form-data
-        files = req.files.getlist("files")  # List of uploaded files
-        series_name = req.form.get("series_name")
-        book_name = req.form.get("book_name")
-        draft_name = req.form.get("draft_name")
-        sequential = req.form.get("sequential") == "true"
+        files = req.files.getlist("files")
+        draft_id = req.form.get("draft_id")
+        sequential = req.form.get("sequential", "true") == "true"
 
-        if not (series_name and book_name and draft_name):
-            return func.HttpResponse(
-                json.dumps({"success": False, "error": "Missing series/book/draft info"}),
-                status_code=400,
-                mimetype="application/json"
-            )
+        if not draft_id:
+            return error("Missing draft_id", 400)
+        if not files:
+            return error("No files provided", 400)
 
-        # Transform uploaded files into expected structure for the service
         files_payload = []
         for f in files:
             content = f.stream.read().decode("utf-8")
             files_payload.append({
                 "filename": f.filename,
-                "title": f.filename.replace('.md', ''),
-                "content": content
+                "title": f.filename.rsplit(".", 1)[0].replace("_", " ").replace("-", " "),
+                "content": content,
+                "slot": req.form.get(f"slot_{f.filename}"),
             })
 
-        # Process upload via author service
         result = process_uploaded_chapters(
-            manuscript_id=f"{series_name}-{book_name}-{draft_name}".lower().replace(" ", "-"),
-            draft_name=draft_name,
+            user_email=user["email"],
+            draft_id=draft_id,
             files=files_payload,
-            sequential=sequential
+            sequential=sequential,
         )
+        return ok(result)
 
-        return func.HttpResponse(
-            json.dumps({"success": True, "result": result}),
-            status_code=200,
-            mimetype="application/json"
-        )
-
+    except PermissionError as e:
+        return error(str(e), 403)
+    except ValueError as e:
+        return error(str(e), 404)
     except Exception as e:
-        return func.HttpResponse(
-            json.dumps({"success": False, "error": str(e)}),
-            status_code=500,
-            mimetype="application/json"
-        )
+        return error(str(e))
