@@ -1,4 +1,4 @@
 azure-functions
-pymongo
+pymongo[srv]
 python-dotenv
 markdown

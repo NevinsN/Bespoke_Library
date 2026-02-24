@@ -1,198 +1,155 @@
-# Bespoke Library  
-**Cloud-native manuscript platform with secure access control (Azure)**
+# Bespoke Library
 
-Live: https://bespoke.nicholasnevins.org  
+A private reading platform for manuscript authors to share their work with a curated audience — built as both a working product and a portfolio demonstration of full-stack engineering on Azure.
+
+Live at [nicholasnevins.org](https://nicholasnevins.org)
 
 ---
 
-## Overview
+## What it does
 
-Bespoke Library is a full-stack Azure application that enables authors to securely distribute unpublished manuscripts to a controlled audience.
-
-It is deployed as a **dedicated Azure Static Web App (SWA)** under a subdomain of a separate React-based portfolio site, demonstrating separation of concerns across independently deployed systems.
-
-The system is designed around a core challenge:
-
-> How do you share sensitive content while maintaining strict control over access, versioning, and user experience?
-
-This project demonstrates:
-- Cloud architecture on Azure (serverless + managed services)
-- Backend-enforced authorization and data integrity
-- Scalable NoSQL data modeling
-- Maintainable, layered system design
+Authors upload novel manuscripts (`.md` files or `.zip` archives) to a structured library. They control exactly who can read what — granting access at the series, book, or individual draft level. Readers get a clean, distraction-free reading experience that remembers where they left off.
 
 ---
 
 ## Architecture
 
-```
-                          ┌────────────────────────────┐
-                          │  React Portfolio (Main)    │
-                          │  nicholasnevins.org        │
-                          └────────────┬───────────────┘
-                                       │
-                                       │ Subdomain Routing
-                                       ▼
-                    ┌──────────────────────────────────────┐
-                    │ Azure Static Web App (Frontend)      │
-                    │ bespoke.nicholasnevins.org           │
-                    │                                      │
-                    │ - Vanilla JS (ES Modules)            │
-                    │ - AAD Auth via /.auth/me             │
-                    └────────────┬─────────────────────────┘
-                                 │
-                                 │ Authenticated API Calls
-                                 ▼
-                    ┌──────────────────────────────────────┐
-                    │ Azure Functions (Python - v2)        │
-                    │ Serverless API Layer                 │
-                    │                                      │
-                    │ Routes → Services → Repositories     │
-                    │                                      │
-                    │ - Permission enforcement             │
-                    │ - Invite redemption logic            │
-                    │ - Business rules                     │
-                    └────────────┬─────────────────────────┘
-                                 │
-                                 │ Queries / Writes
-                                 ▼
-                    ┌──────────────────────────────────────┐
-                    │ Azure Cosmos DB (MongoDB API)        │
-                    │                                      │
-                    │ Collections:                         │
-                    │ - series                             │
-                    │ - manuscripts                        │
-                    │ - drafts                             │
-                    │ - chapters                           │
-                    │ - access                             │
-                    │ - users                              │
-                    │ - invites                            │
-                    └──────────────────────────────────────┘
-```
+### Stack
 
----
+- **Frontend** — Vanilla JavaScript ES modules, no framework. Azure Static Web Apps hosts and handles AAD authentication.
+- **Backend** — Python Azure Functions (v2 programming model)
+- **Database** — Azure Cosmos DB for MongoDB API
 
-## Key Engineering Highlights
+### Database schema
 
-### Backend-enforced access control
+Five collections, normalised from an original flat design:
 
-- Hierarchical permissions: `series → manuscript → draft`  
-- Roles: `owner`, `author`, `reader`  
-- Cascading resolution across hierarchy  
+| Collection | Purpose |
+|---|---|
+| `series` | Top-level grouping of manuscripts |
+| `manuscripts` | Individual books within a series |
+| `drafts` | Versioned drafts of a manuscript |
+| `chapters` | Individual chapter documents with content |
+| `access` | All permission grants (scope-typed) |
+| `users` | User records, created on first login |
+| `invites` | Time-limited invite tokens |
 
-All authorization is enforced server-side in `api/services/permission_service.py`.
+### Permission model
 
-The frontend makes **zero security decisions**, enforcing a proper trust boundary.
-
----
-
-### Atomic invite system (race-condition safe)
-
-- Token-based (`UUID`)
-- Time-limited and use-limited
-- Atomic redemption via `find_one_and_update`
-
-Prevents:
-- Duplicate redemptions  
-- Concurrency issues under simultaneous access  
-
----
-
-### Layered backend architecture
+Access is granted at three scopes (`series`, `manuscript`, `draft`) with three roles (`owner`, `author`, `reader`). Resolution walks the hierarchy — a series-level grant cascades to all manuscripts and drafts within it. Draft-level grants are reader-only; authorship can only be granted at series or manuscript level.
 
 ```
-Routes → Services → Repositories → Database
+Series owner     → full access to all manuscripts in series
+Manuscript owner → full access to that book
+Series author    → edit access to all drafts of all books in series
+Manuscript author → edit access to all drafts of that book
+Series reader    → read all books in series
+Manuscript reader → read all drafts of that book
+Draft reader     → read that specific draft only
 ```
 
-- **Routes**: thin HTTP handlers  
-- **Services**: business logic + permission enforcement  
-- **Repositories**: isolated database access  
+All permission checks are enforced on the backend (`permission_service.py`) before any data is returned or written. The frontend makes zero security decisions.
 
-Promotes maintainability, testability, and clear separation of concerns.
+### Invite system
 
----
+Owners generate time-limited, use-limited invite links from the Author Studio. Links carry a UUID token (`/?invite=<token>`). If the recipient isn't logged in, the token is saved to `sessionStorage`, the user is sent through AAD authentication, and the invite is redeemed automatically on return. Redemptions are atomic — a `find_one_and_update` with a use-count condition prevents race conditions if the same link is clicked simultaneously.
 
-### Data modeling (Cosmos DB)
+### Author Studio
 
-Collections:
+Authors upload chapters via a drag-and-drop interface. ZIP archives are expanded client-side using JSZip. Files can be reordered by dragging before upload, with editable title fields and word counts per file. Upload progress is tracked via `XMLHttpRequest` (Fetch does not expose upload progress).
 
-- `series`
-- `manuscripts`
-- `drafts`
-- `chapters`
-- `access`
-- `users`
-- `invites`
+### Reading progress
 
-Key design decisions:
-- Separate `access` collection enables **constant-time permission updates**  
-- Avoids document fan-out when permissions change  
-- Optimized for efficient “what can this user access?” queries  
+Progress is stored in `localStorage` keyed by `draft_id`, persisting across sessions. Scroll position is saved as a percentage (not pixels) so it survives window resizes. The bookshelf shows a per-draft progress bar and a "Continue Reading" section for the most recently active drafts.
 
 ---
 
-### Frontend design decisions
+## Project structure
 
-- Vanilla JavaScript (ES modules, no framework)  
-- Chosen to minimize complexity for a small, focused application  
-- Client-side ZIP parsing (JSZip) reduces backend load  
-- Upload progress handled via `XMLHttpRequest` (Fetch limitation workaround)  
-- Reading progress stored as percentages for resolution-independent persistence  
+```
+/
+├── api/                        # Azure Functions (Python)
+│   ├── function_app.py         # Route registration
+│   ├── routes/                 # HTTP handlers (thin layer)
+│   ├── services/               # Business logic + permission enforcement
+│   ├── repositories/           # Database access (one per collection)
+│   └── utils/                  # Auth extraction, response helpers
+├── frontend/                   # Static web app
+│   ├── core/                   # Router, state management
+│   ├── views/                  # Page-level render functions
+│   ├── components/             # Reusable UI components
+│   ├── services/               # API call wrappers
+│   └── utils/                  # groupNovels, markdown renderer
+├── migrate.py                  # One-time migration from v1 schema
+└── staticwebapp.config.json    # Azure SWA routing + auth config
+```
 
 ---
 
-## Tech Stack
+## API routes
 
-- **Frontend**: Vanilla JavaScript (ES Modules)  
-- **Backend**: Python Azure Functions (v2 programming model)  
-- **Database**: Azure Cosmos DB (MongoDB API)  
-- **Hosting/Auth**: Azure Static Web Apps (AAD authentication)  
+| Route | Method | Auth | Description |
+|---|---|---|---|
+| `GetNovels` | GET | Optional | All content visible to the current user |
+| `GetChapters` | GET | Optional | Chapter list for a draft |
+| `GetChapterContent` | GET | Optional | Single chapter with prev/next IDs |
+| `GetAuthoredManuscripts` | GET | Required | Manuscripts where user is owner/author |
+| `CreateProject` | POST | Required | Create series + manuscript + draft |
+| `GetDrafts` | GET | Required | Drafts for a manuscript (write access) |
+| `UploadFiles` | POST | Required | Upload chapters to a draft |
+| `CreateInvite` | POST | Required (owner) | Generate an invite link |
+| `RedeemInvite` | POST | Required | Redeem an invite token |
+| `RevokeInvite` | POST | Required (owner) | Revoke an active invite |
+| `ListInvites` | GET | Required (owner) | Active invites for a scope |
 
 ---
 
-## Running Locally
+## Running locally
+
+Azure Static Web Apps can be run locally with the [SWA CLI](https://azure.github.io/static-web-apps-cli/).
 
 ```bash
+# Install SWA CLI
 npm install -g @azure/static-web-apps-cli
 
-cd api
-pip install -r requirements.txt
+# Install Python dependencies
+cd api && pip install -r requirements.txt
 
+# Set environment variables
 export COSMOS_CONNECTION_STRING="..."
 export ADMIN_EMAIL="you@example.com"
 export APP_BASE_URL="http://localhost:4280"
 
+# Run
 swa start frontend --api-location api
 ```
+
+The `/.auth/me` endpoint is mocked by the SWA CLI locally, so authentication works without a live Azure tenant.
 
 ---
 
 ## Migration
 
+If migrating from the original single-collection schema:
+
 ```bash
 COSMOS_CONNECTION_STRING="..." python migrate.py
 ```
 
-- Idempotent  
-- Non-destructive  
-- Supports dry-run with `DRY_RUN=1`  
+The script is idempotent and non-destructive — it uses `_migration_old_id` tracking to skip already-migrated documents and does not drop the original `novels` collection. Verify the migration before dropping it manually.
+
+To preview what would be migrated without writing anything:
+
+```bash
+DRY_RUN=1 COSMOS_CONNECTION_STRING="..." python migrate.py
+```
 
 ---
 
-## What I’d Improve Next
+## Key design decisions
 
-- Add Azure Monitor + Application Insights for observability  
-- Introduce infrastructure-as-code (Bicep or Terraform)  
-- Implement rate limiting and abuse protection  
-- Expand integration test coverage (especially permission edge cases)  
+**Why Cosmos DB over SQL?** Manuscripts and chapters have a natural document shape — a chapter is always read with its content, never joined to other tables. Cosmos DB's MongoDB API gives document storage with a familiar query interface and horizontal scaling built in.
 
----
+**Why vanilla JS over React?** The app has three views and minimal shared state. A framework would add build complexity without meaningful benefit. ES modules give clean separation without a bundler.
 
-## Why This Project Matters
-
-This project demonstrates the ability to:
-
-- Design secure, backend-driven access control systems  
-- Build and structure cloud-native applications on Azure  
-- Make practical tradeoffs in NoSQL data modeling  
-- Think beyond features into reliability, scalability, and maintainability  
+**Why a separate `access` collection instead of embedding permissions?** Embedded permissions (e.g. an array on each manuscript) require updating every manuscript document when a series-level grant changes. A separate collection means one write for any grant change, regardless of how many manuscripts it affects. It also makes "what can this user see" a single indexed query rather than a full collection scan.
