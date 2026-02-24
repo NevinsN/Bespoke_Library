@@ -1,8 +1,6 @@
 # services/author_service.py
 
 import re
-import json
-
 from repositories.novel_repo import (
     insert_chapter,
     update_chapter,

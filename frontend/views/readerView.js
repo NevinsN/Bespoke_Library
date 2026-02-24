@@ -25,8 +25,8 @@ export async function renderReader(chapterId) {
   container.appendChild(content);
 
   // ⬅️➡️ Navigation
-  const chapters = await getChapters(chapter.bookId);
-  const index = chapters.findIndex(c => c.id === chapterId);
+  const chapters = await getChapters(chapter.manuscript_id);
+  const index = chapters.findIndex(c => c._id === chapterId);
 
   const nav = document.createElement('div');
 
@@ -34,7 +34,7 @@ export async function renderReader(chapterId) {
     const prev = document.createElement('button');
     prev.textContent = 'Previous';
     prev.onclick = () => {
-      window.location.search = `?chapter=${chapters[index - 1].id}`;
+      window.location.search = `?id=${chapters[index - 1]._id}`;
     };
     nav.appendChild(prev);
   }
@@ -43,7 +43,7 @@ export async function renderReader(chapterId) {
     const next = document.createElement('button');
     next.textContent = 'Next';
     next.onclick = () => {
-      window.location.search = `?chapter=${chapters[index + 1].id}`;
+      window.location.search = `?id=${chapters[index + 1]._id}`;
     };
     nav.appendChild(next);
   }

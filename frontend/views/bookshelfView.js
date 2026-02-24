@@ -14,7 +14,7 @@ export async function renderBookshelf() {
   const authWrapper = document.createElement('div');
   authWrapper.id = 'auth-container';
   authWrapper.style.marginBottom = '20px';
-  authWrapper.appendChild(renderAuthButton()); // assumes this returns a button element
+  authWrapper.appendChild(await renderAuthButton()); // renderAuthButton is async
   container.appendChild(authWrapper);
 
   let novels = [];

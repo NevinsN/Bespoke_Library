@@ -1,6 +1,18 @@
 import { getNovels } from '../services/novelService.js';
-import { processUpload } from '../services/author_service.js'; // new service for uploading
-import JSZip from 'jszip'; // npm package for zip preview
+import { processUpload } from '../services/authorService.js';
+
+// Load JSZip dynamically from CDN
+async function getJSZip() {
+  if (window.JSZip) return window.JSZip;
+  await new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+  return window.JSZip;
+}
 
 const containerId = 'main-content';
 
@@ -47,6 +59,7 @@ export async function renderAuthorStudio() {
         for (const file of files) {
             if (file.name.endsWith('.zip')) {
                 // Preview ZIP contents
+                const JSZip = await getJSZip();
                 const zipData = await file.arrayBuffer();
                 const zip = await JSZip.loadAsync(zipData);
                 for (const [filename, f] of Object.entries(zip.files)) {
