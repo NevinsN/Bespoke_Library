@@ -1,0 +1,30 @@
+name: Run Access Migration
+
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    name: Migrate legacy data to new schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pymongo[srv] python-dotenv
+
+      - name: Dry run first
+        env:
+          COSMOS_CONNECTION_STRING: ${{ secrets.COSMOS_CONNECTION_STRING }}
+          DRY_RUN: "1"
+        run: python migrate_access.py
+
+      - name: Run migration
+        env:
+          COSMOS_CONNECTION_STRING: ${{ secrets.COSMOS_CONNECTION_STRING }}
+        run: python migrate_access.py
