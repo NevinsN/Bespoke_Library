@@ -20,12 +20,8 @@ def record_ping(source, db_latency_ms, api_latency_ms, status="ok", error=None):
 def get_recent_pings(hours=24, limit=500):
     """Fetch recent pings for the dashboard."""
     since = datetime.utcnow() - timedelta(hours=hours)
-    return list(
-        db["health_pings"]
-        .find({"timestamp": {"$gt": since}}, {"_id": 0})
-        .sort("timestamp", -1)
-        .limit(limit)
-    )
+    results = list(db["health_pings"].find({"timestamp": {"$gt": since}}, {"_id": 0}))
+    return sorted(results, key=lambda p: p.get("timestamp", 0), reverse=True)[:limit]
 
 
 def get_uptime_summary(hours=24):

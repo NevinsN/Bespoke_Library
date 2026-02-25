@@ -68,4 +68,4 @@ def get_invites_for_scope(scope_type, scope_id):
         "scope_type": scope_type,
         "scope_id": str(scope_id),
         "active": True,
-    }).sort("created_at", -1))
+    }))

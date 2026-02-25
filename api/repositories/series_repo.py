@@ -22,7 +22,7 @@ def get_series_by_name(name):
 
 
 def get_all_series():
-    return list(db["series"].find().sort("name", 1))
+    return list(db["series"].find())
 
 
 def get_series_for_ids(series_ids):

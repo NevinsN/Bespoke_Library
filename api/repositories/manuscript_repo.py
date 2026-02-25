@@ -24,7 +24,7 @@ def get_manuscripts_for_series(series_id):
     return list(
         db["manuscripts"]
         .find({"series_id": str(series_id)})
-        .sort("book", 1)
+        
     )
 
 
@@ -36,7 +36,7 @@ def get_manuscripts_by_ids(manuscript_ids):
 
 def get_all_manuscripts():
     """Admin use only."""
-    return list(db["manuscripts"].find().sort([("series_id", 1), ("book", 1)]))
+    return list(db["manuscripts"].find())
 
 
 def delete_manuscript(manuscript_id):

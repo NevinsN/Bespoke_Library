@@ -36,11 +36,8 @@ def update_chapter(chapter_id, updates):
 def get_chapters_for_draft(draft_id, include_content=False):
     """All chapters for a draft, sorted by order. Excludes content by default."""
     projection = None if include_content else {"content": 0}
-    return list(
-        db["chapters"]
-        .find({"draft_id": draft_id}, projection)
-        .sort("order", 1)
-    )
+    results = list(db["chapters"].find({"draft_id": draft_id}, projection))
+    return sorted(results, key=lambda c: c.get("order", 0))
 
 
 def get_chapter_by_id(chapter_id):
@@ -54,12 +51,8 @@ def get_chapter_by_filename(draft_id, filename):
 
 def get_next_order(draft_id):
     """Returns the next available order index for sequential uploads."""
-    last = list(
-        db["chapters"]
-        .find({"draft_id": draft_id}, {"order": 1})
-        .sort("order", -1)
-        .limit(1)
-    )
+    results = list(db["chapters"].find({"draft_id": draft_id}, {"order": 1}))
+    last = sorted(results, key=lambda c: c.get("order", 0), reverse=True)[:1]
     return (last[0]["order"] + 1) if last else 0
 
 

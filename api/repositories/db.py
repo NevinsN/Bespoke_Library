@@ -1,4 +1,4 @@
-from pymongo import MongoClient, ASCENDING
+from pymongo import MongoClient, ASCENDING, DESCENDING
 import os
 
 COSMOS_CONN = os.environ.get("COSMOS_CONNECTION_STRING")
@@ -80,6 +80,16 @@ def ensure_indexes():
         print(f"Index warning: {e}")
     try:
         db["invites"].create_index([("expires_at", ASCENDING)])
+    except Exception as e:
+        print(f"Index warning: {e}")
+
+    # chapters — composite indexes for filter+sort queries (required by Cosmos)
+    try:
+        db["chapters"].create_index([("draft_id", ASCENDING), ("order", ASCENDING)])
+    except Exception as e:
+        print(f"Index warning: {e}")
+    try:
+        db["chapters"].create_index([("draft_id", ASCENDING), ("order", DESCENDING)])
     except Exception as e:
         print(f"Index warning: {e}")
 

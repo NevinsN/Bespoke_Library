@@ -25,7 +25,7 @@ def get_drafts_for_manuscript(manuscript_id):
     return list(
         db["drafts"]
         .find({"manuscript_id": str(manuscript_id)})
-        .sort("created_at", 1)
+        
     )
 
 
