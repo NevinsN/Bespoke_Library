@@ -83,7 +83,7 @@ async function loadFooterStatus() {
   if (!dot || !text) return;
 
   try {
-    const res    = await fetch('https://bespokelibrary-production.up.railway.app/api/Health?source=footer');
+    const res    = await fetch('https://bespoke-library.onrender.com/api/Health?source=footer');
     const data   = await res.json();
     const status = data?.data?.status;
 
