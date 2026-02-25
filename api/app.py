@@ -13,7 +13,7 @@ from routes.novel_routes  import handle_get_novels, handle_get_chapters, handle_
 from routes.upload_files  import handle_upload_files
 from routes.author_routes import handle_get_authored_manuscripts, handle_create_project, handle_get_drafts
 from routes.invite_routes import handle_create_invite, handle_redeem_invite, handle_revoke_invite, handle_list_invites
-from routes.health_routes import handle_health, handle_ping_history
+from routes.health_routes import handle_health, handle_ping_history, handle_whoami
 
 app = Flask(__name__)
 
@@ -79,6 +79,10 @@ def health():
 @app.get("/api/PingHistory")
 def ping_history():
     return handle_ping_history()
+
+@app.get("/api/WhoAmI")
+def whoami():
+    return handle_whoami()
 
 # ── Keep function_app.py so the repo doesn't break if Azure is tried again ────
 if __name__ == "__main__":
