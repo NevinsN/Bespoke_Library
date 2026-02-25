@@ -27,9 +27,6 @@ def extract_user(req=None):
 
     if email:
         upsert_user(email)
-        
-    print("ADMIN LIST:", ADMIN_LIST)
-    print("CURRENT USER:", email)
 
     return {
         "id":       payload.get("userId"),

@@ -20,9 +20,9 @@ app = Flask(__name__)
 # CORS — allow requests from the SWA domain
 CORS(app, origins=[
     "https://bespoke.nicholasnevins.org",
-    "https://purple-moss-00a59f61e.azurestaticapps.net",  # SWA default domain
+    "https://purple-moss-00a59f61e.azurestaticapps.net",
     "http://localhost:4280",
-])
+], supports_credentials=True)
 
 # ── Reader routes ─────────────────────────────────────────────────────────────
 @app.get("/api/GetNovels")
