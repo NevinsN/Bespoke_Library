@@ -5,7 +5,7 @@ on:
 
 jobs:
   migrate:
-    name: Migrate legacy data to new schema
+    name: Clean up and re-migrate correctly
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -18,13 +18,15 @@ jobs:
       - name: Install dependencies
         run: pip install pymongo[srv] python-dotenv
 
-      - name: Dry run first
+      - name: Dry run
         env:
           COSMOS_CONNECTION_STRING: ${{ secrets.COSMOS_CONNECTION_STRING }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
           DRY_RUN: "1"
-        run: python migrate_access.py
+        run: python cleanup_and_migrate.py
 
       - name: Run migration
         env:
           COSMOS_CONNECTION_STRING: ${{ secrets.COSMOS_CONNECTION_STRING }}
-        run: python migrate_access.py
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+        run: python cleanup_and_migrate.py
