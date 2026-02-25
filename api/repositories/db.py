@@ -11,38 +11,87 @@ def ensure_indexes():
     """
     Create all indexes on cold start.
     Idempotent — safe to call every startup.
+    Each index is wrapped individually so one failure doesn't abort the rest.
     """
     # series
-    db["series"].create_index([("owner", ASCENDING)])
-    db["series"].create_index([("name", ASCENDING)])
+    try:
+        db["series"].create_index([("owner", ASCENDING)])
+    except Exception as e:
+        print(f"Index warning: {e}")
+    try:
+        db["series"].create_index([("name", ASCENDING)])
+    except Exception as e:
+        print(f"Index warning: {e}")
 
     # manuscripts
-    db["manuscripts"].create_index([("series_id", ASCENDING)])
-    db["manuscripts"].create_index([("owner", ASCENDING)])
+    try:
+        db["manuscripts"].create_index([("series_id", ASCENDING)])
+    except Exception as e:
+        print(f"Index warning: {e}")
+    try:
+        db["manuscripts"].create_index([("owner", ASCENDING)])
+    except Exception as e:
+        print(f"Index warning: {e}")
 
     # drafts
-    db["drafts"].create_index([("manuscript_id", ASCENDING)])
+    try:
+        db["drafts"].create_index([("manuscript_id", ASCENDING)])
+    except Exception as e:
+        print(f"Index warning: {e}")
 
     # chapters
-    db["chapters"].create_index([("draft_id", ASCENDING), ("order", ASCENDING)])
-    db["chapters"].create_index([("manuscript_id", ASCENDING)])
+    try:
+        db["chapters"].create_index([("draft_id", ASCENDING), ("order", ASCENDING)])
+    except Exception as e:
+        print(f"Index warning: {e}")
+    try:
+        db["chapters"].create_index([("manuscript_id", ASCENDING)])
+    except Exception as e:
+        print(f"Index warning: {e}")
 
     # access
-    db["access"].create_index([("email", ASCENDING), ("scope_type", ASCENDING)])
-    db["access"].create_index([("scope_id", ASCENDING)])
-    db["access"].create_index([("email", ASCENDING), ("role", ASCENDING)])
+    try:
+        db["access"].create_index([("email", ASCENDING), ("scope_type", ASCENDING)])
+    except Exception as e:
+        print(f"Index warning: {e}")
+    try:
+        db["access"].create_index([("scope_id", ASCENDING)])
+    except Exception as e:
+        print(f"Index warning: {e}")
+    try:
+        db["access"].create_index([("email", ASCENDING), ("role", ASCENDING)])
+    except Exception as e:
+        print(f"Index warning: {e}")
 
     # users
-    db["users"].create_index([("email", ASCENDING)], unique=True)
+    try:
+        db["users"].create_index([("email", ASCENDING)])
+    except Exception as e:
+        print(f"Index warning: {e}")
 
     # invites
-    db["invites"].create_index([("token", ASCENDING)], unique=True)
-    db["invites"].create_index([("scope_type", ASCENDING), ("scope_id", ASCENDING)])
-    db["invites"].create_index([("expires_at", ASCENDING)])
+    try:
+        db["invites"].create_index([("token", ASCENDING)], unique=True)
+    except Exception as e:
+        print(f"Index warning: {e}")
+    try:
+        db["invites"].create_index([("scope_type", ASCENDING), ("scope_id", ASCENDING)])
+    except Exception as e:
+        print(f"Index warning: {e}")
+    try:
+        db["invites"].create_index([("expires_at", ASCENDING)])
+    except Exception as e:
+        print(f"Index warning: {e}")
 
     # health_pings — time-series, queried by recency
-    db["health_pings"].create_index([("timestamp", ASCENDING)])
-    db["health_pings"].create_index([("source", ASCENDING), ("timestamp", ASCENDING)])
+    try:
+        db["health_pings"].create_index([("timestamp", ASCENDING)])
+    except Exception as e:
+        print(f"Index warning: {e}")
+    try:
+        db["health_pings"].create_index([("source", ASCENDING), ("timestamp", ASCENDING)])
+    except Exception as e:
+        print(f"Index warning: {e}")
 
 
 ensure_indexes()
