@@ -22,7 +22,7 @@ def extract_user(req=None):
     except Exception:
         return None
 
-    email    = payload.get("userDetails")
+    email    = (payload.get("userDetails") or "").lower() or None
     is_admin = email in ADMIN_LIST
 
     if email:

@@ -14,6 +14,7 @@ export async function route() {
   const bookId      = params.get('book');
   const chapterId   = params.get('id');
   const studio      = params.get('studio');
+  const action      = params.get('action');
   const inviteToken = params.get('invite');
   const health      = params.get('health');
 
@@ -41,15 +42,11 @@ export async function route() {
   if (studio === '1') {
     const user = await getUser();
     if (user) {
-      const novels = await getNovelsCache(async () => {
-        const res = await getNovels();
-        return Array.isArray(res) ? res : (res?.data || []);
-      });
-      if (isAuthor(novels)) {
-        renderAuthorStudio();
-        return;
-      }
+      renderAuthorStudio({ openNewForm: action === 'new' });
+      return;
     }
+    window.location.href = '/.auth/login/aad?post_login_redirect_uri=/?studio=1';
+    return;
   }
 
   // ── Standard routes ────────────────────────────────────────────────────────

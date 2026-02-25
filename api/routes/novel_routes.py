@@ -8,7 +8,9 @@ def handle_get_novels():
     try:
         user   = extract_user()
         novels = get_authorized_novels(user or {})
-        return ok(novels)
+        # Pass is_admin in meta so frontend can show/hide admin controls
+        meta = {"is_admin": user.get("is_admin", False) if user else False}
+        return ok(novels, meta=meta)
     except Exception as e:
         return error(str(e))
 

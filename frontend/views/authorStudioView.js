@@ -26,7 +26,7 @@ let state = {
 };
 
 // ─── Entry point ──────────────────────────────────────────────────────────────
-export async function renderAuthorStudio() {
+export async function renderAuthorStudio({ openNewForm = false } = {}) {
   const container = document.getElementById('main-content');
   container.innerHTML = '';
 

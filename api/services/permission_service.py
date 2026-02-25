@@ -44,6 +44,8 @@ ADMIN_EMAILS = [e.strip() for e in os.getenv("ADMIN_EMAIL", "").split(",") if e]
 # ─── Core resolution ──────────────────────────────────────────────────────────
 
 def resolve_effective_role(email, series_id=None, manuscript_id=None, draft_id=None):
+    if email:
+        email = email.lower()
     """
     Returns the highest effective role the user has for the given scope,
     or None if no access.

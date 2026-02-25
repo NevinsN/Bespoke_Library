@@ -49,15 +49,32 @@ export function isAuthor(novels) {
 }
 
 // ─── Novels cache ─────────────────────────────────────────────────────────────
+let _meta = null;
+
 export async function getNovelsCache(fetchFn) {
   if (_novels) return _novels;
-  _novels = await fetchFn();
+  const result = await fetchFn();
+  // fetchFn may return { novels, meta } or just novels array
+  if (result?.novels) {
+    _novels = result.novels;
+    _meta   = result.meta || {};
+  } else {
+    _novels = result;
+    _meta   = {};
+  }
   return _novels;
+}
+
+export function getNovelsMeta() {
+  return _meta || {};
 }
 
 export function invalidateNovels() {
   _novels = null;
+  _meta   = null;
 }
+
+
 
 // ─── Reading progress ─────────────────────────────────────────────────────────
 function loadProgress() {

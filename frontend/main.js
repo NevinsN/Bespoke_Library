@@ -1,5 +1,6 @@
 import { getUser } from './core/appState.js';
 import { route } from './core/router.js';
+import { renderFooter } from './components/footer.js';
 
 // Global error boundary
 window.addEventListener('unhandledrejection', e => {
@@ -25,5 +26,7 @@ window.addEventListener('load', async () => {
     console.log(`Logged in as: ${user.userDetails}`);
   }
 
-  route();
+  // Route first so content loads, then render footer
+  await route();
+  renderFooter(); // Non-blocking — footer loads after main content
 });
