@@ -5,15 +5,23 @@ import { renderBookshelf } from '../views/bookshelfView.js';
 import { renderReader } from '../views/readerView.js';
 import { renderChapterList } from '../views/chapterListView.js';
 import { renderAuthorStudio } from '../views/authorStudioView.js';
+import { renderHealthDashboard } from '../views/healthView.js';
 
 const PENDING_INVITE_KEY = 'bespoke_pending_invite';
 
 export async function route() {
-  const params     = new URLSearchParams(window.location.search);
-  const bookId     = params.get('book');
-  const chapterId  = params.get('id');
-  const studio     = params.get('studio');
+  const params      = new URLSearchParams(window.location.search);
+  const bookId      = params.get('book');
+  const chapterId   = params.get('id');
+  const studio      = params.get('studio');
   const inviteToken = params.get('invite');
+  const health      = params.get('health');
+
+  // ── Health dashboard ───────────────────────────────────────────────────────
+  if (health === '1') {
+    renderHealthDashboard();
+    return;
+  }
 
   // ── Invite redemption ──────────────────────────────────────────────────────
   if (inviteToken) {

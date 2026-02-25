@@ -2,7 +2,7 @@
   "routes": [
     {
       "route": "/api/*",
-      "allowedRoles": ["anonymous", "authenticated"]
+      "rewrite": "https://RAILWAY_URL/api/*"
     },
     {
       "route": "/*",

@@ -38,7 +38,11 @@ def ensure_indexes():
     # invites
     db["invites"].create_index([("token", ASCENDING)], unique=True)
     db["invites"].create_index([("scope_type", ASCENDING), ("scope_id", ASCENDING)])
-    db["invites"].create_index([("expires_at", ASCENDING)])  # for TTL cleanup
+    db["invites"].create_index([("expires_at", ASCENDING)])
+
+    # health_pings — time-series, queried by recency
+    db["health_pings"].create_index([("timestamp", ASCENDING)])
+    db["health_pings"].create_index([("source", ASCENDING), ("timestamp", ASCENDING)])
 
 
 ensure_indexes()

@@ -1,45 +1,48 @@
-import azure.functions as func
-from services.novel_service import get_authorized_novels, get_manuscript_toc, get_full_chapter
+from flask import request
+from services.novel_service import get_authorized_novels, get_draft_chapters, get_chapter
 from utils.auth import extract_user
 from utils.response import ok, error
 
 
-def handle_get_novels(req: func.HttpRequest) -> func.HttpResponse:
+def handle_get_novels():
     try:
-        user = extract_user(req)
-        novels = get_authorized_novels(user if user else {})
+        user   = extract_user()
+        email  = user["email"] if user else None
+        novels = get_authorized_novels(email)
         return ok(novels)
     except Exception as e:
         return error(str(e))
 
 
-def handle_get_chapters(req: func.HttpRequest) -> func.HttpResponse:
-    """Expects ?draft_id=<id>"""
+def handle_get_chapters():
     try:
-        user = extract_user(req)
-        draft_id = req.params.get("draft_id")
+        user     = extract_user()
+        email    = user["email"] if user else None
+        draft_id = request.args.get("draft_id") or request.args.get("book")
         if not draft_id:
             return error("Missing draft_id", 400)
-        chapters, err = get_manuscript_toc(user if user else {}, draft_id)
-        if err:
-            code = 404 if err == "Draft not found" else 403
-            return error(err, code)
+        chapters = get_draft_chapters(email, draft_id)
         return ok(chapters)
+    except PermissionError as e:
+        return error(str(e), 403)
+    except ValueError as e:
+        return error(str(e), 404)
     except Exception as e:
         return error(str(e))
 
 
-def handle_get_chapter_content(req: func.HttpRequest) -> func.HttpResponse:
-    """Expects ?id=<chapter_id>"""
+def handle_get_chapter_content():
     try:
-        user = extract_user(req)
-        chapter_id = req.params.get("id")
+        user       = extract_user()
+        email      = user["email"] if user else None
+        chapter_id = request.args.get("id")
         if not chapter_id:
-            return error("Missing chapter id", 400)
-        chapter, err = get_full_chapter(user if user else {}, chapter_id)
-        if err:
-            code = 404 if "not found" in err else 403
-            return error(err, code)
+            return error("Missing id", 400)
+        chapter = get_chapter(email, chapter_id)
         return ok(chapter)
+    except PermissionError as e:
+        return error(str(e), 403)
+    except ValueError as e:
+        return error(str(e), 404)
     except Exception as e:
         return error(str(e))

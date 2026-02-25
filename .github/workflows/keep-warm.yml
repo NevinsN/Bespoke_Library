@@ -1,0 +1,29 @@
+name: Keep Functions Warm
+
+on:
+  schedule:
+    # Every 4 minutes — Azure Functions spin down after 5 minutes of inactivity
+    - cron: '*/4 * * * *'
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
+
+jobs:
+  ping:
+    name: Ping API to prevent cold start
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Health Endpoint
+        run: |
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 10 \
+            "${{ secrets.APP_BASE_URL }}/api/Health")
+
+          echo "Health endpoint responded with: $RESPONSE"
+
+          if [ "$RESPONSE" != "200" ]; then
+            echo "Warning: Health endpoint returned $RESPONSE"
+            exit 1
+          fi
+
+      - name: Log result
+        if: always()
+        run: echo "Keep-warm ping completed at $(date -u)"

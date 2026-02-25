@@ -1,4 +1,6 @@
-azure-functions
+flask
+flask-cors
 pymongo[srv]
 python-dotenv
 markdown
+gunicorn

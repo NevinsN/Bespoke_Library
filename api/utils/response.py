@@ -1,22 +1,10 @@
-import json
-import azure.functions as func
+from flask import jsonify
 
 def ok(data, meta=None):
-    payload = {
-        "success": True,
-        "data": data
-    }
+    payload = {"success": True, "data": data}
     if meta:
         payload["meta"] = meta
-    return func.HttpResponse(
-        body=json.dumps(payload),
-        status_code=200,
-        mimetype="application/json"
-    )
+    return jsonify(payload), 200
 
 def error(message, code=500):
-    return func.HttpResponse(
-        body=json.dumps({"success": False, "error": message}),
-        status_code=code,
-        mimetype="application/json"
-    )
+    return jsonify({"success": False, "error": message}), code

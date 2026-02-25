@@ -12,6 +12,7 @@ from routes.invite_routes import (
     handle_revoke_invite,
     handle_list_invites,
 )
+from routes.health_routes import handle_health, handle_ping_history
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
@@ -62,7 +63,11 @@ def revoke_invite(req: func.HttpRequest) -> func.HttpResponse:
 def list_invites(req: func.HttpRequest) -> func.HttpResponse:
     return handle_list_invites(req)
 
-# ── Utility ───────────────────────────────────────────────────────────────────
-@app.route(route="DemoPing", methods=["GET"])
-def demo_ping(req: func.HttpRequest) -> func.HttpResponse:
-    return func.HttpResponse("pong", status_code=200)
+# ── Health routes ─────────────────────────────────────────────────────────────
+@app.route(route="Health", methods=["GET"])
+def health(req: func.HttpRequest) -> func.HttpResponse:
+    return handle_health(req)
+
+@app.route(route="PingHistory", methods=["GET"])
+def ping_history(req: func.HttpRequest) -> func.HttpResponse:
+    return handle_ping_history(req)

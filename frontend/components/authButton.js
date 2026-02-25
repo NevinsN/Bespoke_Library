@@ -27,10 +27,17 @@ export async function renderAuthButton() {
         studioBtn.className = 'auth-button';
         studioBtn.style.marginLeft = '10px';
         studioBtn.textContent = 'Author Studio';
-        studioBtn.onclick = () => {
-          window.location.href = '/?studio=1';
-        };
+        studioBtn.onclick = () => { window.location.href = '/?studio=1'; };
         wrapper.appendChild(studioBtn);
+      }
+
+    if (user?.is_admin) {
+        const healthBtn = document.createElement('button');
+        healthBtn.className = 'auth-button';
+        healthBtn.style.marginLeft = '10px';
+        healthBtn.textContent = '⬤ Health';
+        healthBtn.onclick = () => { window.location.href = '/?health=1'; };
+        wrapper.appendChild(healthBtn);
       }
     } catch (err) {
       console.error('Error checking author status:', err);

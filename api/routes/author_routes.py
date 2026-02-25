@@ -1,4 +1,4 @@
-import azure.functions as func
+from flask import request
 from services.author_service import (
     create_new_project,
     list_drafts,
@@ -8,13 +8,9 @@ from utils.auth import extract_user
 from utils.response import ok, error
 
 
-def handle_get_authored_manuscripts(req: func.HttpRequest) -> func.HttpResponse:
-    """
-    GET — Returns only manuscripts where the user is owner or author.
-    This is the exclusive data source for Author Studio.
-    """
+def handle_get_authored_manuscripts():
     try:
-        user = extract_user(req)
+        user = extract_user()
         if not user:
             return error("Unauthorized", 401)
         manuscripts = get_authored_manuscripts(user["email"])
@@ -23,15 +19,12 @@ def handle_get_authored_manuscripts(req: func.HttpRequest) -> func.HttpResponse:
         return error(str(e))
 
 
-def handle_create_project(req: func.HttpRequest) -> func.HttpResponse:
+def handle_create_project():
     try:
-        user = extract_user(req)
+        user = extract_user()
         if not user:
             return error("Unauthorized", 401)
-        try:
-            body = req.get_json()
-        except Exception:
-            return error("Invalid JSON body", 400)
+        body = request.get_json(silent=True) or {}
         if not body.get("series_name") or not body.get("book"):
             return error("series_name and book are required", 400)
         result = create_new_project(body, owner_email=user["email"])
@@ -42,12 +35,12 @@ def handle_create_project(req: func.HttpRequest) -> func.HttpResponse:
         return error(str(e))
 
 
-def handle_get_drafts(req: func.HttpRequest) -> func.HttpResponse:
+def handle_get_drafts():
     try:
-        user = extract_user(req)
+        user = extract_user()
         if not user:
             return error("Unauthorized", 401)
-        manuscript_id = req.params.get("manuscript_id")
+        manuscript_id = request.args.get("manuscript_id")
         if not manuscript_id:
             return error("Missing manuscript_id", 400)
         drafts = list_drafts(user["email"], manuscript_id)
