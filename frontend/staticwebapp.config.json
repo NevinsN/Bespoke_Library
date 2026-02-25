@@ -2,7 +2,7 @@
   "routes": [
     {
       "route": "/api/*",
-      "rewrite": "https://RAILWAY_URL/api/*"
+      "rewrite": "https://bespokelibrary-production.up.railway.app/api/*"
     },
     {
       "route": "/*",

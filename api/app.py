@@ -19,8 +19,9 @@ app = Flask(__name__)
 
 # CORS — allow requests from the SWA domain
 CORS(app, origins=[
-    os.getenv("APP_BASE_URL", "https://bespoke.nicholasnevins.org"),
-    "http://localhost:4280",  # local SWA CLI dev
+    "https://bespoke.nicholasnevins.org",
+    "https://purple-moss-00a59f61e.azurestaticapps.net",  # SWA default domain
+    "http://localhost:4280",
 ])
 
 # ── Reader routes ─────────────────────────────────────────────────────────────

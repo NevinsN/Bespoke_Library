@@ -1,21 +1,21 @@
-name: Keep Functions Warm
+name: Keep API Warm
 
 on:
   schedule:
-    # Every 4 minutes — Azure Functions spin down after 5 minutes of inactivity
+    # Every 4 minutes — prevents Railway service from going idle
     - cron: '*/4 * * * *'
-  workflow_dispatch:  # Allow manual trigger from GitHub UI
+  workflow_dispatch:
 
 jobs:
   ping:
-    name: Ping API to prevent cold start
+    name: Ping Railway API
     runs-on: ubuntu-latest
     steps:
       - name: Ping Health Endpoint
         run: |
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
             --max-time 10 \
-            "${{ secrets.APP_BASE_URL }}/api/Health")
+            "https://bespokelibrary-production.up.railway.app/api/Health?source=keep-warm")
 
           echo "Health endpoint responded with: $RESPONSE"
 
