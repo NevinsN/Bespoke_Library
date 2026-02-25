@@ -1,23 +1,21 @@
+import { getUser } from './appState.js';
+
 const BASE_URL = 'https://bespoke-library.onrender.com/api';
 
-let _principal = null;
+let _principal = undefined;
 
 async function getEncodedPrincipal() {
   if (_principal !== undefined) return _principal;
   try {
-    const res  = await fetch('/.auth/me');
-    const data = await res.json();
-    const cp   = data.clientPrincipal;
-    if (!cp) { _principal = null; return null; }
+    // Reuse the already-fetched user from appState rather than calling /.auth/me again
+    const user = await getUser();
+    if (!user) { _principal = null; return null; }
 
-    console.log('/.auth/me clientPrincipal:', JSON.stringify(cp));
+    console.log('Principal userDetails:', user.userDetails);
 
-    // SWA's x-ms-client-principal uses these exact field names:
-    // userId, userDetails, identityProvider, userRoles
-    // /.auth/me returns the same structure — encode it directly
-    _principal = btoa(unescape(encodeURIComponent(JSON.stringify(cp))));
+    _principal = btoa(unescape(encodeURIComponent(JSON.stringify(user))));
   } catch (e) {
-    console.error('Failed to get principal:', e);
+    console.error('Failed to encode principal:', e);
     _principal = null;
   }
   return _principal;

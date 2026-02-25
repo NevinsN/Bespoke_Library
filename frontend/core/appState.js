@@ -25,7 +25,7 @@ let _novels = null;      // null = not yet fetched
 export async function getUser() {
   if (_user !== undefined) return _user;
   try {
-    const res = await fetch('/.auth/me');
+    const res = await fetch('/.auth/me', { credentials: 'include' });
     if (!res.ok) { _user = null; return null; }
     const data = await res.json();
     _user = data.clientPrincipal ?? null;
