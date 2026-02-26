@@ -9,5 +9,5 @@ export async function getChapters(draftId) {
 }
 
 export async function getChapter(chapterId) {
-  return await apiFetch(`/GetChapterContent?id=${chapterId}`, {}, { returnFull: true });
+  return await apiFetch(`/GetChapterContent?id=${chapterId}`);
 }

@@ -5,6 +5,7 @@ import { getProgressPercent } from '../core/appState.js';
 import { renderSkeleton } from '../components/loading.js';
 
 export async function renderChapterList(draftId) {
+  console.log('renderChapterList called with draftId:', draftId, new Error().stack);
   const container = document.getElementById('main-content');
   container.innerHTML = '';
   const skeletonWrapper = document.createElement('div');
