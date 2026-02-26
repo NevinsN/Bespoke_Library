@@ -1,4 +1,4 @@
-from .db import db
+from .db import db, serialize, serialize_list
 from bson.objectid import ObjectId
 from datetime import datetime
 
@@ -14,16 +14,15 @@ def create_draft(manuscript_id, name):
 
 
 def get_draft_by_id(draft_id):
-    return db["drafts"].find_one({"_id": ObjectId(draft_id)})
+    return serialize(db["drafts"].find_one({"_id": ObjectId(draft_id)}))
 
 
 def get_draft_by_name(manuscript_id, name):
-    return db["drafts"].find_one({"manuscript_id": str(manuscript_id), "name": name})
+    return serialize(db["drafts"].find_one({"manuscript_id": str(manuscript_id), "name": name}))
 
 
 def get_drafts_for_manuscript(manuscript_id):
-    return list(
-        db["drafts"]
+    return serialize_list(db["drafts"]
         .find({"manuscript_id": str(manuscript_id)})
         
     )
@@ -32,7 +31,7 @@ def get_drafts_for_manuscript(manuscript_id):
 def get_drafts_by_ids(draft_ids):
     """Fetch multiple drafts by a list of _id strings."""
     object_ids = [ObjectId(did) for did in draft_ids if did]
-    return list(db["drafts"].find({"_id": {"$in": object_ids}}))
+    return serialize_list(db["drafts"].find({"_id": {"$in": object_ids}}))
 
 
 def delete_draft(draft_id):

@@ -1,4 +1,4 @@
-from .db import db
+from .db import db, serialize, serialize_list
 from bson.objectid import ObjectId
 from datetime import datetime
 
@@ -16,13 +16,12 @@ def create_manuscript(series_id, book, display_name, owner):
 
 
 def get_manuscript_by_id(manuscript_id):
-    return db["manuscripts"].find_one({"_id": ObjectId(manuscript_id)})
+    return serialize(db["manuscripts"].find_one({"_id": ObjectId(manuscript_id)}))
 
 
 def get_manuscripts_for_series(series_id):
     """All manuscripts in a series, sorted by book name."""
-    return list(
-        db["manuscripts"]
+    return serialize_list(db["manuscripts"]
         .find({"series_id": str(series_id)})
         
     )
@@ -31,12 +30,12 @@ def get_manuscripts_for_series(series_id):
 def get_manuscripts_by_ids(manuscript_ids):
     """Fetch multiple manuscripts by a list of _id strings."""
     object_ids = [ObjectId(mid) for mid in manuscript_ids if mid]
-    return list(db["manuscripts"].find({"_id": {"$in": object_ids}}))
+    return serialize_list(db["manuscripts"].find({"_id": {"$in": object_ids}}))
 
 
 def get_all_manuscripts():
     """Admin use only."""
-    return list(db["manuscripts"].find())
+    return serialize_list(db["manuscripts"].find())
 
 
 def delete_manuscript(manuscript_id):

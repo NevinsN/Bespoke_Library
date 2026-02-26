@@ -1,4 +1,4 @@
-from .db import db
+from .db import db, serialize, serialize_list
 from bson.objectid import ObjectId
 from datetime import datetime
 
@@ -47,12 +47,12 @@ def revoke_access(email, scope_type, scope_id):
 
 def get_grants_for_user(email):
     """All access grants for a user, across all scopes."""
-    return list(db["access"].find({"email": email}))
+    return serialize_list(db["access"].find({"email": email}))
 
 
 def get_grants_for_scope(scope_type, scope_id):
     """All grants for a given scope (e.g. all people with access to a manuscript)."""
-    return list(db["access"].find({
+    return serialize_list(db["access"].find({
         "scope_type": scope_type,
         "scope_id": str(scope_id),
     }))

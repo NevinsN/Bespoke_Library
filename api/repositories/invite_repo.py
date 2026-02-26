@@ -1,4 +1,4 @@
-from .db import db
+from .db import db, serialize, serialize_list
 from datetime import datetime, timedelta
 import uuid
 
@@ -28,7 +28,7 @@ def create_invite(created_by, scope_type, scope_id, role, expires_days=7, max_us
 
 def get_invite(token):
     """Fetch an invite by token."""
-    return db["invites"].find_one({"token": token})
+    return serialize(db["invites"].find_one({"token": token}))
 
 
 def redeem_invite(token, email):
@@ -64,7 +64,7 @@ def revoke_invite(token, revoked_by):
 
 def get_invites_for_scope(scope_type, scope_id):
     """List all active invites for a scope (for the owner's management view)."""
-    return list(db["invites"].find({
+    return serialize_list(db["invites"].find({
         "scope_type": scope_type,
         "scope_id": str(scope_id),
         "active": True,

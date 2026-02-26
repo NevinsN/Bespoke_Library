@@ -105,3 +105,18 @@ def ensure_indexes():
 
 
 ensure_indexes()
+
+
+def serialize(doc):
+    """Convert a MongoDB document's ObjectId fields to strings."""
+    if doc is None:
+        return None
+    doc = dict(doc)
+    for key, val in doc.items():
+        from bson import ObjectId
+        if isinstance(val, ObjectId):
+            doc[key] = str(val)
+    return doc
+
+def serialize_list(docs):
+    return [serialize(d) for d in docs]

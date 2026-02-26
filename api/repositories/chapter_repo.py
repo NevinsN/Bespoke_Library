@@ -1,4 +1,4 @@
-from .db import db
+from .db import db, serialize, serialize_list
 from bson.objectid import ObjectId
 from datetime import datetime
 
@@ -36,17 +36,17 @@ def update_chapter(chapter_id, updates):
 def get_chapters_for_draft(draft_id, include_content=False):
     """All chapters for a draft, sorted by order. Excludes content by default."""
     projection = None if include_content else {"content": 0}
-    results = list(db["chapters"].find({"draft_id": draft_id}, projection))
+    results = serialize_list(db["chapters"].find({"draft_id": draft_id}, projection))
     return sorted(results, key=lambda c: c.get("order", 0))
 
 
 def get_chapter_by_id(chapter_id):
-    return db["chapters"].find_one({"_id": ObjectId(chapter_id)})
+    return serialize(db["chapters"].find_one({"_id": ObjectId(chapter_id)}))
 
 
 def get_chapter_by_filename(draft_id, filename):
     """Check if a filename already exists in this draft."""
-    return db["chapters"].find_one({"draft_id": draft_id, "filename": filename})
+    return serialize(db["chapters"].find_one({"draft_id": draft_id, "filename": filename}))
 
 
 def get_next_order(draft_id):
@@ -58,7 +58,7 @@ def get_next_order(draft_id):
 
 def get_neighboring_chapter(manuscript_id, draft_id, order):
     """Get the chapter immediately before or after by order within the same draft."""
-    return db["chapters"].find_one(
+    return serialize(db["chapters"].find_one(
         {"draft_id": draft_id, "order": order},
         {"_id": 1}
     )
