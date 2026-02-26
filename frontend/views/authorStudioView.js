@@ -1,6 +1,5 @@
-import { getAuthoredManuscripts } from '../services/authorService.js';
 import { renderInvitePanel } from '../components/invitePanel.js';
-import { createProject, getDrafts, uploadChapters } from '../services/authorService.js';
+import { getAuthoredManuscripts, createProject, getDrafts, uploadChapters, setDraftVisibility } from '../services/authorService.js';
 
 // Load JSZip from CDN on demand
 async function getJSZip() {
