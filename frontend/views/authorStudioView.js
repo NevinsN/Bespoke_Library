@@ -159,12 +159,44 @@ function renderDraftSection(container, manuscript) {
   drafts.forEach(d => {
     const item = document.createElement('div');
     item.className = 'project-item' + (state.selectedDraft?._id === d._id ? ' selected' : '');
-    item.textContent = d.name;
-    item.onclick = () => {
+    item.style.display = 'flex';
+    item.style.alignItems = 'center';
+    item.style.justifyContent = 'space-between';
+    item.style.gap = '8px';
+
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = d.name;
+    nameSpan.style.flex = '1';
+    nameSpan.onclick = () => {
       state.selectedDraft = d;
       state.pendingFiles = [];
       rerenderUploadPanel();
     };
+    item.appendChild(nameSpan);
+
+    // ── Public toggle ──
+    const toggle = document.createElement('button');
+    toggle.className = 'visibility-toggle' + (d.public ? ' public' : '');
+    toggle.textContent = d.public ? '🌐 Public' : '🔒 Private';
+    toggle.title = d.public ? 'Click to make private' : 'Click to make public';
+    toggle.onclick = async (e) => {
+      e.stopPropagation();
+      const newPublic = !d.public;
+      toggle.disabled = true;
+      try {
+        await setDraftVisibility(d._id, newPublic);
+        d.public = newPublic;
+        toggle.textContent = newPublic ? '🌐 Public' : '🔒 Private';
+        toggle.className = 'visibility-toggle' + (newPublic ? ' public' : '');
+        toggle.title = newPublic ? 'Click to make private' : 'Click to make public';
+      } catch (err) {
+        console.error('Failed to update visibility:', err);
+      } finally {
+        toggle.disabled = false;
+      }
+    };
+    item.appendChild(toggle);
+
     list.appendChild(item);
   });
 

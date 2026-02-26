@@ -36,6 +36,7 @@ from repositories.manuscript_repo import (
 from repositories.draft_repo import (
     get_drafts_for_manuscript,
     get_drafts_by_ids,
+    get_public_drafts,
 )
 
 ADMIN_EMAILS = [e.strip() for e in os.getenv("ADMIN_EMAIL", "").split(",") if e]
@@ -147,6 +148,14 @@ def get_visible_manuscripts(email):
         )
         result.extend(draft_only_entries)
 
+    # Public drafts — visible to all authenticated users
+    public_drafts = get_public_drafts()
+    if public_drafts:
+        public_entries = _build_draft_only_entries(
+            {str(d["_id"]) for d in public_drafts}, visible_manuscript_ids
+        )
+        result.extend(public_entries)
+
     # Deduplicate by manuscript _id (series + manuscript grants may overlap)
     seen = set()
     deduped = []
@@ -164,7 +173,7 @@ def _attach_all_drafts(manuscripts):
     for m in manuscripts:
         m["_id"] = str(m["_id"])
         drafts = get_drafts_for_manuscript(m["_id"])
-        m["drafts"] = [{"_id": str(d["_id"]), "name": d["name"]} for d in drafts]
+        m["drafts"] = [{"_id": str(d["_id"]), "name": d["name"], "public": d.get("public", False)} for d in drafts]
         result.append(m)
     return result
 
@@ -194,7 +203,7 @@ def _build_draft_only_entries(draft_ids, already_visible_manuscript_ids):
             continue
         manuscript["_id"] = str(manuscript["_id"])
         manuscript["drafts"] = [
-            {"_id": str(d["_id"]), "name": d["name"]} for d in drafts
+            {"_id": str(d["_id"]), "name": d["name"], "public": d.get("public", False)} for d in drafts
         ]
         result.append(manuscript)
 

@@ -50,6 +50,10 @@ def create_project():
 def get_drafts():
     return handle_get_drafts()
 
+@app.post("/api/SetDraftVisibility")
+def set_draft_visibility():
+    return handle_set_draft_visibility()
+
 @app.post("/api/UploadFiles")
 def upload_files():
     return handle_upload_files()

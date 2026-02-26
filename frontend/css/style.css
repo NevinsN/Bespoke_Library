@@ -1365,3 +1365,36 @@ h2, h3 {
     justify-content: flex-start;
   }
 }
+
+/* ── Visibility toggle ─────────────────────────────────────────── */
+.visibility-toggle {
+  font-size: 0.72em;
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1px solid #333;
+  background: transparent;
+  color: #666;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.visibility-toggle:hover {
+  border-color: #555;
+  color: #999;
+}
+
+.visibility-toggle.public {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.visibility-toggle.public:hover {
+  background: rgba(100, 160, 255, 0.08);
+}
+
+.visibility-toggle:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

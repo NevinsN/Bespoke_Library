@@ -112,7 +112,7 @@ function renderDraftCard(draft) {
 
   const titleRow = document.createElement('div');
   titleRow.className = 'book-card-title';
-  titleRow.textContent = draft.display_name || draft.name || 'Untitled';
+  titleRow.textContent = draft.name || draft.display_name || 'Untitled';
   card.appendChild(titleRow);
 
   if (hasStarted) {

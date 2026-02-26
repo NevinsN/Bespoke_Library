@@ -36,3 +36,15 @@ def get_drafts_by_ids(draft_ids):
 
 def delete_draft(draft_id):
     db["drafts"].delete_one({"_id": ObjectId(draft_id)})
+
+
+def set_draft_visibility(draft_id, public):
+    """Set a draft's public visibility flag."""
+    db["drafts"].update_one(
+        {"_id": ObjectId(draft_id)},
+        {"$set": {"public": bool(public)}}
+    )
+
+def get_public_drafts():
+    """All drafts marked public=True."""
+    return serialize_list(db["drafts"].find({"public": True}))

@@ -115,3 +115,11 @@ export async function revokeInvite(token) {
 export async function listInvites(scope_type, scope_id) {
   return await apiFetch(`/ListInvites?scope_type=${scope_type}&scope_id=${scope_id}`);
 }
+
+export async function setDraftVisibility(draftId, isPublic) {
+  return await apiFetch('/SetDraftVisibility', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ draft_id: draftId, public: isPublic }),
+  });
+}
