@@ -5,7 +5,7 @@ export async function getNovels() {
 }
 
 export async function getChapters(draftId) {
-  return await apiFetch(`/GetChapters?draft_id=${draftId}`, {}, { returnFull: true });
+  return await apiFetch(`/GetChapters?draft_id=${draftId}`);
 }
 
 export async function getChapter(chapterId) {
