@@ -61,7 +61,7 @@ def get_neighboring_chapter(manuscript_id, draft_id, order):
     return serialize(db["chapters"].find_one(
         {"draft_id": draft_id, "order": order},
         {"_id": 1}
-    )
+    ))
 
 
 def get_word_count_for_manuscript(manuscript_id):
