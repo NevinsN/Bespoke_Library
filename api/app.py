@@ -11,7 +11,7 @@ from flask_cors import CORS
 
 from routes.novel_routes  import handle_get_novels, handle_get_chapters, handle_get_chapter_content
 from routes.upload_files  import handle_upload_files
-from routes.author_routes import handle_get_authored_manuscripts, handle_create_project, handle_get_drafts
+from routes.author_routes import handle_get_authored_manuscripts, handle_create_project, handle_get_drafts, handle_set_draft_visibility
 from routes.invite_routes import handle_create_invite, handle_redeem_invite, handle_revoke_invite, handle_list_invites
 from routes.health_routes import handle_health, handle_ping_history, handle_whoami
 
