@@ -66,6 +66,9 @@ export async function renderReader(chapterId) {
   content.innerHTML = await renderMarkdown(chapter.content);
   article.appendChild(content);
 
+  // ── Footnote popups ──────────────────────────────────────────────────────
+  initFootnotePopups(content);
+
   // ── Bottom nav ──
   if (chapter.prev_id || chapter.next_id) {
     const bottomNav = document.createElement('div');
@@ -118,4 +121,90 @@ export async function renderReader(chapterId) {
   window.addEventListener('popstate', () => {
     window.removeEventListener('scroll', onScroll);
   }, { once: true });
+}
+
+
+// ─── Footnote popup ───────────────────────────────────────────────────────────
+
+function initFootnotePopups(container) {
+  // marked.js renders footnotes as:
+  //   reference: <sup><a href="#fn-1" id="fnref-1">1</a></sup>
+  //   definition: <li id="fn-1"><p>Text <a href="#fnref-1">↩</a></p></li>
+  // We intercept reference clicks and show a popup instead.
+
+  // Hide the footnotes section at the bottom
+  const fnSection = container.querySelector('.footnotes, section.footnotes, ol.footnotes');
+  if (fnSection) fnSection.style.display = 'none';
+
+  // Also hide any <hr> immediately before footnotes
+  if (fnSection?.previousElementSibling?.tagName === 'HR') {
+    fnSection.previousElementSibling.style.display = 'none';
+  }
+
+  // Build a map of id → text content from footnote items
+  const fnMap = {};
+  container.querySelectorAll('li[id^="fn"]').forEach(li => {
+    const id = li.getAttribute('id');
+    // Clone and remove the back-link (↩) for clean display
+    const clone = li.cloneNode(true);
+    clone.querySelectorAll('a[href^="#fnref"]').forEach(a => a.remove());
+    fnMap[id] = clone.textContent.trim();
+  });
+
+  // Create singleton popup element
+  const popup = document.createElement('div');
+  popup.className = 'footnote-popup';
+  popup.setAttribute('role', 'tooltip');
+  document.body.appendChild(popup);
+
+  let activeRef = null;
+
+  function showPopup(anchor, fnId) {
+    const text = fnMap[fnId];
+    if (!text) return;
+    popup.textContent = text;
+    popup.classList.add('visible');
+    activeRef = anchor;
+
+    // Position above the anchor
+    const rect = anchor.getBoundingClientRect();
+    const popupW = 280;
+    let left = rect.left + window.scrollX - popupW / 2 + rect.width / 2;
+    left = Math.max(12, Math.min(left, window.innerWidth - popupW - 12));
+    const top = rect.top + window.scrollY - popup.offsetHeight - 10;
+
+    popup.style.left = left + 'px';
+    popup.style.top  = (top < window.scrollY + 60 
+      ? rect.bottom + window.scrollY + 8   // flip below if no room above
+      : top) + 'px';
+  }
+
+  function hidePopup() {
+    popup.classList.remove('visible');
+    activeRef = null;
+  }
+
+  // Intercept footnote reference clicks
+  container.querySelectorAll('a[href^="#fn"]').forEach(anchor => {
+    const href = anchor.getAttribute('href');
+    // Only reference links (not back-links which go to #fnref)
+    if (href.startsWith('#fnref')) return;
+
+    anchor.addEventListener('click', e => {
+      e.preventDefault();
+      const fnId = href.slice(1); // strip leading #
+      if (activeRef === anchor && popup.classList.contains('visible')) {
+        hidePopup();
+      } else {
+        showPopup(anchor, fnId);
+      }
+    });
+  });
+
+  // Click outside to dismiss
+  document.addEventListener('click', e => {
+    if (!popup.contains(e.target) && e.target !== activeRef) {
+      hidePopup();
+    }
+  }, { capture: true });
 }
