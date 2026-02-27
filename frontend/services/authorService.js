@@ -144,8 +144,16 @@ export async function publishDraft(draftId) {
 
 export async function deleteChapter(chapterId) {
   return await apiFetch('/DeleteChapter', {
-    method: 'DELETE',
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chapter_id: chapterId }),
+  });
+}
+
+export async function setCommentsEnabled(draftId, enabled) {
+  return await apiFetch('/SetCommentsEnabled', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ draft_id: draftId, enabled }),
   });
 }
