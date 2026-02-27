@@ -60,7 +60,7 @@ def get_neighboring_chapter(manuscript_id, draft_id, order):
     """Get the chapter immediately before or after by order within the same draft."""
     return serialize(db["chapters"].find_one(
         {"draft_id": draft_id, "order": order},
-        {"_id": 1}
+        {"_id": 1, "status": 1}
     ))
 
 

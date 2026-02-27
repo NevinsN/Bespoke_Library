@@ -82,11 +82,22 @@ def get_full_chapter(user, chapter_id):
     prev_ch = get_neighboring_chapter(manuscript_id, draft_id, order - 1)
     next_ch = get_neighboring_chapter(manuscript_id, draft_id, order + 1)
 
+    is_author = can_write(user.get("email"), manuscript_id=manuscript_id)
+
+    def accessible(ch):
+        """Returns chapter id only if the user can navigate to it."""
+        if not ch:
+            return None
+        status = ch.get("status", "published")
+        if is_author or status == "published":
+            return str(ch["_id"])
+        return None
+
     chapter["_id"] = str(chapter["_id"])
     chapter["draft_id"] = draft_id
     chapter["manuscript_id"] = manuscript_id
-    chapter["prev_id"] = str(prev_ch["_id"]) if prev_ch else None
-    chapter["next_id"] = str(next_ch["_id"]) if next_ch else None
+    chapter["prev_id"] = accessible(prev_ch)
+    chapter["next_id"] = accessible(next_ch)
 
     # Pass comments_enabled from draft (default True if not set)
     draft = get_draft_by_id(draft_id)
