@@ -39,10 +39,10 @@ export async function uploadChapters(draftId, files, sequential = true, onProgre
   });
 
   // Use XMLHttpRequest so we can track upload progress
+  const authHeader = await getAuthHeader();
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', 'https://bespoke-library.onrender.com/api/UploadFiles');
-    const authHeader = await getAuthHeader();
     if (authHeader) xhr.setRequestHeader('x-ms-client-principal', authHeader);
 
     if (onProgress) {
