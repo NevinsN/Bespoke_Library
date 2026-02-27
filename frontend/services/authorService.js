@@ -157,3 +157,23 @@ export async function setCommentsEnabled(draftId, enabled) {
     body: JSON.stringify({ draft_id: draftId, enabled }),
   });
 }
+
+export async function exportDraft(draftId, filename) {
+  const { getAuthHeader } = await import('../core/api.js');
+  const authHeader = await getAuthHeader();
+
+  const response = await fetch(
+    `https://bespoke-library.onrender.com/api/ExportDraft?draft_id=${draftId}`,
+    { headers: authHeader ? { 'x-ms-client-principal': authHeader } : {} }
+  );
+
+  if (!response.ok) throw new Error('Export failed');
+
+  const blob = await response.blob();
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename || 'manuscript.docx';
+  a.click();
+  URL.revokeObjectURL(url);
+}

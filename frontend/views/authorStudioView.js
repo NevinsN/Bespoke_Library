@@ -1,5 +1,5 @@
 import { renderInvitePanel } from '../components/invitePanel.js';
-import { getAuthoredManuscripts, createProject, getDrafts, uploadChapters, setDraftVisibility, setChapterStatus, publishDraft, deleteChapter } from '../services/authorService.js';
+import { getAuthoredManuscripts, createProject, getDrafts, uploadChapters, setDraftVisibility, setChapterStatus, publishDraft, deleteChapter, setCommentsEnabled, exportDraft } from '../services/authorService.js';
 import { renderFeedbackPanel } from './feedbackView.js';
 
 // Load JSZip from CDN on demand
@@ -248,6 +248,52 @@ function renderDraftSection(container, manuscript) {
       }
     };
     item.appendChild(feedbackBtn);
+
+    // ── Comments toggle ──
+    const commentsBtn = document.createElement('button');
+    const commentsOn = d.comments_enabled !== false; // default true
+    commentsBtn.className = 'visibility-toggle' + (commentsOn ? ' public' : '');
+    commentsBtn.textContent = commentsOn ? '💬 On' : '💬 Off';
+    commentsBtn.title = commentsOn ? 'Comments enabled — click to disable' : 'Comments disabled — click to enable';
+    commentsBtn.onclick = async (e) => {
+      e.stopPropagation();
+      const newVal = !(d.comments_enabled !== false);
+      commentsBtn.disabled = true;
+      try {
+        await setCommentsEnabled(d._id, newVal);
+        d.comments_enabled = newVal;
+        commentsBtn.textContent = newVal ? '💬 On' : '💬 Off';
+        commentsBtn.className = 'visibility-toggle' + (newVal ? ' public' : '');
+        commentsBtn.title = newVal ? 'Comments enabled — click to disable' : 'Comments disabled — click to enable';
+      } catch(err) {
+        console.error('Failed to update comments setting:', err);
+      } finally {
+        commentsBtn.disabled = false;
+      }
+    };
+    item.appendChild(commentsBtn);
+
+    // ── Export button ──
+    const exportBtn = document.createElement('button');
+    exportBtn.className = 'visibility-toggle';
+    exportBtn.textContent = '⬇ DOCX';
+    exportBtn.title = 'Download as Word document';
+    exportBtn.onclick = async (e) => {
+      e.stopPropagation();
+      exportBtn.disabled = true;
+      exportBtn.textContent = '⬇ …';
+      try {
+        const filename = `${state.selectedManuscript?.display_name || 'manuscript'} - ${d.name}.docx`.replace(/\s+/g, '_');
+        await exportDraft(d._id, filename);
+      } catch(err) {
+        console.error('Export failed:', err);
+        alert('Export failed. Please try again.');
+      } finally {
+        exportBtn.disabled = false;
+        exportBtn.textContent = '⬇ DOCX';
+      }
+    };
+    item.appendChild(exportBtn);
 
     list.appendChild(item);
   });

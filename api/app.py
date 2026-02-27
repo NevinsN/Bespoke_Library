@@ -14,6 +14,7 @@ from routes.upload_files  import handle_upload_files
 from routes.author_routes import handle_get_authored_manuscripts, handle_create_project, handle_get_drafts, handle_set_draft_visibility, handle_set_chapter_status, handle_publish_draft, handle_delete_chapter, handle_set_comments_enabled
 from routes.invite_routes import handle_create_invite, handle_redeem_invite, handle_revoke_invite, handle_list_invites
 from routes.health_routes import handle_health, handle_ping_history, handle_whoami
+from routes.export_routes import handle_export_draft
 from routes.comment_routes import handle_create_comment, handle_get_comments, handle_set_comment_status, handle_get_unread_count
 
 app = Flask(__name__)
@@ -70,6 +71,10 @@ def delete_chapter():
 @app.post("/api/SetCommentsEnabled")
 def set_comments_enabled():
     return handle_set_comments_enabled()
+
+@app.get("/api/ExportDraft")
+def export_draft():
+    return handle_export_draft()
 
 @app.post("/api/CreateComment")
 def create_comment():

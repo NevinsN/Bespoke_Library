@@ -4,3 +4,4 @@ pymongo[srv]
 python-dotenv
 markdown
 gunicorn
+python-docx
