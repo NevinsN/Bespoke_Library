@@ -1,4 +1,4 @@
-import { apiFetch } from '../core/api.js';
+import { apiFetch, getAuthHeader } from '../core/api.js';
 
 /**
  * Create a new series + manuscript + draft.
@@ -41,7 +41,9 @@ export async function uploadChapters(draftId, files, sequential = true, onProgre
   // Use XMLHttpRequest so we can track upload progress
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/UploadFiles');
+    xhr.open('POST', 'https://bespoke-library.onrender.com/api/UploadFiles');
+    const authHeader = await getAuthHeader();
+    if (authHeader) xhr.setRequestHeader('x-ms-client-principal', authHeader);
 
     if (onProgress) {
       xhr.upload.addEventListener('progress', e => {

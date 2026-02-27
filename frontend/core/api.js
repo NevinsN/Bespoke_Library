@@ -21,6 +21,10 @@ async function getEncodedPrincipal() {
   return _principal;
 }
 
+export async function getAuthHeader() {
+  return await getEncodedPrincipal();
+}
+
 export async function apiFetch(endpoint, options = {}, { returnFull = false } = {}) {
   try {
     const url       = `${BASE_URL}${endpoint}`;
