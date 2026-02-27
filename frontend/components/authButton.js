@@ -41,6 +41,17 @@ export async function renderAuthButton() {
     studioBtn.className = 'auth-button';
     studioBtn.textContent = 'Studio';
     studioBtn.onclick = () => { window.location.href = '/?studio=1'; };
+
+  // ── Unread comment badge ──
+  getUnreadCommentCount().then(count => {
+    if (count > 0) {
+      const badge = document.createElement('span');
+      badge.className = 'comment-badge';
+      badge.textContent = count > 99 ? '99+' : count;
+      studioBtn.style.position = 'relative';
+      studioBtn.appendChild(badge);
+    }
+  }).catch(() => {});
     wrapper.appendChild(studioBtn);
   }
 
@@ -50,7 +61,12 @@ export async function renderAuthButton() {
   logoutBtn.style.marginLeft = '8px';
   logoutBtn.textContent = 'Logout';
   logoutBtn.onclick = () => {
-    window.location.href = '/.auth/logout?post_logout_redirect_uri=/';
+    // Clear the page before the AAD redirect hop so it doesn't flash
+    document.getElementById('main-content').innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:center;height:40vh;color:#555;font-size:0.9em;">Logging out…</div>';
+    setTimeout(() => {
+      window.location.href = '/.auth/logout?post_logout_redirect_uri=/';
+    }, 300);
   };
   wrapper.appendChild(logoutBtn);
 
