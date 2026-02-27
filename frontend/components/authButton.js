@@ -1,4 +1,5 @@
 import { getUser, getNovelsCache, getNovelsMeta } from '../core/appState.js';
+import { getUnreadCommentCount } from '../services/commentService.js';
 import { getNovels } from '../services/novelService.js';
 
 export async function renderAuthButton() {
