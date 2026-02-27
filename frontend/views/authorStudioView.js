@@ -1,5 +1,6 @@
 import { renderInvitePanel } from '../components/invitePanel.js';
-import { getAuthoredManuscripts, createProject, getDrafts, uploadChapters, setDraftVisibility, setChapterStatus, publishDraft } from '../services/authorService.js';
+import { getAuthoredManuscripts, createProject, getDrafts, uploadChapters, setDraftVisibility, setChapterStatus, publishDraft, deleteChapter } from '../services/authorService.js';
+import { renderFeedbackPanel } from './feedbackView.js';
 
 // Load JSZip from CDN on demand
 async function getJSZip() {
@@ -220,6 +221,33 @@ function renderDraftSection(container, manuscript) {
       }
     };
     item.appendChild(publishBtn);
+
+    // ── Feedback button ──
+    const feedbackBtn = document.createElement('button');
+    feedbackBtn.className = 'visibility-toggle';
+    feedbackBtn.textContent = '💬';
+    feedbackBtn.title = 'View reader feedback';
+    feedbackBtn.onclick = async (e) => {
+      e.stopPropagation();
+      state.selectedDraft = d;
+      state.pendingFiles  = [];
+      // Replace upload panel with feedback panel
+      const existing = document.getElementById('upload-panel');
+      if (existing) {
+        existing.innerHTML = '';
+        existing.id = 'upload-panel'; // keep id so rerenderUploadPanel can find it
+        const fp = await renderFeedbackPanel(d, state.selectedManuscript);
+        // Add back button
+        const backBtn = document.createElement('button');
+        backBtn.className = 'studio-btn small';
+        backBtn.style.margin = '16px 0 0';
+        backBtn.textContent = '← Back to Upload';
+        backBtn.onclick = () => rerenderUploadPanel();
+        existing.appendChild(fp);
+        existing.appendChild(backBtn);
+      }
+    };
+    item.appendChild(feedbackBtn);
 
     list.appendChild(item);
   });
@@ -510,13 +538,9 @@ async function buildChapterStatusPanel(panel) {
         try {
           await setChapterStatus(ch._id, nextStatus);
           ch.status = nextStatus;
-          // Update button
           const newCfg = STATUS_CONFIG[nextStatus];
           btn.textContent = `${newCfg.icon} ${newCfg.label}`;
           btn.className = `chapter-status-btn status-${nextStatus}`;
-          // Update closure var
-          Object.assign(ch, { status: nextStatus });
-          // Re-close over new status
           const currentStatus = nextStatus;
           btn.onclick = async () => {
             const ns = STATUS_CONFIG[currentStatus]?.next || 'hidden';
@@ -536,7 +560,25 @@ async function buildChapterStatusPanel(panel) {
         }
       };
 
+      // ── Delete button ──
+      const delBtn = document.createElement('button');
+      delBtn.className = 'chapter-delete-btn';
+      delBtn.textContent = '✕';
+      delBtn.title = 'Delete chapter';
+      delBtn.onclick = async () => {
+        if (!confirm(`Delete "${ch.title || 'this chapter'}"? This cannot be undone.`)) return;
+        delBtn.disabled = true;
+        try {
+          await deleteChapter(ch._id);
+          row.remove();
+        } catch(e) {
+          console.error('Failed to delete chapter:', e);
+          delBtn.disabled = false;
+        }
+      };
+
       row.appendChild(btn);
+      row.appendChild(delBtn);
       section.appendChild(row);
     });
   } catch(e) {

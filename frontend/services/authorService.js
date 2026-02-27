@@ -141,3 +141,11 @@ export async function publishDraft(draftId) {
     body: JSON.stringify({ draft_id: draftId }),
   });
 }
+
+export async function deleteChapter(chapterId) {
+  return await apiFetch('/DeleteChapter', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chapter_id: chapterId }),
+  });
+}

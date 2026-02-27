@@ -11,9 +11,10 @@ from flask_cors import CORS
 
 from routes.novel_routes  import handle_get_novels, handle_get_chapters, handle_get_chapter_content
 from routes.upload_files  import handle_upload_files
-from routes.author_routes import handle_get_authored_manuscripts, handle_create_project, handle_get_drafts, handle_set_draft_visibility, handle_set_chapter_status, handle_publish_draft
+from routes.author_routes import handle_get_authored_manuscripts, handle_create_project, handle_get_drafts, handle_set_draft_visibility, handle_set_chapter_status, handle_publish_draft, handle_delete_chapter
 from routes.invite_routes import handle_create_invite, handle_redeem_invite, handle_revoke_invite, handle_list_invites
 from routes.health_routes import handle_health, handle_ping_history, handle_whoami
+from routes.comment_routes import handle_create_comment, handle_get_comments, handle_set_comment_status, handle_get_unread_count
 
 app = Flask(__name__)
 
@@ -61,6 +62,26 @@ def set_chapter_status():
 @app.post("/api/PublishDraft")
 def publish_draft():
     return handle_publish_draft()
+
+@app.delete("/api/DeleteChapter")
+def delete_chapter():
+    return handle_delete_chapter()
+
+@app.post("/api/CreateComment")
+def create_comment():
+    return handle_create_comment()
+
+@app.get("/api/GetComments")
+def get_comments():
+    return handle_get_comments()
+
+@app.post("/api/SetCommentStatus")
+def set_comment_status():
+    return handle_set_comment_status()
+
+@app.get("/api/GetUnreadCommentCount")
+def get_unread_count():
+    return handle_get_unread_count()
 
 @app.post("/api/UploadFiles")
 def upload_files():

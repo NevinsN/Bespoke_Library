@@ -5,7 +5,7 @@ from services.author_service import (
     get_authored_manuscripts,
 )
 from repositories.draft_repo import get_draft_by_id, set_draft_visibility
-from repositories.chapter_repo import get_chapter_by_id, set_chapter_status, publish_all_chapters
+from repositories.chapter_repo import get_chapter_by_id, set_chapter_status, publish_all_chapters, delete_chapter
 from services.permission_service import can_manage
 from utils.auth import extract_user
 from utils.response import ok, error
@@ -127,5 +127,29 @@ def handle_publish_draft():
 
         publish_all_chapters(draft_id)
         return ok({"draft_id": draft_id, "status": "published"})
+    except Exception as e:
+        return error(str(e))
+
+
+def handle_delete_chapter():
+    try:
+        user = extract_user()
+        if not user:
+            return error("Unauthorized", 401)
+        body = request.get_json(silent=True) or {}
+        chapter_id = body.get("chapter_id")
+        if not chapter_id:
+            return error("chapter_id is required", 400)
+
+        chapter = get_chapter_by_id(chapter_id)
+        if not chapter:
+            return error("Chapter not found", 404)
+
+        draft = get_draft_by_id(chapter["draft_id"])
+        if not can_manage(user["email"], manuscript_id=draft["manuscript_id"]):
+            return error("Forbidden", 403)
+
+        delete_chapter(chapter_id)
+        return ok({"deleted": chapter_id})
     except Exception as e:
         return error(str(e))

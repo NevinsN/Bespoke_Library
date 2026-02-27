@@ -131,7 +131,10 @@ def process_uploaded_chapters(user_email, draft_id, files, sequential=True):
     current_order = get_next_order(draft_id) if sequential else None
 
     for file in files:
-        filename = file.get("filename")
+        filename = file.get("filename", "")
+        # Strip extension for storage and display
+        import os as _os
+        filename = _os.path.splitext(filename)[0]
         title    = file.get("title") or filename
         content  = file.get("content", "")
         order    = current_order if sequential else int(file.get("slot", 0))

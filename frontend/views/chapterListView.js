@@ -98,7 +98,22 @@ export async function renderChapterList(draftId) {
     const li = document.createElement('li');
     const status = ch.status || 'published';
 
-    if (status === 'upcoming') {
+    if (status === 'hidden' && ch._id) {
+      // Author-only: hidden chapter — visible but badged
+      li.className = 'chapter-list-item hidden-chapter';
+
+      const a = document.createElement('a');
+      a.href = `/?id=${ch._id}`;
+      a.className = 'chapter-list-link';
+      a.textContent = ch.title || 'Untitled Chapter';
+      li.appendChild(a);
+
+      const badge = document.createElement('span');
+      badge.className = 'ch-metadata hidden-badge';
+      badge.textContent = '🙈 Hidden';
+      li.appendChild(badge);
+
+    } else if (status === 'upcoming') {
       // Teaser row — not clickable
       li.className = 'chapter-list-item upcoming';
 
@@ -109,8 +124,9 @@ export async function renderChapterList(draftId) {
 
       const badge = document.createElement('span');
       badge.className = 'ch-metadata upcoming-badge';
-      badge.textContent = 'Coming soon';
+      badge.textContent = '⏳ Upcoming';
       li.appendChild(badge);
+
     } else {
       // Published row — fully clickable
       li.className = 'chapter-list-item';

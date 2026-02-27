@@ -1536,3 +1536,252 @@ h2, h3 {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ── Comment popup (reader) ────────────────────────────────────── */
+.comment-popup {
+  position: absolute;
+  width: 320px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 14px;
+  z-index: 2000;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.comment-popup.visible {
+  display: flex;
+}
+
+.comment-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.comment-popup-title {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #ccc;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.comment-popup-close {
+  background: none;
+  border: none;
+  color: #555;
+  cursor: pointer;
+  font-size: 0.9em;
+  padding: 0;
+  line-height: 1;
+}
+
+.comment-popup-close:hover { color: #999; }
+
+.comment-category {
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #ccc;
+  padding: 6px 10px;
+  font-size: 0.85em;
+  width: 100%;
+}
+
+.comment-note {
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #ddd;
+  padding: 8px 10px;
+  font-size: 0.88em;
+  font-family: inherit;
+  resize: vertical;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.comment-note:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.comment-error {
+  font-size: 0.78em;
+  color: var(--error-color, #e06);
+  min-height: 1em;
+}
+
+/* ── Comment badge on Studio button ───────────────────────────── */
+.comment-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #e33;
+  color: #fff;
+  font-size: 0.65em;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  pointer-events: none;
+}
+
+/* ── Feedback panel (studio) ───────────────────────────────────── */
+.feedback-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.feedback-tab {
+  background: transparent;
+  border: 1px solid #333;
+  border-radius: 20px;
+  color: #666;
+  font-size: 0.78em;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.feedback-tab.active {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.feedback-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.feedback-card {
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.feedback-card.status-flagged  { border-left: 3px solid #b8860b; }
+.feedback-card.status-accepted { border-left: 3px solid var(--accent-color); }
+.feedback-card.status-dismissed { opacity: 0.5; }
+
+.feedback-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.feedback-who {
+  font-size: 0.8em;
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+.feedback-category {
+  font-size: 0.75em;
+  color: #888;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  padding: 2px 8px;
+}
+
+.feedback-when {
+  font-size: 0.72em;
+  color: #444;
+  margin-left: auto;
+}
+
+.feedback-quote {
+  margin: 0;
+  padding: 8px 12px;
+  border-left: 2px solid #333;
+  color: #666;
+  font-style: italic;
+  font-size: 0.85em;
+  background: #0d0d0d;
+  border-radius: 0 4px 4px 0;
+}
+
+.feedback-note {
+  margin: 0;
+  font-size: 0.9em;
+  color: #ccc;
+  line-height: 1.5;
+}
+
+.feedback-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.feedback-action-btn {
+  background: transparent;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #888;
+  font-size: 0.78em;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.feedback-action-btn:hover {
+  border-color: #555;
+  color: #bbb;
+}
+
+.feedback-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Hidden chapter (author view) ──────────────────────────────── */
+.chapter-list-item.hidden-chapter {
+  opacity: 0.5;
+}
+
+.hidden-badge {
+  font-size: 0.78em;
+  color: #555;
+  font-style: italic;
+}
+
+/* ── Chapter delete button ─────────────────────────────────────── */
+.chapter-delete-btn {
+  background: transparent;
+  border: none;
+  color: #3a3a3a;
+  cursor: pointer;
+  font-size: 0.85em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+  line-height: 1;
+}
+
+.chapter-delete-btn:hover {
+  color: #c0392b;
+}
+
+.chapter-delete-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
