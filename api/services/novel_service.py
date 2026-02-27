@@ -1,4 +1,4 @@
-from services.permission_service import get_visible_manuscripts, can_read
+from services.permission_service import get_visible_manuscripts, can_read, can_write, can_manage
 from repositories.series_repo import get_series_by_id
 from repositories.chapter_repo import (
     get_chapters_for_draft,
