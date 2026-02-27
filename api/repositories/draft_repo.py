@@ -48,3 +48,11 @@ def set_draft_visibility(draft_id, public):
 def get_public_drafts():
     """All drafts marked public=True."""
     return serialize_list(db["drafts"].find({"public": True}))
+
+
+def set_comments_enabled(draft_id, enabled):
+    """Enable or disable reader commenting for a draft."""
+    db["drafts"].update_one(
+        {"_id": ObjectId(draft_id)},
+        {"$set": {"comments_enabled": bool(enabled)}}
+    )

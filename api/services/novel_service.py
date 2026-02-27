@@ -88,4 +88,8 @@ def get_full_chapter(user, chapter_id):
     chapter["prev_id"] = str(prev_ch["_id"]) if prev_ch else None
     chapter["next_id"] = str(next_ch["_id"]) if next_ch else None
 
+    # Pass comments_enabled from draft (default True if not set)
+    draft = get_draft_by_id(draft_id)
+    chapter["comments_enabled"] = draft.get("comments_enabled", True) if draft else True
+
     return chapter, None

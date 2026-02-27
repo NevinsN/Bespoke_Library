@@ -4,7 +4,7 @@ from services.author_service import (
     list_drafts,
     get_authored_manuscripts,
 )
-from repositories.draft_repo import get_draft_by_id, set_draft_visibility
+from repositories.draft_repo import get_draft_by_id, set_draft_visibility, set_comments_enabled
 from repositories.chapter_repo import get_chapter_by_id, set_chapter_status, publish_all_chapters, delete_chapter
 from services.permission_service import can_manage
 from utils.auth import extract_user
@@ -151,5 +151,28 @@ def handle_delete_chapter():
 
         delete_chapter(chapter_id)
         return ok({"deleted": chapter_id})
+    except Exception as e:
+        return error(str(e))
+
+
+def handle_set_comments_enabled():
+    try:
+        user = extract_user()
+        if not user:
+            return error("Unauthorized", 401)
+        body    = request.get_json(silent=True) or {}
+        draft_id = body.get("draft_id")
+        enabled  = body.get("enabled")
+        if not draft_id or enabled is None:
+            return error("draft_id and enabled are required", 400)
+
+        draft = get_draft_by_id(draft_id)
+        if not draft:
+            return error("Draft not found", 404)
+        if not can_manage(user["email"], manuscript_id=draft["manuscript_id"]):
+            return error("Forbidden", 403)
+
+        set_comments_enabled(draft_id, enabled)
+        return ok({"draft_id": draft_id, "comments_enabled": enabled})
     except Exception as e:
         return error(str(e))
