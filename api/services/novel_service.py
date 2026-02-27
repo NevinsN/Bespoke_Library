@@ -43,10 +43,24 @@ def get_manuscript_toc(user, draft_id):
         return None, "Forbidden"
 
     chapters = get_chapters_for_draft(draft_id, include_content=False)
+    is_author = can_write(user.get("email"), manuscript_id=manuscript_id)  # owners + authors see all
+
+    result = []
     for c in chapters:
         c["_id"] = str(c["_id"])
         c["draft_id"] = str(c["draft_id"])
-    return chapters, None
+        status = c.get("status", "published")  # legacy chapters default to published
+        if is_author:
+            c["status"] = status  # owners see everything with status label
+            result.append(c)
+        elif status == "published":
+            c["status"] = "published"
+            result.append(c)
+        elif status == "upcoming":
+            # Include as teaser — no _id so it can't be clicked
+            result.append({"title": c["title"], "word_count": c["word_count"], "status": "upcoming"})
+        # hidden: skip entirely
+    return result, None
 
 
 def get_full_chapter(user, chapter_id):

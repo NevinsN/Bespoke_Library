@@ -11,7 +11,7 @@ from flask_cors import CORS
 
 from routes.novel_routes  import handle_get_novels, handle_get_chapters, handle_get_chapter_content
 from routes.upload_files  import handle_upload_files
-from routes.author_routes import handle_get_authored_manuscripts, handle_create_project, handle_get_drafts, handle_set_draft_visibility
+from routes.author_routes import handle_get_authored_manuscripts, handle_create_project, handle_get_drafts, handle_set_draft_visibility, handle_set_chapter_status, handle_publish_draft
 from routes.invite_routes import handle_create_invite, handle_redeem_invite, handle_revoke_invite, handle_list_invites
 from routes.health_routes import handle_health, handle_ping_history, handle_whoami
 
@@ -53,6 +53,14 @@ def get_drafts():
 @app.post("/api/SetDraftVisibility")
 def set_draft_visibility():
     return handle_set_draft_visibility()
+
+@app.post("/api/SetChapterStatus")
+def set_chapter_status():
+    return handle_set_chapter_status()
+
+@app.post("/api/PublishDraft")
+def publish_draft():
+    return handle_publish_draft()
 
 @app.post("/api/UploadFiles")
 def upload_files():

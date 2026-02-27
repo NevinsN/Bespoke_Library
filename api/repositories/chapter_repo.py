@@ -81,3 +81,22 @@ def delete_chapters_for_draft(draft_id):
 
 def delete_chapter(chapter_id):
     db["chapters"].delete_one({"_id": ObjectId(chapter_id)})
+
+
+VALID_STATUSES = {"hidden", "upcoming", "published"}
+
+def set_chapter_status(chapter_id, status):
+    """Set a chapter's publication status: hidden | upcoming | published."""
+    if status not in VALID_STATUSES:
+        raise ValueError(f"Invalid status: {status}")
+    db["chapters"].update_one(
+        {"_id": ObjectId(chapter_id)},
+        {"$set": {"status": status}}
+    )
+
+def publish_all_chapters(draft_id):
+    """Set all chapters in a draft to published."""
+    db["chapters"].update_many(
+        {"draft_id": draft_id},
+        {"$set": {"status": "published"}}
+    )

@@ -1423,3 +1423,79 @@ h2, h3 {
   transform: translateY(0);
   pointer-events: auto;
 }
+
+/* ── Chapter status panel ──────────────────────────────────────── */
+.chapter-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #1a1a1a;
+  gap: 10px;
+}
+
+.chapter-status-row:last-child {
+  border-bottom: none;
+}
+
+.chapter-status-title {
+  font-size: 0.88em;
+  color: #bbb;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chapter-status-btn {
+  font-size: 0.72em;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid #333;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.chapter-status-btn.status-hidden {
+  color: #555;
+  border-color: #333;
+}
+
+.chapter-status-btn.status-upcoming {
+  color: #b8860b;
+  border-color: #b8860b;
+}
+
+.chapter-status-btn.status-published {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.chapter-status-btn:hover {
+  opacity: 0.75;
+}
+
+.chapter-status-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Upcoming chapter teasers ──────────────────────────────────── */
+.chapter-list-item.upcoming {
+  opacity: 0.45;
+}
+
+.upcoming-title {
+  color: var(--text-color);
+  font-style: italic;
+  cursor: default;
+}
+
+.upcoming-badge {
+  font-size: 0.78em;
+  color: #b8860b;
+  font-style: italic;
+}

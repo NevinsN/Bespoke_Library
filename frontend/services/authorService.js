@@ -123,3 +123,19 @@ export async function setDraftVisibility(draftId, isPublic) {
     body: JSON.stringify({ draft_id: draftId, public: isPublic }),
   });
 }
+
+export async function setChapterStatus(chapterId, status) {
+  return await apiFetch('/SetChapterStatus', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chapter_id: chapterId, status }),
+  });
+}
+
+export async function publishDraft(draftId) {
+  return await apiFetch('/PublishDraft', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ draft_id: draftId }),
+  });
+}

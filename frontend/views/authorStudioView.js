@@ -1,5 +1,5 @@
 import { renderInvitePanel } from '../components/invitePanel.js';
-import { getAuthoredManuscripts, createProject, getDrafts, uploadChapters, setDraftVisibility } from '../services/authorService.js';
+import { getAuthoredManuscripts, createProject, getDrafts, uploadChapters, setDraftVisibility, setChapterStatus, publishDraft } from '../services/authorService.js';
 
 // Load JSZip from CDN on demand
 async function getJSZip() {
@@ -196,6 +196,31 @@ function renderDraftSection(container, manuscript) {
     };
     item.appendChild(toggle);
 
+    // ── Publish All button ──
+    const publishBtn = document.createElement('button');
+    publishBtn.className = 'visibility-toggle';
+    publishBtn.textContent = '🚀 Publish';
+    publishBtn.title = 'Publish all chapters in this draft';
+    publishBtn.onclick = async (e) => {
+      e.stopPropagation();
+      if (!confirm(`Publish all chapters in "${d.name}"? This will make them visible to readers.`)) return;
+      publishBtn.disabled = true;
+      try {
+        await publishDraft(d._id);
+        publishBtn.textContent = '✓ Published';
+        setTimeout(() => {
+          publishBtn.textContent = '🚀 Publish';
+          publishBtn.disabled = false;
+        }, 2000);
+        // Refresh chapter list if this draft is selected
+        if (state.selectedDraft?._id === d._id) rerenderUploadPanel();
+      } catch (err) {
+        console.error('Failed to publish draft:', err);
+        publishBtn.disabled = false;
+      }
+    };
+    item.appendChild(publishBtn);
+
     list.appendChild(item);
   });
 
@@ -388,6 +413,9 @@ function buildUploadPanel(panel) {
 
   panel.appendChild(dropZone);
 
+  // ── Existing chapters with status controls ──
+  buildChapterStatusPanel(panel);
+
   // ── Pending file list ──
   if (state.pendingFiles.length) {
     panel.appendChild(renderFileList());
@@ -399,6 +427,121 @@ function buildUploadPanel(panel) {
     commitBtn.textContent = `Upload ${state.pendingFiles.length} file${state.pendingFiles.length > 1 ? 's' : ''}`;
     commitBtn.onclick = () => commitUpload(panel, commitBtn);
     panel.appendChild(commitBtn);
+  }
+}
+
+// ─── Chapter status panel ─────────────────────────────────────────────────────
+
+const STATUS_CONFIG = {
+  hidden:    { label: 'Hidden',    icon: '🙈', next: 'upcoming'  },
+  upcoming:  { label: 'Upcoming',  icon: '⏳', next: 'published' },
+  published: { label: 'Published', icon: '✅', next: 'hidden'    },
+};
+
+async function buildChapterStatusPanel(panel) {
+  if (!state.selectedDraft) return;
+
+  // Remove existing chapter panel if present
+  panel.querySelector('#chapter-status-panel')?.remove();
+
+  const section = document.createElement('div');
+  section.id = 'chapter-status-panel';
+  section.style.marginTop = '24px';
+
+  const header = document.createElement('div');
+  header.className = 'studio-panel-header';
+  header.style.marginBottom = '8px';
+  const h4 = document.createElement('h4');
+  h4.textContent = 'Chapters';
+  h4.style.margin = '0';
+  h4.style.fontSize = '0.8em';
+  h4.style.letterSpacing = '0.08em';
+  h4.style.textTransform = 'uppercase';
+  h4.style.color = '#666';
+  header.appendChild(h4);
+  section.appendChild(header);
+
+  const loading = document.createElement('div');
+  loading.className = 'studio-hint';
+  loading.textContent = 'Loading chapters...';
+  section.appendChild(loading);
+
+  // Insert before pending files section
+  const dropZone = panel.querySelector('.drop-zone');
+  if (dropZone?.nextSibling) {
+    panel.insertBefore(section, dropZone.nextSibling);
+  } else {
+    panel.appendChild(section);
+  }
+
+  try {
+    const { apiFetch } = await import('../core/api.js');
+    const chapters = await apiFetch(`/GetChapters?draft_id=${state.selectedDraft._id}`);
+    loading.remove();
+
+    if (!chapters?.length) {
+      const empty = document.createElement('div');
+      empty.className = 'studio-hint';
+      empty.textContent = 'No chapters yet.';
+      section.appendChild(empty);
+      return;
+    }
+
+    chapters.forEach(ch => {
+      const status = ch.status || 'published'; // legacy default
+      const cfg    = STATUS_CONFIG[status] || STATUS_CONFIG.published;
+
+      const row = document.createElement('div');
+      row.className = 'chapter-status-row';
+
+      const titleSpan = document.createElement('span');
+      titleSpan.className = 'chapter-status-title';
+      titleSpan.textContent = ch.title || 'Untitled';
+      row.appendChild(titleSpan);
+
+      const btn = document.createElement('button');
+      btn.className = `chapter-status-btn status-${status}`;
+      btn.textContent = `${cfg.icon} ${cfg.label}`;
+      btn.title = `Click to cycle: Hidden → Upcoming → Published`;
+
+      btn.onclick = async () => {
+        const nextStatus = STATUS_CONFIG[status]?.next || 'hidden';
+        btn.disabled = true;
+        try {
+          await setChapterStatus(ch._id, nextStatus);
+          ch.status = nextStatus;
+          // Update button
+          const newCfg = STATUS_CONFIG[nextStatus];
+          btn.textContent = `${newCfg.icon} ${newCfg.label}`;
+          btn.className = `chapter-status-btn status-${nextStatus}`;
+          // Update closure var
+          Object.assign(ch, { status: nextStatus });
+          // Re-close over new status
+          const currentStatus = nextStatus;
+          btn.onclick = async () => {
+            const ns = STATUS_CONFIG[currentStatus]?.next || 'hidden';
+            btn.disabled = true;
+            try {
+              await setChapterStatus(ch._id, ns);
+              const nc = STATUS_CONFIG[ns];
+              btn.textContent = `${nc.icon} ${nc.label}`;
+              btn.className = `chapter-status-btn status-${ns}`;
+            } catch(e) { console.error(e); }
+            finally { btn.disabled = false; }
+          };
+        } catch(e) {
+          console.error('Failed to update chapter status:', e);
+        } finally {
+          btn.disabled = false;
+        }
+      };
+
+      row.appendChild(btn);
+      section.appendChild(row);
+    });
+  } catch(e) {
+    loading.textContent = 'Failed to load chapters.';
+    console.error(e);
   }
 }
 

@@ -5,6 +5,7 @@ from services.author_service import (
     get_authored_manuscripts,
 )
 from repositories.draft_repo import get_draft_by_id, set_draft_visibility
+from repositories.chapter_repo import get_chapter_by_id, set_chapter_status, publish_all_chapters
 from services.permission_service import can_manage
 from utils.auth import extract_user
 from utils.response import ok, error
@@ -75,5 +76,56 @@ def handle_set_draft_visibility():
 
         set_draft_visibility(draft_id, public)
         return ok({"draft_id": draft_id, "public": public})
+    except Exception as e:
+        return error(str(e))
+
+
+def handle_set_chapter_status():
+    try:
+        user = extract_user()
+        if not user:
+            return error("Unauthorized", 401)
+        body = request.get_json(silent=True) or {}
+        chapter_id = body.get("chapter_id")
+        status     = body.get("status")
+        if not chapter_id or not status:
+            return error("chapter_id and status are required", 400)
+
+        chapter = get_chapter_by_id(chapter_id)
+        if not chapter:
+            return error("Chapter not found", 404)
+
+        draft = get_draft_by_id(chapter["draft_id"])
+        if not draft:
+            return error("Draft not found", 404)
+        if not can_manage(user["email"], manuscript_id=draft["manuscript_id"]):
+            return error("Forbidden", 403)
+
+        set_chapter_status(chapter_id, status)
+        return ok({"chapter_id": chapter_id, "status": status})
+    except ValueError as e:
+        return error(str(e), 400)
+    except Exception as e:
+        return error(str(e))
+
+
+def handle_publish_draft():
+    try:
+        user = extract_user()
+        if not user:
+            return error("Unauthorized", 401)
+        body = request.get_json(silent=True) or {}
+        draft_id = body.get("draft_id")
+        if not draft_id:
+            return error("draft_id is required", 400)
+
+        draft = get_draft_by_id(draft_id)
+        if not draft:
+            return error("Draft not found", 404)
+        if not can_manage(user["email"], manuscript_id=draft["manuscript_id"]):
+            return error("Forbidden", 403)
+
+        publish_all_chapters(draft_id)
+        return ok({"draft_id": draft_id, "status": "published"})
     except Exception as e:
         return error(str(e))

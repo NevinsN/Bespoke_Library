@@ -96,18 +96,36 @@ export async function renderChapterList(draftId) {
 
   chapters.forEach(ch => {
     const li = document.createElement('li');
-    li.className = 'chapter-list-item';
+    const status = ch.status || 'published';
 
-    const a = document.createElement('a');
-    a.href = `/?id=${ch._id}`;
-    a.className = 'chapter-list-link';
-    a.textContent = ch.title || 'Untitled Chapter';
-    li.appendChild(a);
+    if (status === 'upcoming') {
+      // Teaser row — not clickable
+      li.className = 'chapter-list-item upcoming';
 
-    const meta = document.createElement('span');
-    meta.className = 'ch-metadata';
-    meta.textContent = `${(ch.word_count || 0).toLocaleString()} words`;
-    li.appendChild(meta);
+      const span = document.createElement('span');
+      span.className = 'chapter-list-link upcoming-title';
+      span.textContent = ch.title || 'Untitled Chapter';
+      li.appendChild(span);
+
+      const badge = document.createElement('span');
+      badge.className = 'ch-metadata upcoming-badge';
+      badge.textContent = 'Coming soon';
+      li.appendChild(badge);
+    } else {
+      // Published row — fully clickable
+      li.className = 'chapter-list-item';
+
+      const a = document.createElement('a');
+      a.href = `/?id=${ch._id}`;
+      a.className = 'chapter-list-link';
+      a.textContent = ch.title || 'Untitled Chapter';
+      li.appendChild(a);
+
+      const meta = document.createElement('span');
+      meta.className = 'ch-metadata';
+      meta.textContent = `${(ch.word_count || 0).toLocaleString()} words`;
+      li.appendChild(meta);
+    }
 
     ul.appendChild(li);
   });
