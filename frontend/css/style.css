@@ -1785,3 +1785,27 @@ h2, h3 {
   opacity: 0.3;
   cursor: not-allowed;
 }
+
+/* ── Download draft button ─────────────────────────────────────── */
+.download-draft-btn {
+  background: transparent;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #666;
+  font-size: 0.8em;
+  padding: 6px 14px;
+  cursor: pointer;
+  margin: 10px 0 4px;
+  transition: all 0.15s;
+  display: inline-block;
+}
+
+.download-draft-btn:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.download-draft-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

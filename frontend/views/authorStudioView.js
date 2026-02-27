@@ -1,5 +1,5 @@
 import { renderInvitePanel } from '../components/invitePanel.js';
-import { getAuthoredManuscripts, createProject, getDrafts, uploadChapters, setDraftVisibility, setChapterStatus, publishDraft, deleteChapter, setCommentsEnabled, exportDraft } from '../services/authorService.js';
+import { getAuthoredManuscripts, createProject, getDrafts, uploadChapters, setDraftVisibility, setChapterStatus, publishDraft, deleteChapter, setCommentsEnabled } from '../services/authorService.js';
 import { renderFeedbackPanel } from './feedbackView.js';
 
 // Load JSZip from CDN on demand
@@ -272,28 +272,6 @@ function renderDraftSection(container, manuscript) {
       }
     };
     item.appendChild(commentsBtn);
-
-    // ── Export button ──
-    const exportBtn = document.createElement('button');
-    exportBtn.className = 'visibility-toggle';
-    exportBtn.textContent = '⬇ DOCX';
-    exportBtn.title = 'Download as Word document';
-    exportBtn.onclick = async (e) => {
-      e.stopPropagation();
-      exportBtn.disabled = true;
-      exportBtn.textContent = '⬇ …';
-      try {
-        const filename = `${state.selectedManuscript?.display_name || 'manuscript'} - ${d.name}.docx`.replace(/\s+/g, '_');
-        await exportDraft(d._id, filename);
-      } catch(err) {
-        console.error('Export failed:', err);
-        alert('Export failed. Please try again.');
-      } finally {
-        exportBtn.disabled = false;
-        exportBtn.textContent = '⬇ DOCX';
-      }
-    };
-    item.appendChild(exportBtn);
 
     list.appendChild(item);
   });

@@ -1,4 +1,5 @@
 import { getChapters } from '../services/novelService.js';
+import { exportDraft } from '../services/authorService.js';
 import { getNovelsCache } from '../core/appState.js';
 import { getNovels } from '../services/novelService.js';
 import { getProgressPercent } from '../core/appState.js';
@@ -89,6 +90,26 @@ export async function renderChapterList(draftId) {
     metaEl.textContent += ` · ${Math.round(progressPct * 100)}% read`;
   }
   wrap.appendChild(metaEl);
+
+  // Download button
+  const dlBtn = document.createElement('button');
+  dlBtn.className = 'download-draft-btn';
+  dlBtn.innerHTML = '⬇ Download as Word doc';
+  dlBtn.onclick = async () => {
+    dlBtn.disabled = true;
+    dlBtn.textContent = 'Preparing…';
+    try {
+      const filename = `${displayName} - ${draftName || 'draft'}.docx`.replace(/\s+/g, '_');
+      await exportDraft(draftId, filename);
+    } catch(e) {
+      console.error('Export failed:', e);
+      alert('Download failed. Please try again.');
+    } finally {
+      dlBtn.disabled = false;
+      dlBtn.innerHTML = '⬇ Download as Word doc';
+    }
+  };
+  wrap.appendChild(dlBtn);
 
   // Chapter list
   const ul = document.createElement('ul');
