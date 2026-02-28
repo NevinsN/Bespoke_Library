@@ -56,12 +56,24 @@ def get_next_order(draft_id):
     return (last[0]["order"] + 1) if last else 0
 
 
-def get_neighboring_chapter(manuscript_id, draft_id, order):
-    """Get the chapter immediately before or after by order within the same draft."""
-    return serialize(db["chapters"].find_one(
-        {"draft_id": draft_id, "order": order},
-        {"_id": 1, "status": 1}
-    ))
+def get_neighboring_chapter(manuscript_id, draft_id, current_order, direction="next"):
+    """
+    Get the nearest chapter before or after current_order within the same draft.
+    Uses gt/lt rather than exact order match to handle gaps from deletions.
+    """
+    if direction == "next":
+        cursor = db["chapters"].find(
+            {"draft_id": draft_id, "order": {"$gt": current_order}},
+            {"_id": 1, "status": 1, "order": 1}
+        ).sort("order", 1).limit(1)
+    else:
+        cursor = db["chapters"].find(
+            {"draft_id": draft_id, "order": {"$lt": current_order}},
+            {"_id": 1, "status": 1, "order": 1}
+        ).sort("order", -1).limit(1)
+
+    results = list(cursor)
+    return serialize(results[0]) if results else None
 
 
 def get_word_count_for_manuscript(manuscript_id):

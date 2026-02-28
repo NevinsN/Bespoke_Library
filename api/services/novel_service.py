@@ -79,8 +79,8 @@ def get_full_chapter(user, chapter_id):
         return None, "Forbidden"
 
     order = chapter["order"]
-    prev_ch = get_neighboring_chapter(manuscript_id, draft_id, order - 1)
-    next_ch = get_neighboring_chapter(manuscript_id, draft_id, order + 1)
+    prev_ch = get_neighboring_chapter(manuscript_id, draft_id, order, direction="prev")
+    next_ch = get_neighboring_chapter(manuscript_id, draft_id, order, direction="next")
 
     is_author = can_write(user.get("email"), manuscript_id=manuscript_id)
 
