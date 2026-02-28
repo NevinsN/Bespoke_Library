@@ -159,7 +159,6 @@ export async function setCommentsEnabled(draftId, enabled) {
 }
 
 export async function exportDraft(draftId, filename) {
-  const { getAuthHeader } = await import('../core/api.js');
   const authHeader = await getAuthHeader();
 
   const response = await fetch(
