@@ -176,3 +176,19 @@ export async function exportDraft(draftId, filename) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+export async function reorderChapters(draftId, orderedIds) {
+  return await apiFetch('/ReorderChapters', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ draft_id: draftId, ordered_ids: orderedIds }),
+  });
+}
+
+export async function replaceChapter(chapterId, title, content) {
+  return await apiFetch('/ReplaceChapter', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chapter_id: chapterId, title, content }),
+  });
+}

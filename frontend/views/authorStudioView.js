@@ -1,5 +1,5 @@
 import { renderInvitePanel } from '../components/invitePanel.js';
-import { getAuthoredManuscripts, createProject, getDrafts, uploadChapters, setDraftVisibility, setChapterStatus, publishDraft, deleteChapter, setCommentsEnabled } from '../services/authorService.js';
+import { getAuthoredManuscripts, createProject, getDrafts, uploadChapters, setDraftVisibility, setChapterStatus, publishDraft, deleteChapter, setCommentsEnabled, reorderChapters, replaceChapter } from '../services/authorService.js';
 import { renderFeedbackPanel } from './feedbackView.js';
 
 // Load JSZip from CDN on demand
@@ -539,25 +539,61 @@ async function buildChapterStatusPanel(panel) {
       return;
     }
 
-    chapters.forEach(ch => {
-      const status = ch.status || 'published'; // legacy default
-      const cfg    = STATUS_CONFIG[status] || STATUS_CONFIG.published;
+    // ── Drag-and-drop reorder ──────────────────────────────────
+    let dragSrc = null;
+
+    function buildChapterRow(ch) {
+      let status = ch.status || 'published';
+      const cfg  = STATUS_CONFIG[status] || STATUS_CONFIG.published;
 
       const row = document.createElement('div');
       row.className = 'chapter-status-row';
+      row.draggable = true;
+      row.dataset.id = ch._id;
 
+      // Drag handle
+      const handle = document.createElement('span');
+      handle.className = 'drag-handle';
+      handle.textContent = '⠿';
+      handle.title = 'Drag to reorder';
+      row.appendChild(handle);
+
+      // Title — click to replace file
       const titleSpan = document.createElement('span');
-      titleSpan.className = 'chapter-status-title';
+      titleSpan.className = 'chapter-status-title chapter-replaceable';
       titleSpan.textContent = ch.title || 'Untitled';
+      titleSpan.title = 'Click to replace with a new file';
+      titleSpan.onclick = () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.md,.txt';
+        input.onchange = async () => {
+          const file = input.files[0];
+          if (!file) return;
+          const text = await file.text();
+          const newTitle = file.name.replace(/\.md$|\.txt$/i, '');
+          titleSpan.textContent = '⏳ Replacing…';
+          try {
+            await replaceChapter(ch._id, newTitle, text);
+            ch.title = newTitle;
+            titleSpan.textContent = newTitle;
+          } catch(e) {
+            console.error('Replace failed:', e);
+            titleSpan.textContent = ch.title || 'Untitled';
+          }
+        };
+        input.click();
+      };
       row.appendChild(titleSpan);
 
+      // Status toggle button
       const btn = document.createElement('button');
       btn.className = `chapter-status-btn status-${status}`;
       btn.textContent = `${cfg.icon} ${cfg.label}`;
-      btn.title = `Click to cycle: Hidden → Upcoming → Published`;
+      btn.title = 'Click to cycle: Hidden → Upcoming → Published';
 
-      btn.onclick = async () => {
-        const nextStatus = STATUS_CONFIG[status]?.next || 'hidden';
+      const cycleStatus = async (currentStatus) => {
+        const nextStatus = STATUS_CONFIG[currentStatus]?.next || 'hidden';
         btn.disabled = true;
         try {
           await setChapterStatus(ch._id, nextStatus);
@@ -565,26 +601,17 @@ async function buildChapterStatusPanel(panel) {
           const newCfg = STATUS_CONFIG[nextStatus];
           btn.textContent = `${newCfg.icon} ${newCfg.label}`;
           btn.className = `chapter-status-btn status-${nextStatus}`;
-          const currentStatus = nextStatus;
-          btn.onclick = async () => {
-            const ns = STATUS_CONFIG[currentStatus]?.next || 'hidden';
-            btn.disabled = true;
-            try {
-              await setChapterStatus(ch._id, ns);
-              const nc = STATUS_CONFIG[ns];
-              btn.textContent = `${nc.icon} ${nc.label}`;
-              btn.className = `chapter-status-btn status-${ns}`;
-            } catch(e) { console.error(e); }
-            finally { btn.disabled = false; }
-          };
+          btn.onclick = () => cycleStatus(nextStatus);
         } catch(e) {
           console.error('Failed to update chapter status:', e);
         } finally {
           btn.disabled = false;
         }
       };
+      btn.onclick = () => cycleStatus(status);
+      row.appendChild(btn);
 
-      // ── Delete button ──
+      // Delete button
       const delBtn = document.createElement('button');
       delBtn.className = 'chapter-delete-btn';
       delBtn.textContent = '✕';
@@ -600,11 +627,51 @@ async function buildChapterStatusPanel(panel) {
           delBtn.disabled = false;
         }
       };
-
-      row.appendChild(btn);
       row.appendChild(delBtn);
-      section.appendChild(row);
-    });
+
+      // ── Drag events ──
+      row.addEventListener('dragstart', e => {
+        dragSrc = row;
+        e.dataTransfer.effectAllowed = 'move';
+        row.classList.add('dragging');
+      });
+      row.addEventListener('dragend', async () => {
+        row.classList.remove('dragging');
+        section.querySelectorAll('.chapter-status-row').forEach(r => r.classList.remove('drag-over'));
+        // Save new order
+        const orderedIds = [...section.querySelectorAll('.chapter-status-row')].map(r => r.dataset.id);
+        try {
+          await reorderChapters(state.selectedDraft._id, orderedIds);
+        } catch(e) {
+          console.error('Reorder failed:', e);
+        }
+      });
+      row.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (dragSrc && dragSrc !== row) {
+          section.querySelectorAll('.chapter-status-row').forEach(r => r.classList.remove('drag-over'));
+          row.classList.add('drag-over');
+        }
+      });
+      row.addEventListener('drop', e => {
+        e.preventDefault();
+        if (!dragSrc || dragSrc === row) return;
+        const rows = [...section.querySelectorAll('.chapter-status-row')];
+        const srcIdx = rows.indexOf(dragSrc);
+        const tgtIdx = rows.indexOf(row);
+        if (srcIdx < tgtIdx) {
+          row.after(dragSrc);
+        } else {
+          row.before(dragSrc);
+        }
+        row.classList.remove('drag-over');
+      });
+
+      return row;
+    }
+
+    chapters.forEach(ch => section.appendChild(buildChapterRow(ch)));
   } catch(e) {
     loading.textContent = 'Failed to load chapters.';
     console.error(e);

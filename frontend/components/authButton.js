@@ -61,6 +61,24 @@ export async function renderAuthButton() {
   logoutBtn.className = 'auth-button';
   logoutBtn.style.marginLeft = '8px';
   logoutBtn.textContent = 'Logout';
+  // ── Theme toggle ──
+  const themeBtn = document.createElement('button');
+  themeBtn.className = 'auth-button';
+  themeBtn.style.marginLeft = '8px';
+  const savedTheme = localStorage.getItem('bespoke-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme === 'sepia' ? 'sepia' : '');
+  themeBtn.textContent = savedTheme === 'sepia' ? '🌙' : '📜';
+  themeBtn.title = savedTheme === 'sepia' ? 'Switch to dark mode' : 'Switch to sepia mode';
+  themeBtn.onclick = () => {
+    const current = localStorage.getItem('bespoke-theme') || 'dark';
+    const next = current === 'sepia' ? 'dark' : 'sepia';
+    localStorage.setItem('bespoke-theme', next);
+    document.documentElement.setAttribute('data-theme', next === 'sepia' ? 'sepia' : '');
+    themeBtn.textContent = next === 'sepia' ? '🌙' : '📜';
+    themeBtn.title = next === 'sepia' ? 'Switch to dark mode' : 'Switch to sepia mode';
+  };
+  wrapper.appendChild(themeBtn);
+
   logoutBtn.onclick = () => {
     // Clear the page before the AAD redirect hop so it doesn't flash
     document.getElementById('main-content').innerHTML =

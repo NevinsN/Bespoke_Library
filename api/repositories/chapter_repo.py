@@ -112,3 +112,26 @@ def publish_all_chapters(draft_id):
         {"draft_id": draft_id},
         {"$set": {"status": "published"}}
     )
+
+
+def reorder_chapters(ordered_ids):
+    """
+    Accept a list of chapter IDs in desired order.
+    Assigns order = 0, 1, 2... to each.
+    """
+    for i, chapter_id in enumerate(ordered_ids):
+        db["chapters"].update_one(
+            {"_id": ObjectId(chapter_id)},
+            {"$set": {"order": i}}
+        )
+
+def replace_chapter_content(chapter_id, title, content):
+    """Replace the content (and optionally title) of an existing chapter."""
+    db["chapters"].update_one(
+        {"_id": ObjectId(chapter_id)},
+        {"$set": {
+            "title":      title,
+            "content":    content,
+            "word_count": len(content.split()),
+        }}
+    )

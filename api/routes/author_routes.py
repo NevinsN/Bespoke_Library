@@ -5,7 +5,7 @@ from services.author_service import (
     get_authored_manuscripts,
 )
 from repositories.draft_repo import get_draft_by_id, set_draft_visibility, set_comments_enabled
-from repositories.chapter_repo import get_chapter_by_id, set_chapter_status, publish_all_chapters, delete_chapter
+from repositories.chapter_repo import get_chapter_by_id, set_chapter_status, publish_all_chapters, delete_chapter, reorder_chapters, replace_chapter_content
 from services.permission_service import can_manage
 from utils.auth import extract_user
 from utils.response import ok, error
@@ -174,5 +174,58 @@ def handle_set_comments_enabled():
 
         set_comments_enabled(draft_id, enabled)
         return ok({"draft_id": draft_id, "comments_enabled": enabled})
+    except Exception as e:
+        return error(str(e))
+
+
+def handle_reorder_chapters():
+    try:
+        user = extract_user()
+        if not user:
+            return error("Unauthorized", 401)
+
+        body = request.get_json(silent=True) or {}
+        draft_id    = body.get("draft_id")
+        ordered_ids = body.get("ordered_ids", [])
+
+        if not draft_id or not ordered_ids:
+            return error("draft_id and ordered_ids are required", 400)
+
+        draft = get_draft_by_id(draft_id)
+        if not draft:
+            return error("Draft not found", 404)
+        if not can_manage(user["email"], manuscript_id=draft["manuscript_id"]):
+            return error("Forbidden", 403)
+
+        reorder_chapters(ordered_ids)
+        return ok({"reordered": len(ordered_ids)})
+    except Exception as e:
+        return error(str(e))
+
+
+def handle_replace_chapter():
+    try:
+        user = extract_user()
+        if not user:
+            return error("Unauthorized", 401)
+
+        body       = request.get_json(silent=True) or {}
+        chapter_id = body.get("chapter_id")
+        title      = body.get("title")
+        content    = body.get("content")
+
+        if not chapter_id or content is None:
+            return error("chapter_id and content are required", 400)
+
+        chapter = get_chapter_by_id(chapter_id)
+        if not chapter:
+            return error("Chapter not found", 404)
+
+        draft = get_draft_by_id(chapter["draft_id"])
+        if not can_manage(user["email"], manuscript_id=draft["manuscript_id"]):
+            return error("Forbidden", 403)
+
+        replace_chapter_content(chapter_id, title or chapter["title"], content)
+        return ok({"chapter_id": chapter_id})
     except Exception as e:
         return error(str(e))
