@@ -2031,7 +2031,8 @@ h2, h3 {
   .comment-panel {
     left: 0;
     right: 0;
-    width: 100%;
+    width: auto;
+    box-sizing: border-box;
     border-radius: 12px 12px 0 0;
     max-height: 80vh;
     padding: 16px;
