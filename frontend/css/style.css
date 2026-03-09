@@ -2022,14 +2022,32 @@ h2, h3 {
 .cp-submit:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ── Mobile: full width panel ──────────────────────────────────── */
+.comment-panel {
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
 @media (max-width: 480px) {
   .comment-panel {
     width: 100vw;
     border-radius: 12px 12px 0 0;
+    max-height: 80vh;
+    padding: 16px;
+    gap: 12px;
   }
 
   .comment-trigger-btn {
     bottom: 20px;
     right: 16px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .cp-note {
+    font-size: 16px; /* prevent iOS zoom on focus */
+  }
+
+  .cp-category {
+    font-size: 16px; /* prevent iOS zoom on focus */
   }
 }

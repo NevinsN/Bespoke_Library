@@ -39,7 +39,7 @@ def handle_create_comment():
         if not draft:
             return error("Draft not found", 404)
 
-        if not can_read(user["email"], manuscript_id=draft["manuscript_id"]):
+        if not can_read(user["email"], manuscript_id=draft["manuscript_id"], draft_id=chapter["draft_id"]):
             return error("Forbidden", 403)
 
         comment_id = create_comment(
