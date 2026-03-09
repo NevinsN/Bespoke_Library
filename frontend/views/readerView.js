@@ -1,4 +1,5 @@
 import { getChapter } from '../services/novelService.js';
+import { initCommentPanel, destroyCommentPanel } from '../components/commentPanel.js';
 import {
   markChapterRead,
   saveScrollPosition,
@@ -69,6 +70,12 @@ export async function renderReader(chapterId) {
   // ── Footnote popups ──────────────────────────────────────────────────────
   initFootnotePopups(content);
 
+  // ── Comment panel ─────────────────────────────────────────────────────────
+  destroyCommentPanel();
+  if (chapter.comments_enabled !== false) {
+    initCommentPanel(chapter._id, chapter.draft_id);
+  }
+
   // ── Bottom nav ──
   if (chapter.prev_id || chapter.next_id) {
     const bottomNav = document.createElement('div');
@@ -120,6 +127,7 @@ export async function renderReader(chapterId) {
   // Clean up scroll listener when navigating away
   window.addEventListener('popstate', () => {
     window.removeEventListener('scroll', onScroll);
+    destroyCommentPanel();
   }, { once: true });
 }
 
