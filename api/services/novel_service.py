@@ -13,8 +13,8 @@ def get_authorized_novels(user):
     Returns the full library view for a user — series → manuscripts → drafts.
     Enriches each manuscript with its series name for display.
     """
-    email = user.get("id")
-    manuscripts = get_visible_manuscripts(email)
+    user_id = user.get("id")
+    manuscripts = get_visible_manuscripts(user_id)
 
     # Attach series name to each manuscript for the frontend grouping
     series_cache = {}
