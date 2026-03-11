@@ -1,6 +1,10 @@
 /**
- * authButton.js — Auth0-powered nav buttons.
- * Login/logout via Auth0, theme toggle, Studio access for admins.
+ * authButton.js — Nav bar with three zones:
+ *   Left:   Home + Theme toggle
+ *   Center: @username
+ *   Right:  Studio + Logout
+ *
+ * Anonymous: bar is rendered but empty (hidden on welcome page via CSS class)
  */
 
 import { getUser, getNovelsCache, getNovelsMeta } from '../core/appState.js';
@@ -9,91 +13,105 @@ import { getUnreadCommentCount } from '../services/commentService.js';
 import { getNovels } from '../services/novelService.js';
 
 export async function renderAuthButton() {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'auth-menu';
+  const nav = document.createElement('nav');
+  nav.className = 'site-nav';
 
   const user = await getUser();
 
-  if (!user) {
-    const loginBtn = document.createElement('button');
-    loginBtn.className = 'auth-button';
-    loginBtn.textContent = 'Login';
-    loginBtn.onclick = () => loginWithRedirect();
-    wrapper.appendChild(loginBtn);
-    return wrapper;
-  }
+  // ── Left zone ─────────────────────────────────────────────────────────────
+  const left = document.createElement('div');
+  left.className = 'nav-left';
 
-  // ── Load novels for meta ───────────────────────────────────────────────────
-  let isAdmin = false;
-  try {
-    await getNovelsCache(async () => {
-      const res = await getNovels();
-      if (res?.data) return { novels: res.data, meta: res.meta || {} };
-      return Array.isArray(res) ? res : [];
-    });
-    const meta = getNovelsMeta();
-    isAdmin = !!meta?.is_admin || !!user?.is_admin;
-  } catch (err) {
-    console.error('Error checking role:', err);
-  }
+  // Home button
+  const homeBtn = document.createElement('button');
+  homeBtn.className = 'nav-icon-btn';
+  homeBtn.title = 'Library';
+  homeBtn.innerHTML = '🏠';
+  homeBtn.onclick = () => { window.location.href = '/'; };
+  left.appendChild(homeBtn);
 
-  // ── Studio button ─────────────────────────────────────────────────────────
-  if (isAdmin) {
-    const studioBtn = document.createElement('button');
-    studioBtn.className = 'auth-button';
-    studioBtn.textContent = 'Studio';
-    studioBtn.onclick = () => { window.location.href = '/?studio=1'; };
-
-    getUnreadCommentCount().then(count => {
-      if (count > 0) {
-        const badge = document.createElement('span');
-        badge.className = 'comment-badge';
-        badge.textContent = count > 99 ? '99+' : count;
-        studioBtn.style.position = 'relative';
-        studioBtn.appendChild(badge);
-      }
-    }).catch(() => {});
-
-    wrapper.appendChild(studioBtn);
-  }
-
-  // ── Username display ───────────────────────────────────────────────────────
-  if (user.username) {
-    const nameEl = document.createElement('span');
-    nameEl.className = 'auth-username';
-    nameEl.textContent = `@${user.username}`;
-    wrapper.appendChild(nameEl);
-  }
-
-  // ── Theme toggle ───────────────────────────────────────────────────────────
+  // Theme toggle
   const themeBtn = document.createElement('button');
-  themeBtn.className = 'auth-button';
-  themeBtn.style.marginLeft = '8px';
+  themeBtn.className = 'nav-icon-btn';
   const savedTheme = localStorage.getItem('bespoke-theme') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme === 'sepia' ? 'sepia' : '');
-  themeBtn.textContent = savedTheme === 'sepia' ? '🌙' : '📜';
+  themeBtn.innerHTML   = savedTheme === 'sepia' ? '🌙' : '📜';
   themeBtn.title = savedTheme === 'sepia' ? 'Switch to dark' : 'Switch to sepia';
   themeBtn.onclick = () => {
     const current = localStorage.getItem('bespoke-theme') || 'dark';
     const next = current === 'sepia' ? 'dark' : 'sepia';
     localStorage.setItem('bespoke-theme', next);
     document.documentElement.setAttribute('data-theme', next === 'sepia' ? 'sepia' : '');
-    themeBtn.textContent = next === 'sepia' ? '🌙' : '📜';
+    themeBtn.innerHTML   = next === 'sepia' ? '🌙' : '📜';
     themeBtn.title = next === 'sepia' ? 'Switch to dark' : 'Switch to sepia';
   };
-  wrapper.appendChild(themeBtn);
+  left.appendChild(themeBtn);
 
-  // ── Logout ────────────────────────────────────────────────────────────────
-  const logoutBtn = document.createElement('button');
-  logoutBtn.className = 'auth-button';
-  logoutBtn.style.marginLeft = '8px';
-  logoutBtn.textContent = 'Logout';
-  logoutBtn.onclick = () => {
-    document.getElementById('main-content').innerHTML =
-      '<div style="display:flex;align-items:center;justify-content:center;height:40vh;color:var(--text-subtle);font-size:0.9em;">Logging out…</div>';
-    setTimeout(() => logout(), 300);
-  };
-  wrapper.appendChild(logoutBtn);
+  // ── Center zone ───────────────────────────────────────────────────────────
+  const center = document.createElement('div');
+  center.className = 'nav-center';
 
-  return wrapper;
+  if (user?.username) {
+    const nameEl = document.createElement('span');
+    nameEl.className = 'nav-username';
+    nameEl.textContent = `@${user.username}`;
+    center.appendChild(nameEl);
+  }
+
+  // ── Right zone ────────────────────────────────────────────────────────────
+  const right = document.createElement('div');
+  right.className = 'nav-right';
+
+  if (!user) {
+    // Anonymous — right zone empty, welcome page handles login CTA
+  } else {
+    // Check admin
+    let isAdmin = !!user?.is_admin;
+    try {
+      await getNovelsCache(async () => {
+        const res = await getNovels();
+        if (res?.data) return { novels: res.data, meta: res.meta || {} };
+        return Array.isArray(res) ? res : [];
+      });
+      const meta = getNovelsMeta();
+      isAdmin = isAdmin || !!meta?.is_admin;
+    } catch {}
+
+    // Studio
+    if (isAdmin) {
+      const studioBtn = document.createElement('button');
+      studioBtn.className = 'nav-btn';
+      studioBtn.textContent = 'Studio';
+      studioBtn.onclick = () => { window.location.href = '/?studio=1'; };
+
+      getUnreadCommentCount().then(count => {
+        if (count > 0) {
+          const badge = document.createElement('span');
+          badge.className = 'comment-badge';
+          badge.textContent = count > 99 ? '99+' : count;
+          studioBtn.style.position = 'relative';
+          studioBtn.appendChild(badge);
+        }
+      }).catch(() => {});
+
+      right.appendChild(studioBtn);
+    }
+
+    // Logout
+    const logoutBtn = document.createElement('button');
+    logoutBtn.className = 'nav-btn';
+    logoutBtn.textContent = 'Logout';
+    logoutBtn.onclick = () => {
+      document.getElementById('main-content').innerHTML =
+        '<div style="display:flex;align-items:center;justify-content:center;height:40vh;color:var(--text-subtle);font-size:0.9em;">Logging out…</div>';
+      setTimeout(() => logout(), 300);
+    };
+    right.appendChild(logoutBtn);
+  }
+
+  nav.appendChild(left);
+  nav.appendChild(center);
+  nav.appendChild(right);
+
+  return nav;
 }

@@ -13,11 +13,10 @@ export async function renderBookshelf() {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
 
-  // ── Auth button — in its own wrapper, never cleared ──
-  const authWrapper = document.createElement('div');
-  authWrapper.id = 'auth-container';
-  authWrapper.appendChild(await renderAuthButton());
-  container.appendChild(authWrapper);
+  // ── Nav bar ──
+  const nav = await renderAuthButton();
+  nav.id = 'auth-container';
+  container.appendChild(nav);
 
   // ── Skeleton — in its own wrapper below auth ──
   const skeletonWrapper = document.createElement('div');

@@ -121,23 +121,99 @@ body {
 }
 
 /* -------------------------
-   Auth Menu
+   Site Nav
 ------------------------- */
-.auth-menu {
+.site-nav {
     position: fixed;
-    top: 10px;
-    right: 10px;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    background: var(--bg-color);
+    border-bottom: 1px solid var(--border-color);
     z-index: 1000;
 }
 
-.auth-button {
-    padding: 6px 12px;
-    font-size: 14px;
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 80px;
+}
+
+.nav-center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 80px;
+    justify-content: flex-end;
+}
+
+.nav-icon-btn {
+    background: none;
+    border: none;
+    font-size: 1.1em;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 6px;
+    color: var(--text-muted);
+    transition: background 0.15s;
+    line-height: 1;
+}
+
+.nav-icon-btn:hover { background: var(--bg-raised); }
+
+.nav-btn {
+    padding: 5px 12px;
+    font-size: 0.85em;
     cursor: pointer;
     border: 1px solid var(--accent-color);
     background: var(--accent-mild);
     color: var(--accent-color);
-    border-radius: 4px;
+    border-radius: 6px;
+    transition: opacity 0.15s;
+}
+
+.nav-btn:hover { opacity: 0.8; }
+
+.nav-username {
+    font-size: 0.82em;
+    color: var(--text-muted);
+    letter-spacing: 0.01em;
+}
+
+/* Push page content below fixed nav */
+#main-content {
+    padding-top: 48px;
+}
+
+/* Welcome page — nav visible but empty, no border needed */
+.welcome-landing ~ * .site-nav,
+body:has(.welcome-landing) .site-nav {
+    border-bottom-color: transparent;
+    background: transparent;
+}
+
+/* Legacy auth-button — keep for any stragglers */
+.auth-button {
+    padding: 5px 12px;
+    font-size: 0.85em;
+    cursor: pointer;
+    border: 1px solid var(--accent-color);
+    background: var(--accent-mild);
+    color: var(--accent-color);
+    border-radius: 6px;
 }
 
 /* -------------------------
