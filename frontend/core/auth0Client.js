@@ -25,6 +25,7 @@ async function getClient() {
     cacheLocation: 'localstorage',
     useRefreshTokens: true,
   });
+  window._auth0Client = _client;
 
   return _client;
 }
