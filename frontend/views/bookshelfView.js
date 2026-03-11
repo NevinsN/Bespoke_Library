@@ -45,9 +45,33 @@ export async function renderBookshelf() {
   skeletonWrapper.remove();
 
   if (!novels.length) {
+    const user = await getUser();
     const empty = document.createElement('div');
-    empty.className = 'empty-library';
-    empty.textContent = 'No books available.';
+
+    if (!user) {
+      // Anonymous — show welcome landing
+      empty.className = 'welcome-landing';
+      empty.innerHTML = `
+        <div class="welcome-card">
+          <div class="welcome-icon">📖</div>
+          <h1 class="welcome-title">Bespoke Library</h1>
+          <p class="welcome-subtitle">A private reading platform for works-in-progress.<br>Read early. Give feedback that matters.</p>
+          <p class="welcome-note">Manuscripts are currently invite-only.<br>If you have an invite link, log in to redeem it.</p>
+          <button class="welcome-login-btn">Log in or create an account</button>
+        </div>
+      `;
+      empty.querySelector('.welcome-login-btn').onclick = () => {
+        import('../core/auth0Client.js').then(({ loginWithRedirect }) => loginWithRedirect());
+      };
+    } else {
+      // Logged in but no access yet
+      empty.className = 'empty-library';
+      empty.innerHTML = `
+        <p>You don't have access to any manuscripts yet.</p>
+        <p style="font-size:0.85em; color:var(--text-muted); margin-top:8px;">If you received an invite link, open it to gain access.</p>
+      `;
+    }
+
     container.appendChild(empty);
     return;
   }

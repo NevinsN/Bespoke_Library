@@ -112,7 +112,7 @@ function buildCommentCard(comment, allComments, refresh) {
 
   const who = document.createElement('span');
   who.className = 'feedback-who';
-  who.textContent = comment.reader_email;
+  who.textContent = comment.reader_username;
 
   const cat = document.createElement('span');
   cat.className = 'feedback-category';
