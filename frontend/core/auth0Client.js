@@ -14,9 +14,6 @@ let _client = null;
 async function getClient() {
   if (_client) return _client;
 
-  // Load Auth0 SPA SDK from CDN
-  await loadScript('https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js');
-
   _client = await window.auth0.createAuth0Client({
     domain:   AUTH0_DOMAIN,
     clientId: AUTH0_CLIENT_ID,
@@ -30,17 +27,6 @@ async function getClient() {
   });
 
   return _client;
-}
-
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
-    const s = document.createElement('script');
-    s.src = src;
-    s.onload  = resolve;
-    s.onerror = reject;
-    document.head.appendChild(s);
-  });
 }
 
 export async function initAuth() {
