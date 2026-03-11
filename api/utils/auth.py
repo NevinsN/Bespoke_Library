@@ -16,7 +16,7 @@ from repositories.user_repo import upsert_user_by_sub, get_user_by_sub
 
 AUTH0_DOMAIN   = os.getenv("AUTH0_DOMAIN", "")
 AUTH0_AUDIENCE = os.getenv("AUTH0_AUDIENCE", "")
-ADMIN_LIST     = [e.strip() for e in os.getenv("ADMIN_EMAIL", "").split(",") if e]
+ADMIN_LIST = [e.strip() for e in os.getenv("ADMIN_SUB", "").split(",") if e]
 
 # Cache JWKS so we don't fetch on every request
 _jwks_cache = None
@@ -87,7 +87,7 @@ def extract_user(req=None):
 
     sub   = payload.get("sub")
     email = (payload.get("email") or "").lower() or None
-    is_admin = email in ADMIN_LIST if email else False
+    is_admin = sub in ADMIN_LIST if sub else False
 
     if sub:
         upsert_user_by_sub(sub, email)
