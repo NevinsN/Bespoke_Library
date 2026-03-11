@@ -13,7 +13,7 @@ def get_authorized_novels(user):
     Returns the full library view for a user — series → manuscripts → drafts.
     Enriches each manuscript with its series name for display.
     """
-    email = user.get("email")
+    email = user.get("id")
     manuscripts = get_visible_manuscripts(email)
 
     # Attach series name to each manuscript for the frontend grouping
@@ -39,11 +39,11 @@ def get_manuscript_toc(user, draft_id):
 
     manuscript_id = draft["manuscript_id"]
 
-    if not can_read(user.get("email"), manuscript_id=manuscript_id, draft_id=draft_id):
+    if not can_read(user.get("id"), manuscript_id=manuscript_id, draft_id=draft_id):
         return None, "Forbidden"
 
     chapters = get_chapters_for_draft(draft_id, include_content=False)
-    is_author = can_write(user.get("email"), manuscript_id=manuscript_id)  # owners + authors see all
+    is_author = can_write(user.get("id"), manuscript_id=manuscript_id)  # owners + authors see all
 
     result = []
     for c in chapters:
@@ -75,14 +75,14 @@ def get_full_chapter(user, chapter_id):
     draft_id = str(chapter["draft_id"])
     manuscript_id = str(chapter["manuscript_id"])
 
-    if not can_read(user.get("email"), manuscript_id=manuscript_id, draft_id=draft_id):
+    if not can_read(user.get("id"), manuscript_id=manuscript_id, draft_id=draft_id):
         return None, "Forbidden"
 
     order = chapter["order"]
     prev_ch = get_neighboring_chapter(manuscript_id, draft_id, order, direction="prev")
     next_ch = get_neighboring_chapter(manuscript_id, draft_id, order, direction="next")
 
-    is_author = can_write(user.get("email"), manuscript_id=manuscript_id)
+    is_author = can_write(user.get("id"), manuscript_id=manuscript_id)
 
     def accessible(ch):
         """Returns chapter id only if the user can navigate to it."""
