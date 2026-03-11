@@ -42,7 +42,7 @@ export async function uploadChapters(draftId, files, sequential = true, onProgre
   const authHeader = await getAuthHeader();
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'https://bespoke-library.onrender.com/api/UploadFiles');
+    xhr.open('POST', 'https://bespoke-api.nicholasnevins.org/api/UploadFiles');
     if (authHeader) xhr.setRequestHeader('x-ms-client-principal', authHeader);
 
     if (onProgress) {
@@ -162,7 +162,7 @@ export async function exportDraft(draftId, filename) {
   const authHeader = await getAuthHeader();
 
   const response = await fetch(
-    `https://bespoke-library.onrender.com/api/ExportDraft?draft_id=${draftId}`,
+    `https://bespoke-api.nicholasnevins.org/api/ExportDraft?draft_id=${draftId}`,
     { headers: authHeader ? { 'x-ms-client-principal': authHeader } : {} }
   );
 
