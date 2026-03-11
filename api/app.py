@@ -25,7 +25,7 @@ CORS(app, origins=[
     "https://purple-moss-00a59f61e.azurestaticapps.net",
     "http://localhost:4280",
     "http://localhost:3000",
-], supports_credentials=True)
+], supports_credentials=True, allow_headers=["Authorization", "Content-Type"], methods=["GET", "POST", "OPTIONS"])
 
 # ── Reader routes ─────────────────────────────────────────────────────────────
 @app.get("/api/GetNovels")
