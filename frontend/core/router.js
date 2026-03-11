@@ -45,7 +45,9 @@ export async function route() {
       renderAuthorStudio({ openNewForm: action === 'new' });
       return;
     }
-    window.location.href = '/.auth/login/aad?post_login_redirect_uri=/?studio=1';
+    const { loginWithRedirect } = await import('../core/auth0Client.js');
+    await loginWithRedirect();
+
     return;
   }
 
@@ -62,7 +64,9 @@ async function handleInviteFlow(token) {
   if (!user) {
     // Not logged in — save token and send through AAD
     sessionStorage.setItem(PENDING_INVITE_KEY, token);
-    window.location.href = '/.auth/login/aad?post_login_redirect_uri=/';
+    const { loginWithRedirect } = await import('../core/auth0Client.js');
+    await loginWithRedirect();
+
     return;
   }
 
