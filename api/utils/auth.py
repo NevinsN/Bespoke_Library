@@ -6,7 +6,7 @@ from repositories.user_repo import upsert_user_by_sub, get_user_by_sub
 
 AUTH0_DOMAIN   = os.getenv("AUTH0_DOMAIN", "")
 AUTH0_AUDIENCE = os.getenv("AUTH0_AUDIENCE", "")
-ADMIN_LIST     = [e.strip() for e in os.getenv("ADMIN_SUB", "").split(",") if e]
+ADMIN_LIST     = [s.strip() for s in os.getenv("ADMIN_SUB", "").split(",") if s]
 
 _jwks_cache = None
 
@@ -27,19 +27,14 @@ def _verify_token(token):
     for key in jwks.get("keys", []):
         if key.get("kid") == unverified_header.get("kid"):
             rsa_key = {
-                "kty": key["kty"],
-                "kid": key["kid"],
-                "use": key["use"],
-                "n":   key["n"],
-                "e":   key["e"],
+                "kty": key["kty"], "kid": key["kid"],
+                "use": key["use"], "n": key["n"], "e": key["e"],
             }
             break
     if not rsa_key:
         raise JWTError("Unable to find matching key")
     return jwt.decode(
-        token,
-        rsa_key,
-        algorithms=["RS256"],
+        token, rsa_key, algorithms=["RS256"],
         audience=AUTH0_AUDIENCE,
         issuer=f"https://{AUTH0_DOMAIN}/",
     )
@@ -63,21 +58,21 @@ def extract_user(req=None):
     if not sub:
         return None
 
-    # Get email from JWT if present, otherwise fall back to DB record
+    # Email from token (only present if Auth0 Action injects it)
     email_from_token = (payload.get("email") or "").lower() or None
 
-    # Upsert — stores email if we have it
+    # Upsert — encrypts and stores email if present
     upsert_user_by_sub(sub, email_from_token)
 
-    # Always look up from DB so we get email even if not in token
-    user_doc  = get_user_by_sub(sub)
-    email     = user_doc.get("email") if user_doc else email_from_token
-    username  = user_doc.get("username") if user_doc else None
-    is_admin  = sub in ADMIN_LIST
+    user_doc = get_user_by_sub(sub)
+    username = user_doc.get("username") if user_doc else None
+    is_admin = sub in ADMIN_LIST
 
+    # Note: email is NOT included in the returned user dict.
+    # It is stored encrypted and only accessed via get_decrypted_email()
+    # in the account linking flow.
     return {
         "id":           sub,
-        "email":        email,
         "username":     username,
         "roles":        [],
         "is_admin":     is_admin,

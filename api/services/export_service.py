@@ -88,7 +88,7 @@ def _set_para_spacing(para, space_before=0, space_after=0, line_spacing=None):
         fmt.line_spacing = line_spacing
 
 
-def _add_header(doc, author_email, title, draft_name):
+def _add_header(doc, author_id, title, draft_name):
     """Add running header: Author / Title — Draft · Page #"""
     section = doc.sections[0]
     section.different_first_page_header_footer = True
@@ -104,7 +104,7 @@ def _add_header(doc, author_email, title, draft_name):
     p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
 
     short_title = title[:30] + '…' if len(title) > 30 else title
-    run = p.add_run(f"{author_email} / {short_title} — {draft_name}  ")
+    run = p.add_run(f"{author_id} / {short_title} — {draft_name}  ")
     run.font.name = 'Times New Roman'
     run.font.size = Pt(11)
     run.font.color.rgb = RGBColor(0x88, 0x88, 0x88)
@@ -126,7 +126,7 @@ def _add_header(doc, author_email, title, draft_name):
     run4._r.append(fld2)
 
 
-def _add_title_block(doc, display_name, draft_name, author_email):
+def _add_title_block(doc, display_name, draft_name, author_id):
     """Standard manuscript title page block — top third of page."""
     # Push title down ~1/3 page with spacing
     for _ in range(8):
@@ -148,7 +148,7 @@ def _add_title_block(doc, display_name, draft_name, author_email):
 
     author_p = doc.add_paragraph()
     author_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r3 = author_p.add_run(author_email)
+    r3 = author_p.add_run(author_id)
     r3.font.name = 'Times New Roman'
     r3.font.size = Pt(12)
 
@@ -221,7 +221,7 @@ def _add_scene_break(doc):
 
 # ── Main builder ──────────────────────────────────────────────────
 
-def build_docx(user_email, draft_id):
+def build_docx(user_id, draft_id):
     draft = get_draft_by_id(draft_id)
     if not draft:
         raise ValueError("Draft not found")
@@ -230,7 +230,7 @@ def build_docx(user_email, draft_id):
     if not manuscript:
         raise ValueError("Manuscript not found")
 
-    is_author = can_write(user_email, manuscript_id=draft["manuscript_id"])
+    is_author = can_write(user_id, manuscript_id=draft["manuscript_id"])
     chapters  = get_chapters_for_draft(draft_id, include_content=True)
 
     if not is_author:
@@ -254,10 +254,10 @@ def build_docx(user_email, draft_id):
     section.bottom_margin = Inches(1)
 
     # Running header
-    _add_header(doc, user_email, display_name, draft_name)
+    _add_header(doc, user_id, display_name, draft_name)
 
     # Title block
-    _add_title_block(doc, display_name, draft_name, user_email)
+    _add_title_block(doc, display_name, draft_name, user_id)
 
     # Chapters
     for chapter in chapters:
