@@ -33,8 +33,8 @@ export async function renderFooter() {
   const left = document.createElement('div');
   left.className = 'footer-left';
   left.innerHTML = `
-    <a href="https://nicholasnevins.org" class="footer-link" target="_blank" rel="noopener">
-      nicholasnevins.org
+    <a href="https://bespoke.nicholasnevins.org" class="footer-link" target="_blank" rel="noopener">
+      bespoke.nicholasnevins.org
     </a>
   `;
   inner.appendChild(left);
@@ -83,7 +83,7 @@ async function loadFooterStatus() {
   if (!dot || !text) return;
 
   try {
-    const res    = await fetch('https://bespoke-library.onrender.com/api/Health?source=footer');
+    const res    = await fetch('https://bespoke-api.nicholasnevins.org/api/Health');
     const data   = await res.json();
     const status = data?.data?.status;
 
