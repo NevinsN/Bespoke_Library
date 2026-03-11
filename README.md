@@ -2,7 +2,7 @@
 
 A private reading platform for manuscript authors to share their work with a curated audience — built as both a working product and a portfolio demonstration of full-stack engineering on Azure.
 
-Live at [nicholasnevins.org](https://nicholasnevins.org)
+Live at [bespoke.nicholasnevins.org](https://bespoke.nicholasnevins.org)
 
 ---
 
