@@ -2174,3 +2174,54 @@ h2, h3 {
   color: var(--text-muted);
   margin-left: 8px;
 }
+
+/* ── Account linking ───────────────────────────────────────────── */
+.username-link-offer {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.username-link-text {
+  font-size: 0.82em;
+  color: var(--text-muted);
+  margin: 0 0 10px;
+}
+
+.username-link-btn {
+  background: none;
+  border: 1px solid var(--accent-color);
+  color: var(--accent-color);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.85em;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.username-link-btn:hover    { background: var(--accent-color); color: var(--text-bright); }
+.username-link-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.username-link-sent {
+  margin-top: 20px;
+  padding: 20px;
+  background: var(--bg-input);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.username-link-sent-icon { font-size: 2em; margin-bottom: 10px; }
+
+.username-link-sent-text {
+  font-size: 0.88em;
+  color: var(--text-color);
+  line-height: 1.6;
+  margin: 0 0 6px;
+}
+
+.username-link-sent-sub {
+  font-size: 0.78em;
+  color: var(--text-muted);
+  margin: 0;
+}

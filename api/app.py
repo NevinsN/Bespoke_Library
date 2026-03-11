@@ -1,7 +1,3 @@
-"""
-app.py — Flask application entry point.
-"""
-
 import os
 from flask import Flask
 from flask_cors import CORS
@@ -17,6 +13,7 @@ from routes.health_routes import handle_health, handle_ping_history, handle_whoa
 from routes.export_routes import handle_export_draft
 from routes.comment_routes import handle_create_comment, handle_get_comments, handle_set_comment_status, handle_get_unread_count
 from routes.user_routes   import handle_set_username, handle_check_username, handle_get_me
+from routes.link_routes   import handle_request_account_link, handle_verify_account_link
 
 app = Flask(__name__)
 
@@ -25,7 +22,8 @@ CORS(app, origins=[
     "https://purple-moss-00a59f61e.azurestaticapps.net",
     "http://localhost:4280",
     "http://localhost:3000",
-], supports_credentials=True, allow_headers=["Authorization", "Content-Type"], methods=["GET", "POST", "OPTIONS"])
+], supports_credentials=True, allow_headers=["Authorization", "Content-Type"],
+   methods=["GET", "POST", "OPTIONS"])
 
 # ── Reader routes ─────────────────────────────────────────────────────────────
 @app.get("/api/GetNovels")
@@ -109,6 +107,13 @@ def check_username(): return handle_check_username()
 
 @app.get("/api/GetMe")
 def get_me(): return handle_get_me()
+
+# ── Account linking routes ────────────────────────────────────────────────────
+@app.post("/api/RequestAccountLink")
+def request_account_link(): return handle_request_account_link()
+
+@app.get("/api/VerifyAccountLink")
+def verify_account_link(): return handle_verify_account_link()
 
 # ── Health routes ─────────────────────────────────────────────────────────────
 @app.get("/api/Health")

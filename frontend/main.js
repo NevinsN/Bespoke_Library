@@ -1,9 +1,8 @@
 import { initAppAuth, getUser } from './core/appState.js';
 import { route } from './core/router.js';
 import { renderFooter } from './components/footer.js';
-import { renderUsernameInterstitial } from './views/usernameView.js';
+import { renderUsernameInterstitial, renderLinkVerification } from './views/usernameView.js';
 
-// Global error boundary
 window.addEventListener('unhandledrejection', e => {
   console.error('Unhandled error:', e.reason);
   const container = document.getElementById('main-content');
@@ -19,9 +18,26 @@ window.addEventListener('unhandledrejection', e => {
 });
 
 window.addEventListener('load', async () => {
-  // ── Init Auth0 (handles redirect callback if returning from login) ─────────
   await initAppAuth();
 
+  // ── Account link verification ─────────────────────────────────────────────
+  const params     = new URLSearchParams(window.location.search);
+  const linkToken  = params.get('link_token');
+
+  if (linkToken) {
+    window.history.replaceState({}, '', '/');
+    renderLinkVerification(linkToken, async () => {
+      // Re-fetch user after linking so new sub/username is loaded
+      const { setUser } = await import('./core/appState.js');
+      setUser(undefined);
+      const user = await getUser();
+      await route();
+      renderFooter();
+    });
+    return;
+  }
+
+  // ── Normal auth flow ──────────────────────────────────────────────────────
   const user = await getUser();
 
   if (!user) {
@@ -29,10 +45,8 @@ window.addEventListener('load', async () => {
   } else {
     console.log(`Logged in as: ${user.username || '(no username yet)'}`);
 
-    // ── Username interstitial — blocks until username is set ────────────────
     if (!user.has_username) {
       renderUsernameInterstitial(async () => {
-        // Username set — proceed to normal app
         await route();
         renderFooter();
       });
