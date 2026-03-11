@@ -16,7 +16,7 @@ def handle_get_authored_manuscripts():
         user = extract_user()
         if not user:
             return error("Unauthorized", 401)
-        manuscripts = get_authored_manuscripts(user["email"])
+        manuscripts = get_authored_manuscripts(user["id"])
         return ok(manuscripts)
     except Exception as e:
         return error(str(e))
@@ -30,7 +30,7 @@ def handle_create_project():
         body = request.get_json(silent=True) or {}
         if not body.get("series_name") or not body.get("book"):
             return error("series_name and book are required", 400)
-        result = create_new_project(body, owner_email=user["email"])
+        result = create_new_project(body, owner_id=user["id"])
         return ok(result)
     except PermissionError as e:
         return error(str(e), 403)
@@ -46,7 +46,7 @@ def handle_get_drafts():
         manuscript_id = request.args.get("manuscript_id")
         if not manuscript_id:
             return error("Missing manuscript_id", 400)
-        drafts = list_drafts(user["email"], manuscript_id)
+        drafts = list_drafts(user["id"], manuscript_id)
         return ok(drafts)
     except PermissionError as e:
         return error(str(e), 403)
@@ -71,7 +71,7 @@ def handle_set_draft_visibility():
         draft = get_draft_by_id(draft_id)
         if not draft:
             return error("Draft not found", 404)
-        if not can_manage(user["email"], manuscript_id=draft["manuscript_id"]):
+        if not can_manage(user["id"], manuscript_id=draft["manuscript_id"]):
             return error("Forbidden", 403)
 
         set_draft_visibility(draft_id, public)
@@ -98,7 +98,7 @@ def handle_set_chapter_status():
         draft = get_draft_by_id(chapter["draft_id"])
         if not draft:
             return error("Draft not found", 404)
-        if not can_manage(user["email"], manuscript_id=draft["manuscript_id"]):
+        if not can_manage(user["id"], manuscript_id=draft["manuscript_id"]):
             return error("Forbidden", 403)
 
         set_chapter_status(chapter_id, status)
@@ -122,7 +122,7 @@ def handle_publish_draft():
         draft = get_draft_by_id(draft_id)
         if not draft:
             return error("Draft not found", 404)
-        if not can_manage(user["email"], manuscript_id=draft["manuscript_id"]):
+        if not can_manage(user["id"], manuscript_id=draft["manuscript_id"]):
             return error("Forbidden", 403)
 
         publish_all_chapters(draft_id)
@@ -146,7 +146,7 @@ def handle_delete_chapter():
             return error("Chapter not found", 404)
 
         draft = get_draft_by_id(chapter["draft_id"])
-        if not can_manage(user["email"], manuscript_id=draft["manuscript_id"]):
+        if not can_manage(user["id"], manuscript_id=draft["manuscript_id"]):
             return error("Forbidden", 403)
 
         delete_chapter(chapter_id)
@@ -169,7 +169,7 @@ def handle_set_comments_enabled():
         draft = get_draft_by_id(draft_id)
         if not draft:
             return error("Draft not found", 404)
-        if not can_manage(user["email"], manuscript_id=draft["manuscript_id"]):
+        if not can_manage(user["id"], manuscript_id=draft["manuscript_id"]):
             return error("Forbidden", 403)
 
         set_comments_enabled(draft_id, enabled)
@@ -194,7 +194,7 @@ def handle_reorder_chapters():
         draft = get_draft_by_id(draft_id)
         if not draft:
             return error("Draft not found", 404)
-        if not can_manage(user["email"], manuscript_id=draft["manuscript_id"]):
+        if not can_manage(user["id"], manuscript_id=draft["manuscript_id"]):
             return error("Forbidden", 403)
 
         reorder_chapters(ordered_ids)
@@ -222,7 +222,7 @@ def handle_replace_chapter():
             return error("Chapter not found", 404)
 
         draft = get_draft_by_id(chapter["draft_id"])
-        if not can_manage(user["email"], manuscript_id=draft["manuscript_id"]):
+        if not can_manage(user["id"], manuscript_id=draft["manuscript_id"]):
             return error("Forbidden", 403)
 
         replace_chapter_content(chapter_id, title or chapter["title"], content)

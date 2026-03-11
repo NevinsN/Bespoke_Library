@@ -26,7 +26,7 @@ def handle_create_invite():
             return error("scope_type and scope_id are required", 400)
         if scope_type not in ("series", "manuscript", "draft"):
             return error("scope_type must be series, manuscript, or draft", 400)
-        token      = create_invite_link(user["email"], scope_type, scope_id, expires, max_uses)
+        token      = create_invite_link(user["id"], scope_type, scope_id, expires, max_uses)
         invite_url = f"{BASE_URL}/?invite={token}"
         return ok({"token": token, "url": invite_url})
     except PermissionError as e:
@@ -46,7 +46,7 @@ def handle_redeem_invite():
         token = body.get("token")
         if not token:
             return error("token is required", 400)
-        grant = redeem_invite_link(token, user["email"])
+        grant = redeem_invite_link(token, user["id"])
         return ok(grant)
     except PermissionError as e:
         return error(str(e), 403)
@@ -65,7 +65,7 @@ def handle_revoke_invite():
         token = body.get("token")
         if not token:
             return error("token is required", 400)
-        revoke_invite_link(token, user["email"])
+        revoke_invite_link(token, user["id"])
         return ok({"revoked": True})
     except PermissionError as e:
         return error(str(e), 403)
@@ -84,7 +84,7 @@ def handle_list_invites():
         scope_id   = request.args.get("scope_id")
         if not scope_type or not scope_id:
             return error("scope_type and scope_id are required", 400)
-        invites = list_invites(user["email"], scope_type, scope_id)
+        invites = list_invites(user["id"], scope_type, scope_id)
         return ok(invites)
     except PermissionError as e:
         return error(str(e), 403)

@@ -6,13 +6,13 @@ VALID_STATUSES = {"pending", "flagged", "accepted", "dismissed"}
 VALID_CATEGORIES = {"typo", "grammar", "flow", "question", "suggestion", "general"}
 
 
-def create_comment(draft_id, chapter_id, manuscript_id, reader_email,
+def create_comment(draft_id, chapter_id, manuscript_id, reader_id,
                    highlighted_text, paragraph_index, category, note):
     doc = {
         "draft_id":        str(draft_id),
         "chapter_id":      str(chapter_id),
         "manuscript_id":   str(manuscript_id),
-        "reader_email":    reader_email.lower(),
+        "reader_id":    reader_id,
         "highlighted_text": highlighted_text,
         "paragraph_index": paragraph_index,
         "category":        category,

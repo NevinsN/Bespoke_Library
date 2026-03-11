@@ -20,10 +20,10 @@ def handle_export_draft():
         if not draft:
             return error("Draft not found", 404)
 
-        if not can_read(user["email"], manuscript_id=draft["manuscript_id"]):
+        if not can_read(user["id"], manuscript_id=draft["manuscript_id"]):
             return error("Forbidden", 403)
 
-        buf, filename = build_docx(user["email"], draft_id)
+        buf, filename = build_docx(user["id"], draft_id)
 
         return send_file(
             buf,

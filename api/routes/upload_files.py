@@ -45,7 +45,7 @@ def handle_upload_files():
                 return error("No files provided", 400)
 
         result = process_uploaded_chapters(
-            user_email=user["email"],
+            user_email=user["id"],
             draft_id=draft_id,
             files=files,
             sequential=sequential,

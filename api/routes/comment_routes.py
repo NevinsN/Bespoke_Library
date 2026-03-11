@@ -39,14 +39,14 @@ def handle_create_comment():
         if not draft:
             return error("Draft not found", 404)
 
-        if not can_read(user["email"], manuscript_id=draft["manuscript_id"], draft_id=chapter["draft_id"]):
+        if not can_read(user["id"], manuscript_id=draft["manuscript_id"], draft_id=chapter["draft_id"]):
             return error("Forbidden", 403)
 
         comment_id = create_comment(
             draft_id        = chapter["draft_id"],
             chapter_id      = chapter_id,
             manuscript_id   = draft["manuscript_id"],
-            reader_email    = user["email"],
+            reader_id=user["id"],
             highlighted_text = highlighted_text,
             paragraph_index  = paragraph_index,
             category         = category,
@@ -72,7 +72,7 @@ def handle_get_comments():
         if not draft:
             return error("Draft not found", 404)
 
-        if not can_write(user["email"], manuscript_id=draft["manuscript_id"]):
+        if not can_write(user["id"], manuscript_id=draft["manuscript_id"]):
             return error("Forbidden", 403)
 
         comments = get_comments_for_draft(draft_id)
@@ -100,7 +100,7 @@ def handle_set_comment_status():
             return error("Comment not found", 404)
 
         draft = get_draft_by_id(comment["draft_id"])
-        if not can_write(user["email"], manuscript_id=draft["manuscript_id"]):
+        if not can_write(user["id"], manuscript_id=draft["manuscript_id"]):
             return error("Forbidden", 403)
 
         set_comment_status(comment_id, status)
@@ -119,7 +119,7 @@ def handle_get_unread_count():
             return error("Unauthorized", 401)
 
         from services.author_service import get_authored_manuscripts
-        manuscripts = get_authored_manuscripts(user["email"])
+        manuscripts = get_authored_manuscripts(user["id"])
         manuscript_ids = [m["_id"] for m in manuscripts]
         count = get_unread_count_for_manuscripts(manuscript_ids)
         return ok({"count": count})
