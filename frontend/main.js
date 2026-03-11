@@ -24,12 +24,11 @@ window.addEventListener('load', async () => {
   warmupBanner.id = 'warmup-banner';
   warmupBanner.innerHTML = `
     <div class="warmup-spinner"></div>
-    <p>Spinning up the library&hellip;</p>
-    <p class="warmup-sub">This takes about 30 seconds on first visit.</p>
+    <p>Loading the library&hellip;</p>
   `;
   document.getElementById('main-content').appendChild(warmupBanner);
 
-  const API = 'https://bespoke-library.onrender.com/api/Health';
+  const API = 'https://bespoke-api.nicholasnevins.org/api/Health';
   const waitForBackend = async () => {
     for (let i = 0; i < 24; i++) { // max ~2 min
       try {
