@@ -2054,3 +2054,123 @@ h2, h3 {
     font-size: 16px; /* prevent iOS zoom on focus */
   }
 }
+
+/* ── Username interstitial ─────────────────────────────────────── */
+.username-interstitial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  padding: 24px;
+}
+
+.username-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 40px;
+  max-width: 440px;
+  width: 100%;
+  text-align: center;
+}
+
+.username-icon {
+  font-size: 2.5em;
+  margin-bottom: 16px;
+}
+
+.username-title {
+  font-size: 1.4em;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin: 0 0 10px;
+}
+
+.username-subtitle {
+  font-size: 0.88em;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0 0 28px;
+}
+
+.username-field {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.username-input-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.username-input-wrap:focus-within {
+  border-color: var(--accent-color);
+}
+
+.username-prefix {
+  padding: 0 10px;
+  color: var(--text-muted);
+  font-size: 1em;
+  user-select: none;
+}
+
+.username-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-color);
+  font-size: 1em;
+  padding: 10px 12px 10px 0;
+  font-family: inherit;
+}
+
+.username-hint {
+  font-size: 0.75em;
+  color: var(--text-subtle);
+  margin-top: 6px;
+}
+
+.username-status {
+  font-size: 0.78em;
+  margin-top: 4px;
+  min-height: 1.2em;
+}
+
+.username-status.available { color: var(--success-color); }
+.username-status.taken     { color: var(--error-color); }
+.username-status.checking  { color: var(--text-muted); }
+
+.username-submit {
+  width: 100%;
+  background: var(--accent-color);
+  color: var(--text-bright);
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 0.95em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  margin-bottom: 10px;
+}
+
+.username-submit:hover    { opacity: 0.85; }
+.username-submit:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.username-error {
+  font-size: 0.78em;
+  color: var(--error-color);
+  min-height: 1em;
+}
+
+.auth-username {
+  font-size: 0.82em;
+  color: var(--text-muted);
+  margin-left: 8px;
+}

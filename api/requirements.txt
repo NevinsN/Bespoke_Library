@@ -5,3 +5,5 @@ python-dotenv
 markdown
 gunicorn
 python-docx
+python-jose[cryptography]
+requests

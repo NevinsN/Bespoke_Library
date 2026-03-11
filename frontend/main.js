@@ -1,6 +1,7 @@
-import { getUser } from './core/appState.js';
+import { initAppAuth, getUser } from './core/appState.js';
 import { route } from './core/router.js';
 import { renderFooter } from './components/footer.js';
+import { renderUsernameInterstitial } from './views/usernameView.js';
 
 // Global error boundary
 window.addEventListener('unhandledrejection', e => {
@@ -18,48 +19,27 @@ window.addEventListener('unhandledrejection', e => {
 });
 
 window.addEventListener('load', async () => {
-  // ── Warmup check ─────────────────────────────────────────────────────────
-  // Render free tier cold starts take 30–60s. Show a message while waiting.
-  const warmupBanner = document.createElement('div');
-  warmupBanner.id = 'warmup-banner';
-  warmupBanner.innerHTML = `
-    <div class="warmup-spinner"></div>
-    <p>Loading the library&hellip;</p>
-  `;
-  document.getElementById('main-content').appendChild(warmupBanner);
-
-  const API = 'https://bespoke-api.nicholasnevins.org/api/Health';
-  const waitForBackend = async () => {
-    for (let i = 0; i < 24; i++) { // max ~2 min
-      try {
-        const r = await fetch(API + '?source=warmup', { cache: 'no-store' });
-        if (r.ok) return true;
-      } catch (_) {}
-      await new Promise(r => setTimeout(r, 5000));
-    }
-    return false;
-  };
-
-  const ready = await waitForBackend();
-  warmupBanner.remove();
-  if (!ready) {
-    const errEl = document.createElement('div');
-    errEl.className = 'empty-library';
-    errEl.textContent = 'The library is taking longer than usual to start. Please refresh.';
-    document.getElementById('main-content').appendChild(errEl);
-    return;
-  }
-  // ── End warmup check ─────────────────────────────────────────────────────
+  // ── Init Auth0 (handles redirect callback if returning from login) ─────────
+  await initAppAuth();
 
   const user = await getUser();
 
   if (!user) {
     console.log('Anonymous user — showing public content.');
   } else {
-    console.log(`Logged in as: ${user.userDetails}`);
+    console.log(`Logged in as: ${user.username || '(no username yet)'}`);
+
+    // ── Username interstitial — blocks until username is set ────────────────
+    if (!user.has_username) {
+      renderUsernameInterstitial(async () => {
+        // Username set — proceed to normal app
+        await route();
+        renderFooter();
+      });
+      return;
+    }
   }
 
-  // Route first so content loads, then render footer
   await route();
-  renderFooter(); // Non-blocking — footer loads after main content
+  renderFooter();
 });

@@ -1,42 +1,28 @@
-import { getUser } from './appState.js';
+/**
+ * api.js — Central fetch wrapper.
+ * Sends Auth0 Bearer token on every request.
+ */
+
+import { getAccessToken } from './auth0Client.js';
 
 const BASE_URL = 'https://bespoke-api.nicholasnevins.org/api';
 
-let _principal = undefined;
-
-async function getEncodedPrincipal() {
-  if (_principal !== undefined) return _principal;
-  try {
-    // Reuse the already-fetched user from appState rather than calling /.auth/me again
-    const user = await getUser();
-    if (!user) { _principal = null; return null; }
-
-    console.log('Principal userDetails:', user.userDetails);
-
-    _principal = btoa(unescape(encodeURIComponent(JSON.stringify(user))));
-  } catch (e) {
-    console.error('Failed to encode principal:', e);
-    _principal = null;
-  }
-  return _principal;
-}
-
 export async function getAuthHeader() {
-  return await getEncodedPrincipal();
+  return await getAccessToken();
 }
 
 export async function apiFetch(endpoint, options = {}, { returnFull = false } = {}) {
   try {
-    const url       = `${BASE_URL}${endpoint}`;
-    const principal = await getEncodedPrincipal();
+    const url   = `${BASE_URL}${endpoint}`;
+    const token = await getAccessToken();
 
     const headers = { ...(options.headers || {}) };
-    if (principal) {
-      headers['x-ms-client-principal'] = principal;
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     console.log('API CALL:', url);
-    console.log('Header present:', !!principal);
+    console.log('Header present:', !!token);
 
     const response = await fetch(url, { ...options, headers });
     const text     = await response.text();
