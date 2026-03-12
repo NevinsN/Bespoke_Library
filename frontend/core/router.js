@@ -17,10 +17,23 @@ export async function route() {
   const action      = params.get('action');
   const inviteToken = params.get('invite');
   const health      = params.get('health');
+  const admin       = params.get('admin');
 
   // ── Health dashboard ───────────────────────────────────────────────────────
   if (health === '1') {
     renderHealthDashboard();
+    return;
+  }
+
+  // ── Admin panel ────────────────────────────────────────────────────────────
+  if (admin === '1') {
+    const user = await getUser();
+    if (user?.is_admin) {
+      const { renderAdminPanel } = await import('../views/adminView.js');
+      renderAdminPanel();
+    } else {
+      renderBookshelf();
+    }
     return;
   }
 
@@ -30,7 +43,7 @@ export async function route() {
     return;
   }
 
-  // Check if we just returned from AAD login with a pending invite
+  // Check for pending invite after Auth0 redirect
   const pendingInvite = sessionStorage.getItem(PENDING_INVITE_KEY);
   if (pendingInvite) {
     sessionStorage.removeItem(PENDING_INVITE_KEY);
@@ -47,7 +60,6 @@ export async function route() {
     }
     const { loginWithRedirect } = await import('../core/auth0Client.js');
     await loginWithRedirect();
-
     return;
   }
 
@@ -62,20 +74,17 @@ async function handleInviteFlow(token) {
   const user = await getUser();
 
   if (!user) {
-    // Not logged in — save token and send through AAD
+    // Not logged in — save token and redirect to login
     sessionStorage.setItem(PENDING_INVITE_KEY, token);
     const { loginWithRedirect } = await import('../core/auth0Client.js');
     await loginWithRedirect();
-
     return;
   }
 
-  // Logged in — redeem immediately
   await handleInviteRedemption(token);
 }
 
 async function handleInviteRedemption(token) {
-  // Clean the URL so reloading doesn't re-trigger
   window.history.replaceState({}, '', '/');
 
   const container = document.getElementById('main-content');
@@ -107,9 +116,7 @@ async function handleInviteRedemption(token) {
     const btn = document.createElement('a');
     btn.href = '/';
     btn.className = 'studio-btn';
-    btn.style.display = 'inline-block';
-    btn.style.textAlign = 'center';
-    btn.style.marginTop = '16px';
+    btn.style.cssText = 'display:inline-block;text-align:center;margin-top:16px;';
     btn.textContent = 'Go to Library →';
     card.appendChild(btn);
 
@@ -128,9 +135,7 @@ async function handleInviteRedemption(token) {
     const btn = document.createElement('a');
     btn.href = '/';
     btn.className = 'studio-btn';
-    btn.style.display = 'inline-block';
-    btn.style.textAlign = 'center';
-    btn.style.marginTop = '16px';
+    btn.style.cssText = 'display:inline-block;text-align:center;margin-top:16px;';
     btn.textContent = 'Back to Library';
     card.appendChild(btn);
   }

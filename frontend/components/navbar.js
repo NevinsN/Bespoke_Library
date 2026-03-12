@@ -1,5 +1,5 @@
 /**
- * authButton.js — Nav bar
+ * navbar.js — Nav bar
  *   Left:   𝔅 (home) · theme toggle · profile icon (with dropdown)
  *   Center: empty
  *   Right:  Studio
@@ -132,6 +132,12 @@ export async function renderAuthButton() {
       }).catch(() => {});
 
       right.appendChild(studioBtn);
+
+      const adminBtn = document.createElement('button');
+      adminBtn.className = 'nav-btn';
+      adminBtn.textContent = 'Admin';
+      adminBtn.onclick = () => { window.location.href = '/?admin=1'; };
+      right.appendChild(adminBtn);
     }
   }
 

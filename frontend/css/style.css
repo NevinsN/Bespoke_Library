@@ -2420,3 +2420,35 @@ h2, h3 {
 }
 
 .nav-dropdown-item:hover { background: var(--bg-input); }
+
+/* ── Admin panel ───────────────────────────────────────────────── */
+.admin-wrap {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.admin-header {
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.admin-header h1 {
+  font-size: 1.6em;
+  color: var(--text-heading);
+  margin: 0 0 6px;
+}
+
+.admin-subtitle {
+  font-size: 0.85em;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.admin-coming-soon {
+  color: var(--text-muted);
+  font-size: 0.9em;
+  padding: 40px 0;
+  text-align: center;
+}

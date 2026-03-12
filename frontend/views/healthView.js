@@ -27,14 +27,6 @@ export async function renderHealthDashboard() {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
 
-  // Floating back
-  document.querySelector('.floating-back')?.remove();
-  const back = document.createElement('a');
-  back.href = '/';
-  back.className = 'floating-back';
-  back.textContent = '← Library';
-  document.body.appendChild(back);
-
   const wrap = document.createElement('div');
   wrap.className = 'health-wrap';
 
@@ -91,7 +83,6 @@ export async function renderHealthDashboard() {
   const refreshTimer = setInterval(loadHealthData, 60000);
   window.addEventListener('popstate', () => {
     clearInterval(refreshTimer);
-    back.remove();
   }, { once: true });
 }
 

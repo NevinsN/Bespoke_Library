@@ -31,7 +31,7 @@ def get_invite(token):
     return serialize(db["invites"].find_one({"token": token}))
 
 
-def redeem_invite(token, email):
+def redeem_invite(token, user_id):
     """
     Atomically increment uses and record who redeemed.
     Returns True if successful, False if already maxed out or inactive.
@@ -42,12 +42,12 @@ def redeem_invite(token, email):
             "token": token,
             "active": True,
             "expires_at": {"$gt": now},
-            "redeemed_by": {"$ne": email},  # Can't redeem twice
+            "redeemed_by": {"$ne": user_id},
             "$expr": {"$lt": ["$uses", "$max_uses"]},
         },
         {
             "$inc": {"uses": 1},
-            "$push": {"redeemed_by": email},
+            "$push": {"redeemed_by": user_id},
         },
         return_document=True
     )
