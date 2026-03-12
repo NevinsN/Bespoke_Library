@@ -38,15 +38,19 @@ export async function renderAuthButton() {
   themeBtn.className = 'nav-icon-btn';
   const savedTheme = localStorage.getItem('bespoke-theme') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme === 'sepia' ? 'sepia' : '');
-  themeBtn.innerHTML   = savedTheme === 'sepia' ? '🌙' : '📜';
-  themeBtn.title = savedTheme === 'sepia' ? 'Switch to dark' : 'Switch to sepia';
+  // Theme toggle — half-fill circle SVG
+  themeBtn.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M8 1a7 7 0 0 1 0 14V1z" fill="currentColor"/>
+    </svg>
+  `;
+  themeBtn.style.color = 'var(--accent-color)';
   themeBtn.onclick = () => {
     const current = localStorage.getItem('bespoke-theme') || 'dark';
     const next = current === 'sepia' ? 'dark' : 'sepia';
     localStorage.setItem('bespoke-theme', next);
     document.documentElement.setAttribute('data-theme', next === 'sepia' ? 'sepia' : '');
-    themeBtn.innerHTML   = next === 'sepia' ? '🌙' : '📜';
-    themeBtn.title = next === 'sepia' ? 'Switch to dark' : 'Switch to sepia';
   };
   left.appendChild(themeBtn);
 
