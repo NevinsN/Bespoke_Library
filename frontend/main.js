@@ -1,7 +1,7 @@
 import { initAppAuth, getUser } from './core/appState.js';
 import { route } from './core/router.js';
 import { renderFooter } from './components/footer.js';
-import { renderAuthButton } from './components/authButton.js';
+import { renderNavbar } from './components/navbar.js';
 import { renderUsernameInterstitial, renderLinkVerification } from './views/usernameView.js';
 
 window.addEventListener('unhandledrejection', e => {
