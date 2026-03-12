@@ -1,3 +1,4 @@
+from repositories.event_repo import record_event
 from flask import request
 from utils.auth import extract_user
 from utils.response import ok, error
@@ -52,6 +53,13 @@ def handle_create_comment():
             category         = category,
             note             = note,
         )
+        # Record event
+        try:
+            record_event("comment_created", user_id=user["id"],
+                manuscript_id=draft.get("manuscript_id"),
+                draft_id=chapter["draft_id"], chapter_id=chapter_id)
+        except Exception:
+            pass
         return ok({"comment_id": comment_id})
     except Exception as e:
         return error(str(e))

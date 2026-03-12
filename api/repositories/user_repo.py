@@ -53,11 +53,19 @@ def upsert_user_by_sub(auth0_sub, email=None):
     if email:
         update["$set"] = {"email_enc": encrypt(email.lower())}
 
-    db["users"].update_one(
+    result = db["users"].update_one(
         {"auth0_subs": auth0_sub},
         update,
         upsert=True
     )
+
+    # Fire registration event on first-ever insert
+    if result.upserted_id:
+        try:
+            from repositories.event_repo import record_event
+            record_event("user_registered", user_id=auth0_sub)
+        except Exception:
+            pass
 
 
 def set_username(auth0_sub, username):

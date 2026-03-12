@@ -62,6 +62,14 @@ def redeem_invite_link(token, user_id):
         granted_by=invite["created_by"],
     )
 
+    try:
+        from repositories.event_repo import record_event
+        record_event("invite_redeemed", user_id=user_id,
+                     meta={"scope_type": invite["scope_type"],
+                           "scope_id": invite["scope_id"]})
+    except Exception:
+        pass
+
     return _describe_grant(invite)
 
 

@@ -14,6 +14,17 @@ from routes.export_routes import handle_export_draft
 from routes.comment_routes import handle_create_comment, handle_get_comments, handle_set_comment_status, handle_get_unread_count
 from routes.user_routes   import handle_set_username, handle_check_username, handle_get_me
 from routes.link_routes   import handle_request_account_link, handle_verify_account_link
+from routes.message_routes import handle_send_message
+from routes.admin_routes  import (
+    handle_admin_stats, handle_admin_events_by_day,
+    handle_admin_list_users, handle_admin_get_user,
+    handle_admin_suspend_user, handle_admin_grant_access, handle_admin_revoke_access,
+    handle_admin_list_applications, handle_admin_review_application,
+    handle_admin_list_manuscripts, handle_admin_flag_manuscript, handle_admin_force_hide_draft,
+    handle_admin_list_invites, handle_admin_revoke_invite,
+    handle_admin_list_messages, handle_admin_resolve_message,
+    handle_admin_audit_log,
+)
 
 app = Flask(__name__)
 
@@ -114,6 +125,62 @@ def request_account_link(): return handle_request_account_link()
 
 @app.get("/api/VerifyAccountLink")
 def verify_account_link(): return handle_verify_account_link()
+
+# ── Messaging ─────────────────────────────────────────────────────────────────
+@app.post("/api/SendMessage")
+def send_message(): return handle_send_message()
+
+# ── Admin routes ──────────────────────────────────────────────────────────────
+@app.get("/api/admin/Stats")
+def admin_stats(): return handle_admin_stats()
+
+@app.get("/api/admin/EventsByDay")
+def admin_events_by_day(): return handle_admin_events_by_day()
+
+@app.get("/api/admin/Users")
+def admin_list_users(): return handle_admin_list_users()
+
+@app.get("/api/admin/User")
+def admin_get_user(): return handle_admin_get_user()
+
+@app.post("/api/admin/SuspendUser")
+def admin_suspend_user(): return handle_admin_suspend_user()
+
+@app.post("/api/admin/GrantAccess")
+def admin_grant_access(): return handle_admin_grant_access()
+
+@app.post("/api/admin/RevokeAccess")
+def admin_revoke_access(): return handle_admin_revoke_access()
+
+@app.get("/api/admin/Applications")
+def admin_list_applications(): return handle_admin_list_applications()
+
+@app.post("/api/admin/ReviewApplication")
+def admin_review_application(): return handle_admin_review_application()
+
+@app.get("/api/admin/Manuscripts")
+def admin_list_manuscripts(): return handle_admin_list_manuscripts()
+
+@app.post("/api/admin/FlagManuscript")
+def admin_flag_manuscript(): return handle_admin_flag_manuscript()
+
+@app.post("/api/admin/ForceHideDraft")
+def admin_force_hide_draft(): return handle_admin_force_hide_draft()
+
+@app.get("/api/admin/Invites")
+def admin_list_invites(): return handle_admin_list_invites()
+
+@app.post("/api/admin/RevokeInvite")
+def admin_revoke_invite(): return handle_admin_revoke_invite()
+
+@app.get("/api/admin/Messages")
+def admin_list_messages(): return handle_admin_list_messages()
+
+@app.post("/api/admin/ResolveMessage")
+def admin_resolve_message(): return handle_admin_resolve_message()
+
+@app.get("/api/admin/AuditLog")
+def admin_audit_log(): return handle_admin_audit_log()
 
 # ── Health routes ─────────────────────────────────────────────────────────────
 @app.get("/api/Health")
