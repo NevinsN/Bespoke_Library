@@ -1,8 +1,8 @@
 /**
  * authButton.js — Nav bar
- *   Left:   𝔅 (home) · theme toggle · profile icon
+ *   Left:   𝔅 (home) · theme toggle · profile icon (with dropdown)
  *   Center: empty
- *   Right:  Studio · Logout
+ *   Right:  Studio
  */
 
 import { getUser, getNovelsCache, getNovelsMeta } from '../core/appState.js';
@@ -52,11 +52,15 @@ export async function renderAuthButton() {
   };
   left.appendChild(themeBtn);
 
-  // Profile button (placeholder — wired up when profiles are built)
+  // Profile button + dropdown
   if (user) {
+    const profileWrap = document.createElement('div');
+    profileWrap.className = 'nav-profile-wrap';
+
     const profileBtn = document.createElement('button');
     profileBtn.className = 'nav-icon-btn';
     profileBtn.title = `@${user.username}`;
+    profileBtn.style.color = 'var(--accent-color)';
     profileBtn.innerHTML = `
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.4"/>
@@ -64,8 +68,31 @@ export async function renderAuthButton() {
               stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
       </svg>
     `;
-    profileBtn.onclick = () => { /* profile page — coming soon */ };
-    left.appendChild(profileBtn);
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'nav-profile-dropdown';
+    dropdown.innerHTML = `
+      <div class="nav-dropdown-username">@${user.username}</div>
+      <button class="nav-dropdown-item" id="nav-logout-btn">Log out</button>
+    `;
+
+    profileBtn.onclick = (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle('open');
+    };
+
+    dropdown.querySelector('#nav-logout-btn').onclick = () => {
+      document.getElementById('main-content').innerHTML =
+        '<div style="display:flex;align-items:center;justify-content:center;height:40vh;color:var(--text-subtle);font-size:0.9em;">Logging out…</div>';
+      setTimeout(() => logout(), 300);
+    };
+
+    // Close on outside click
+    document.addEventListener('click', () => dropdown.classList.remove('open'));
+
+    profileWrap.appendChild(profileBtn);
+    profileWrap.appendChild(dropdown);
+    left.appendChild(profileWrap);
   }
 
   // ── Center zone (empty) ───────────────────────────────────────────────────
@@ -106,16 +133,6 @@ export async function renderAuthButton() {
 
       right.appendChild(studioBtn);
     }
-
-    const logoutBtn = document.createElement('button');
-    logoutBtn.className = 'nav-btn';
-    logoutBtn.textContent = 'Logout';
-    logoutBtn.onclick = () => {
-      document.getElementById('main-content').innerHTML =
-        '<div style="display:flex;align-items:center;justify-content:center;height:40vh;color:var(--text-subtle);font-size:0.9em;">Logging out…</div>';
-      setTimeout(() => logout(), 300);
-    };
-    right.appendChild(logoutBtn);
   }
 
   nav.appendChild(left);
