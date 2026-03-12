@@ -26,7 +26,10 @@ export async function renderAuthButton() {
   const homeBtn = document.createElement('button');
   homeBtn.className = 'nav-icon-btn';
   homeBtn.title = 'Library';
-  homeBtn.innerHTML = '🏠';
+  homeBtn.innerHTML = '𝔅';
+  homeBtn.style.fontSize = '1.4em';
+  homeBtn.style.fontWeight = 'bold';
+  homeBtn.style.color = 'var(--accent-color)';
   homeBtn.onclick = () => { window.location.href = '/'; };
   left.appendChild(homeBtn);
 
