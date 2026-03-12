@@ -684,7 +684,7 @@ h2, h3 {
 ------------------------- */
 .floating-back {
     position: fixed;
-    top: 16px;
+    top: 60px;
     left: 16px;
     z-index: 200;
     font-size: 0.85em;
