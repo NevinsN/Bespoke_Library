@@ -29,7 +29,12 @@ export function initCommentPanel(chapId, drftId) {
   // ── Trigger button ─────────────────────────────────────────────
   triggerBtn = document.createElement('button');
   triggerBtn.className = 'comment-trigger-btn';
-  triggerBtn.innerHTML = '💬';
+  triggerBtn.innerHTML = `
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 4.5A1.5 1.5 0 0 1 4.5 3h11A1.5 1.5 0 0 1 17 4.5v8A1.5 1.5 0 0 1 15.5 14H7l-4 3V4.5z"
+            stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+    </svg>
+  `;
   triggerBtn.title = 'Leave a comment';
   triggerBtn.setAttribute('aria-label', 'Leave a comment');
   triggerBtn.onclick = openPanel;
