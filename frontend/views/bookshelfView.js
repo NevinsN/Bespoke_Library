@@ -71,6 +71,15 @@ export async function renderBookshelf() {
     return;
   }
 
+  // ── Wordmark ──
+  const user = await getUser();
+  if (user?.username) {
+    const wordmark = document.createElement('div');
+    wordmark.className = 'library-wordmark';
+    wordmark.textContent = `${possessive(user.username)} Bespoke Library`;
+    container.appendChild(wordmark);
+  }
+
   // ── Continue Reading banner ──
   const continueEntry = getMostRecentRead(novels);
   if (continueEntry) {
@@ -216,4 +225,10 @@ function getMostRecentRead(novels) {
   });
 
   return best;
+}
+
+function possessive(username) {
+  // Strip @ if present, apply grammatically correct possessive
+  const name = username.replace(/^@/, '');
+  return name.endsWith('s') ? `${name}'` : `${name}'s`;
 }

@@ -2364,3 +2364,14 @@ h2, h3 {
 }
 
 .welcome-login-btn:hover { opacity: 0.85; }
+
+/* ── Library wordmark ──────────────────────────────────────────── */
+.library-wordmark {
+  text-align: center;
+  font-family: 'Georgia', serif;
+  font-size: 1.05em;
+  color: var(--text-subtle);
+  letter-spacing: 0.03em;
+  padding: 28px 0 8px;
+  user-select: none;
+}

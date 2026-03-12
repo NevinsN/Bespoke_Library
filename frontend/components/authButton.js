@@ -1,10 +1,8 @@
 /**
- * authButton.js — Nav bar with three zones:
- *   Left:   Home + Theme toggle
- *   Center: @username
- *   Right:  Studio + Logout
- *
- * Anonymous: bar is rendered but empty (hidden on welcome page via CSS class)
+ * authButton.js — Nav bar
+ *   Left:   𝔅 (home) · theme toggle · profile icon
+ *   Center: empty
+ *   Right:  Studio · Logout
  */
 
 import { getUser, getNovelsCache, getNovelsMeta } from '../core/appState.js';
@@ -22,7 +20,7 @@ export async function renderAuthButton() {
   const left = document.createElement('div');
   left.className = 'nav-left';
 
-  // Home button
+  // 𝔅 home
   const homeBtn = document.createElement('button');
   homeBtn.className = 'nav-icon-btn';
   homeBtn.title = 'Library';
@@ -36,16 +34,16 @@ export async function renderAuthButton() {
   // Theme toggle
   const themeBtn = document.createElement('button');
   themeBtn.className = 'nav-icon-btn';
-  const savedTheme = localStorage.getItem('bespoke-theme') || 'dark';
-  document.documentElement.setAttribute('data-theme', savedTheme === 'sepia' ? 'sepia' : '');
-  // Theme toggle — half-fill circle SVG
+  themeBtn.title = 'Toggle theme';
+  themeBtn.style.color = 'var(--accent-color)';
   themeBtn.innerHTML = `
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
       <path d="M8 1a7 7 0 0 1 0 14V1z" fill="currentColor"/>
     </svg>
   `;
-  themeBtn.style.color = 'var(--accent-color)';
+  const savedTheme = localStorage.getItem('bespoke-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme === 'sepia' ? 'sepia' : '');
   themeBtn.onclick = () => {
     const current = localStorage.getItem('bespoke-theme') || 'dark';
     const next = current === 'sepia' ? 'dark' : 'sepia';
@@ -54,25 +52,31 @@ export async function renderAuthButton() {
   };
   left.appendChild(themeBtn);
 
-  // ── Center zone ───────────────────────────────────────────────────────────
+  // Profile button (placeholder — wired up when profiles are built)
+  if (user) {
+    const profileBtn = document.createElement('button');
+    profileBtn.className = 'nav-icon-btn';
+    profileBtn.title = `@${user.username}`;
+    profileBtn.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+        <path d="M2.5 13.5c0-2.485 2.462-4.5 5.5-4.5s5.5 2.015 5.5 4.5"
+              stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+    `;
+    profileBtn.onclick = () => { /* profile page — coming soon */ };
+    left.appendChild(profileBtn);
+  }
+
+  // ── Center zone (empty) ───────────────────────────────────────────────────
   const center = document.createElement('div');
   center.className = 'nav-center';
-
-  if (user?.username) {
-    const nameEl = document.createElement('span');
-    nameEl.className = 'nav-username';
-    nameEl.textContent = `@${user.username}`;
-    center.appendChild(nameEl);
-  }
 
   // ── Right zone ────────────────────────────────────────────────────────────
   const right = document.createElement('div');
   right.className = 'nav-right';
 
-  if (!user) {
-    // Anonymous — right zone empty, welcome page handles login CTA
-  } else {
-    // Check admin
+  if (user) {
     let isAdmin = !!user?.is_admin;
     try {
       await getNovelsCache(async () => {
@@ -84,7 +88,6 @@ export async function renderAuthButton() {
       isAdmin = isAdmin || !!meta?.is_admin;
     } catch {}
 
-    // Studio
     if (isAdmin) {
       const studioBtn = document.createElement('button');
       studioBtn.className = 'nav-btn';
@@ -104,7 +107,6 @@ export async function renderAuthButton() {
       right.appendChild(studioBtn);
     }
 
-    // Logout
     const logoutBtn = document.createElement('button');
     logoutBtn.className = 'nav-btn';
     logoutBtn.textContent = 'Logout';
