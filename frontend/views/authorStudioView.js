@@ -34,13 +34,6 @@ export async function renderAuthorStudio({ openNewForm = false } = {}) {
   studio.className = 'studio-wrap';
   container.appendChild(studio);
 
-  // Back link
-  const back = document.createElement('a');
-  back.href = '/';
-  back.className = 'back-link';
-  back.textContent = '← Back to Library';
-  studio.appendChild(back);
-
   const heading = document.createElement('h1');
   heading.textContent = 'Author Studio';
   studio.appendChild(heading);

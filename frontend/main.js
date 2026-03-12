@@ -1,6 +1,7 @@
 import { initAppAuth, getUser } from './core/appState.js';
 import { route } from './core/router.js';
 import { renderFooter } from './components/footer.js';
+import { renderAuthButton } from './components/authButton.js';
 import { renderUsernameInterstitial, renderLinkVerification } from './views/usernameView.js';
 
 window.addEventListener('unhandledrejection', e => {
@@ -17,20 +18,36 @@ window.addEventListener('unhandledrejection', e => {
   }
 });
 
+async function mountNav() {
+  // Render nav once into a dedicated slot above main-content
+  let navSlot = document.getElementById('nav-slot');
+  if (!navSlot) {
+    navSlot = document.createElement('div');
+    navSlot.id = 'nav-slot';
+    document.body.insertBefore(navSlot, document.body.firstChild);
+  }
+  navSlot.innerHTML = '';
+  const nav = await renderAuthButton();
+  nav.id = 'site-nav';
+  navSlot.appendChild(nav);
+}
+
 window.addEventListener('load', async () => {
   await initAppAuth();
 
+  // ── Persistent nav — rendered once, stays across all views ───────────────
+  await mountNav();
+
   // ── Account link verification ─────────────────────────────────────────────
-  const params     = new URLSearchParams(window.location.search);
-  const linkToken  = params.get('link_token');
+  const params    = new URLSearchParams(window.location.search);
+  const linkToken = params.get('link_token');
 
   if (linkToken) {
     window.history.replaceState({}, '', '/');
     renderLinkVerification(linkToken, async () => {
-      // Re-fetch user after linking so new sub/username is loaded
       const { setUser } = await import('./core/appState.js');
       setUser(undefined);
-      const user = await getUser();
+      await mountNav(); // refresh nav with updated user
       await route();
       renderFooter();
     });
@@ -40,18 +57,13 @@ window.addEventListener('load', async () => {
   // ── Normal auth flow ──────────────────────────────────────────────────────
   const user = await getUser();
 
-  if (!user) {
-    console.log('Anonymous user — showing public content.');
-  } else {
-    console.log(`Logged in as: ${user.username || '(no username yet)'}`);
-
-    if (!user.has_username) {
-      renderUsernameInterstitial(async () => {
-        await route();
-        renderFooter();
-      });
-      return;
-    }
+  if (user && !user.has_username) {
+    renderUsernameInterstitial(async () => {
+      await mountNav(); // refresh nav with new username
+      await route();
+      renderFooter();
+    });
+    return;
   }
 
   await route();

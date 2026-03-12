@@ -1,6 +1,5 @@
 import { getNovels } from '../services/novelService.js';
 import { groupNovels } from '../utils/groupNovels.js';
-import { renderAuthButton } from '../components/authButton.js';
 import { renderSkeleton } from '../components/loading.js';
 import {
   getUser, isAuthor, getNovelsCache, invalidateNovels,
@@ -13,10 +12,7 @@ export async function renderBookshelf() {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
 
-  // ── Nav bar ──
-  const nav = await renderAuthButton();
-  nav.id = 'auth-container';
-  container.appendChild(nav);
+
 
   // ── Skeleton — in its own wrapper below auth ──
   const skeletonWrapper = document.createElement('div');

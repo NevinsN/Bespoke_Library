@@ -28,15 +28,6 @@ export async function renderChapterList(draftId) {
 
   document.getElementById('skeleton-wrapper')?.remove();
 
-  // ── Floating back → library ──
-  document.querySelector('.floating-back')?.remove();
-  const backBtn = document.createElement('a');
-  backBtn.href = '/';
-  backBtn.className = 'floating-back';
-  backBtn.textContent = '← Library';
-  document.body.appendChild(backBtn);
-  window.addEventListener('popstate', () => backBtn.remove(), { once: true });
-
   if (!chapters.length) {
     const empty = document.createElement('div');
     empty.className = 'empty-library';
