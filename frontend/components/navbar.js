@@ -10,7 +10,7 @@ import { loginWithRedirect, logout } from '../core/auth0Client.js';
 import { getUnreadCommentCount } from '../services/commentService.js';
 import { getNovels } from '../services/novelService.js';
 
-export async function renderAuthButton() {
+export async function renderNavbar() {
   const nav = document.createElement('nav');
   nav.className = 'site-nav';
 
