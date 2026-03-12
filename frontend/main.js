@@ -27,7 +27,7 @@ async function mountNav() {
     document.body.insertBefore(navSlot, document.body.firstChild);
   }
   navSlot.innerHTML = '';
-  const nav = await renderAuthButton();
+  const nav = await renderNavbar();
   nav.id = 'site-nav';
   navSlot.appendChild(nav);
 }
