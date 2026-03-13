@@ -3,8 +3,17 @@ import { route } from './core/router.js';
 import { renderFooter } from './components/footer.js';
 import { renderNavbar } from './components/navbar.js';
 import { renderUsernameInterstitial, renderLinkVerification } from './views/usernameView.js';
+import { AuthError } from './core/api.js';
+import { loginWithRedirect } from './core/auth0Client.js';
 
 window.addEventListener('unhandledrejection', e => {
+  // Session expired — redirect to login instead of showing error boundary
+  if (e.reason instanceof AuthError) {
+    e.preventDefault();
+    loginWithRedirect().catch(() => {});
+    return;
+  }
+
   console.error('Unhandled error:', e.reason);
   const container = document.getElementById('main-content');
   if (container && !container.querySelector('.error-boundary')) {
@@ -19,7 +28,6 @@ window.addEventListener('unhandledrejection', e => {
 });
 
 async function mountNav() {
-  // Render nav once into a dedicated slot above main-content
   let navSlot = document.getElementById('nav-slot');
   if (!navSlot) {
     navSlot = document.createElement('div');
@@ -35,10 +43,8 @@ async function mountNav() {
 window.addEventListener('load', async () => {
   await initAppAuth();
 
-  // ── Persistent nav — rendered once, stays across all views ───────────────
   await mountNav();
 
-  // ── Account link verification ─────────────────────────────────────────────
   const params    = new URLSearchParams(window.location.search);
   const linkToken = params.get('link_token');
 
@@ -47,19 +53,18 @@ window.addEventListener('load', async () => {
     renderLinkVerification(linkToken, async () => {
       const { setUser } = await import('./core/appState.js');
       setUser(undefined);
-      await mountNav(); // refresh nav with updated user
+      await mountNav();
       await route();
       renderFooter();
     });
     return;
   }
 
-  // ── Normal auth flow ──────────────────────────────────────────────────────
   const user = await getUser();
 
   if (user && !user.has_username) {
     renderUsernameInterstitial(async () => {
-      await mountNav(); // refresh nav with new username
+      await mountNav();
       await route();
       renderFooter();
     });

@@ -1,8 +1,5 @@
 /**
  * auth0Client.js — Auth0 SPA SDK wrapper.
- *
- * Single instance shared across the whole app.
- * Handles login, logout, token retrieval, and callback processing.
  */
 
 const AUTH0_DOMAIN    = 'dev-11pu823og8y2kbnn.us.auth0.com';
@@ -13,7 +10,6 @@ let _client = null;
 
 async function getClient() {
   if (_client) return _client;
-
   _client = await window.auth0.createAuth0Client({
     domain:   AUTH0_DOMAIN,
     clientId: AUTH0_CLIENT_ID,
@@ -26,14 +22,11 @@ async function getClient() {
     useRefreshTokens: true,
   });
   window._auth0Client = _client;
-
   return _client;
 }
 
 export async function initAuth() {
   const client = await getClient();
-
-  // Handle redirect callback after Auth0 login
   const params = new URLSearchParams(window.location.search);
   if (params.has('code') && params.has('state')) {
     try {
@@ -43,7 +36,6 @@ export async function initAuth() {
     }
     window.history.replaceState({}, document.title, window.location.pathname);
   }
-
   return client;
 }
 
@@ -60,18 +52,10 @@ export async function logout() {
 export async function getAccessToken() {
   const client = await getClient();
   try {
-    // No timeout — on slow mobile the refresh token round-trip can take >10s.
-    // The SDK handles its own internal retry logic.
     return await client.getTokenSilently();
-  } catch (e) {
-    const code = e?.error || e?.message || '';
-    // login_required / consent_required mean the session genuinely expired.
-    // Surface those so the caller can handle re-auth.
-    if (code === 'login_required' || code === 'consent_required') {
-      throw e;
-    }
-    // Any other error (network blip, iframe blocked by ITP, etc.) — return null.
-    // apiFetch will omit the auth header and endpoints will 401 cleanly.
+  } catch {
+    // Any failure (ITP, network, login_required) — return null.
+    // Callers get a 401 and throw AuthError; top-level handles re-login.
     return null;
   }
 }
@@ -82,16 +66,13 @@ export async function getAuth0User() {
     const isAuthenticated = await client.isAuthenticated();
     if (!isAuthenticated) return null;
     return await client.getUser();
-  } catch (e) {
+  } catch {
     return null;
   }
 }
 
 export async function isAuthenticated() {
   const client = await getClient();
-  try {
-    return await client.isAuthenticated();
-  } catch (e) {
-    return false;
-  }
+  try { return await client.isAuthenticated(); }
+  catch { return false; }
 }
