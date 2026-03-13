@@ -5,20 +5,16 @@ import { renderNavbar } from './components/navbar.js';
 import { renderUsernameInterstitial, renderLinkVerification } from './views/usernameView.js';
 import { AuthError } from './core/api.js';
 import { loginWithRedirect, isAuthenticated } from './core/auth0Client.js';
+import { getUnreadCommentCount } from './services/commentService.js';
 
 window.addEventListener('unhandledrejection', async e => {
   const reason = e.reason;
 
   // Auth0 SDK throws empty TypeErrors internally on iOS Safari (ITP iframe block).
-  // They look like: TypeError { } with no message, originating from the SDK bundle.
-  // If the user IS authenticated (token in localStorage), suppress silently —
-  // the error is cosmetic and doesn't affect functionality.
   if (reason instanceof TypeError && !reason.message) {
     e.preventDefault();
     const authed = await isAuthenticated().catch(() => false);
-    if (!authed) {
-      loginWithRedirect().catch(() => {});
-    }
+    if (!authed) loginWithRedirect().catch(() => {});
     return;
   }
 
@@ -29,7 +25,6 @@ window.addEventListener('unhandledrejection', async e => {
     return;
   }
 
-  // Genuine error — show error boundary
   console.error('Unhandled error:', reason);
   const container = document.getElementById('main-content');
   if (container && !container.querySelector('.error-boundary')) {
@@ -56,6 +51,25 @@ async function mountNav() {
   navSlot.appendChild(nav);
 }
 
+// ── Lazy badge — fires after nav is mounted and page is fully ready ───────────
+async function refreshCommentBadge() {
+  const studioBtn = document.getElementById('nav-studio-btn');
+  if (!studioBtn) return;
+  try {
+    const count = await getUnreadCommentCount();
+    studioBtn.querySelector('.comment-badge')?.remove();
+    if (count > 0) {
+      const badge = document.createElement('span');
+      badge.className = 'comment-badge';
+      badge.textContent = count > 99 ? '99+' : count;
+      studioBtn.style.position = 'relative';
+      studioBtn.appendChild(badge);
+    }
+  } catch {
+    // Silent — badge is non-critical
+  }
+}
+
 window.addEventListener('load', async () => {
   await initAppAuth();
 
@@ -72,21 +86,31 @@ window.addEventListener('load', async () => {
       await mountNav();
       await route();
       renderFooter();
+      refreshCommentBadge();
     });
     return;
   }
 
   const user = await getUser();
 
+  // Set authenticated user context for Application Insights
+  if (user?.username && window.appInsights) {
+    window.appInsights.setAuthenticatedUserContext(user.username);
+  }
+
   if (user && !user.has_username) {
     renderUsernameInterstitial(async () => {
       await mountNav();
       await route();
       renderFooter();
+      refreshCommentBadge();
     });
     return;
   }
 
   await route();
   renderFooter();
+
+  // Lazy-load the comment badge after page is rendered and token is warm
+  refreshCommentBadge();
 });

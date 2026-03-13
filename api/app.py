@@ -1,6 +1,7 @@
 import os
 from flask import Flask
 from flask_cors import CORS
+from utils.telemetry import init_telemetry
 
 from routes.novel_routes  import handle_get_novels, handle_get_chapters, handle_get_chapter_content
 from routes.upload_files  import handle_upload_files
@@ -35,6 +36,9 @@ CORS(app, origins=[
     "http://localhost:3000",
 ], supports_credentials=True, allow_headers=["Authorization", "Content-Type"],
    methods=["GET", "POST", "OPTIONS"])
+
+# ── Azure Application Insights ────────────────────────────────────────────────
+init_telemetry(app)
 
 # ── Reader routes ─────────────────────────────────────────────────────────────
 @app.get("/api/GetNovels")

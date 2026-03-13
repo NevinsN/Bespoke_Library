@@ -7,3 +7,6 @@ gunicorn
 python-docx
 python-jose[cryptography]
 requests
+opencensus-ext-azure
+opencensus-ext-flask
+applicationinsights

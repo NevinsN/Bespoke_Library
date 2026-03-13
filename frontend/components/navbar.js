@@ -7,7 +7,6 @@
 
 import { getUser, getNovelsCache, getNovelsMeta } from '../core/appState.js';
 import { loginWithRedirect, logout } from '../core/auth0Client.js';
-import { getUnreadCommentCount } from '../services/commentService.js';
 import { getNovels } from '../services/novelService.js';
 
 export async function renderNavbar() {
@@ -118,19 +117,9 @@ export async function renderNavbar() {
     if (isAdmin) {
       const studioBtn = document.createElement('button');
       studioBtn.className = 'nav-btn';
+      studioBtn.id = 'nav-studio-btn';
       studioBtn.textContent = 'Studio';
       studioBtn.onclick = () => { window.location.href = '/?studio=1'; };
-
-      getUnreadCommentCount().then(count => {
-        if (count > 0) {
-          const badge = document.createElement('span');
-          badge.className = 'comment-badge';
-          badge.textContent = count > 99 ? '99+' : count;
-          studioBtn.style.position = 'relative';
-          studioBtn.appendChild(badge);
-        }
-      }).catch(() => {});
-
       right.appendChild(studioBtn);
 
       const adminBtn = document.createElement('button');
