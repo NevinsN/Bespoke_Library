@@ -61,10 +61,12 @@ def extract_user(req=None):
     # Email from token (only present if Auth0 Action injects it)
     email_from_token = (payload.get("email") or "").lower() or None
 
-    # Upsert — encrypts and stores email if present
-    upsert_user_by_sub(sub, email_from_token)
+    try:
+        upsert_user_by_sub(sub, email_from_token)
+        user_doc = get_user_by_sub(sub)
+    except Exception:
+        user_doc = None
 
-    user_doc = get_user_by_sub(sub)
     username = user_doc.get("username") if user_doc else None
     is_admin = sub in ADMIN_LIST
 

@@ -61,8 +61,11 @@ export async function logout() {
 export async function getAccessToken() {
   const client = await getClient();
   try {
-    return await client.getTokenSilently();
+    return await client.getTokenSilently({ timeoutInSeconds: 10 });
   } catch (e) {
+    // On iOS Safari, silent refresh via iframe fails due to ITP.
+    // If it's a login_required or timeout error, the user needs to re-auth.
+    // Return null — apiFetch will omit the header and endpoints will 401 cleanly.
     return null;
   }
 }
