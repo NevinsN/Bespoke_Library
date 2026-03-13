@@ -4,17 +4,33 @@ import { renderFooter } from './components/footer.js';
 import { renderNavbar } from './components/navbar.js';
 import { renderUsernameInterstitial, renderLinkVerification } from './views/usernameView.js';
 import { AuthError } from './core/api.js';
-import { loginWithRedirect } from './core/auth0Client.js';
+import { loginWithRedirect, isAuthenticated } from './core/auth0Client.js';
 
-window.addEventListener('unhandledrejection', e => {
-  // Session expired — redirect to login instead of showing error boundary
-  if (e.reason instanceof AuthError) {
+window.addEventListener('unhandledrejection', async e => {
+  const reason = e.reason;
+
+  // Auth0 SDK throws empty TypeErrors internally on iOS Safari (ITP iframe block).
+  // They look like: TypeError { } with no message, originating from the SDK bundle.
+  // If the user IS authenticated (token in localStorage), suppress silently —
+  // the error is cosmetic and doesn't affect functionality.
+  if (reason instanceof TypeError && !reason.message) {
+    e.preventDefault();
+    const authed = await isAuthenticated().catch(() => false);
+    if (!authed) {
+      loginWithRedirect().catch(() => {});
+    }
+    return;
+  }
+
+  // Session expired — redirect to login
+  if (reason instanceof AuthError) {
     e.preventDefault();
     loginWithRedirect().catch(() => {});
     return;
   }
 
-  console.error('Unhandled error:', e.reason);
+  // Genuine error — show error boundary
+  console.error('Unhandled error:', reason);
   const container = document.getElementById('main-content');
   if (container && !container.querySelector('.error-boundary')) {
     const msg = document.createElement('div');
