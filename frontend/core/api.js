@@ -1,5 +1,6 @@
 /**
  * api.js — Central fetch wrapper.
+ * Success/failure is driven by HTTP status, not payload shape.
  * Sends Auth0 Bearer token on every request.
  */
 
@@ -12,37 +13,37 @@ export async function getAuthHeader() {
 }
 
 export async function apiFetch(endpoint, options = {}, { returnFull = false } = {}) {
-  try {
-    const url   = `${BASE_URL}${endpoint}`;
-    const token = await getAccessToken();
+  const url   = `${BASE_URL}${endpoint}`;
+  const token = await getAccessToken();
 
-    const headers = { ...(options.headers || {}) };
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    console.log('API CALL:', url);
-    console.log('Header present:', !!token);
-
-    const response = await fetch(url, { ...options, headers });
-    const text     = await response.text();
-    console.log('RAW RESPONSE:', text.substring(0, 300));
-
-    if (!response.ok) throw new Error(`API Error: ${response.status} - ${text}`);
-
-    let result;
-    try {
-      result = JSON.parse(text);
-    } catch (e) {
-      throw new Error('Invalid JSON response');
-    }
-
-    if (!result.success) throw new Error(result.error || 'Unknown API Error');
-
-    return returnFull ? result : result.data;
-
-  } catch (err) {
-    console.error('Fetch failed:', err);
-    throw err;
+  const headers = { ...(options.headers || {}) };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
+
+  let response;
+  try {
+    response = await fetch(url, { ...options, headers });
+  } catch (networkErr) {
+    throw new Error(`Network error: ${networkErr.message}`);
+  }
+
+  let payload = null;
+  const text = await response.text();
+  try {
+    payload = JSON.parse(text);
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok) {
+    const message =
+      payload?.error ||
+      payload?.message ||
+      `API request failed (${response.status})`;
+    throw new Error(message);
+  }
+
+  if (returnFull) return payload;
+  return payload?.data ?? payload;
 }
