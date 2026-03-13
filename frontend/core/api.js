@@ -4,17 +4,32 @@
  * Sends Auth0 Bearer token on every request.
  */
 
-import { getAccessToken } from './auth0Client.js';
+import { getAccessToken, loginWithRedirect } from './auth0Client.js';
 
 const BASE_URL = 'https://bespoke-api.nicholasnevins.org/api';
 
 export async function getAuthHeader() {
-  return await getAccessToken();
+  try {
+    return await getAccessToken();
+  } catch {
+    return null;
+  }
 }
 
 export async function apiFetch(endpoint, options = {}, { returnFull = false } = {}) {
-  const url   = `${BASE_URL}${endpoint}`;
-  const token = await getAccessToken();
+  const url = `${BASE_URL}${endpoint}`;
+
+  let token = null;
+  try {
+    token = await getAccessToken();
+  } catch (e) {
+    // login_required — session expired, redirect to re-auth
+    if (e?.error === 'login_required' || e?.error === 'consent_required') {
+      await loginWithRedirect();
+      return; // navigation will happen
+    }
+    // Other token errors — proceed without auth, let the server 401
+  }
 
   const headers = { ...(options.headers || {}) };
   if (token) {
@@ -37,6 +52,11 @@ export async function apiFetch(endpoint, options = {}, { returnFull = false } = 
   }
 
   if (!response.ok) {
+    // 401 with no token likely means session expired — trigger re-login
+    if (response.status === 401 && !token) {
+      await loginWithRedirect();
+      return;
+    }
     const message =
       payload?.error ||
       payload?.message ||

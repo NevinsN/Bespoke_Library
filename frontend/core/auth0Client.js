@@ -5,7 +5,7 @@
  * Handles login, logout, token retrieval, and callback processing.
  */
 
-const AUTH0_DOMAIN   = 'dev-11pu823og8y2kbnn.us.auth0.com';
+const AUTH0_DOMAIN    = 'dev-11pu823og8y2kbnn.us.auth0.com';
 const AUTH0_CLIENT_ID = 'XvxDdrSBv3GkDAb8D8jLVmouO5UsJqO3';
 const AUTH0_AUDIENCE  = 'https://api.bespoke.nicholasnevins.org/';
 
@@ -41,7 +41,6 @@ export async function initAuth() {
     } catch (e) {
       console.error('Auth0 callback error:', e);
     }
-    // Clean up URL
     window.history.replaceState({}, document.title, window.location.pathname);
   }
 
@@ -61,11 +60,18 @@ export async function logout() {
 export async function getAccessToken() {
   const client = await getClient();
   try {
-    return await client.getTokenSilently({ timeoutInSeconds: 10 });
+    // No timeout — on slow mobile the refresh token round-trip can take >10s.
+    // The SDK handles its own internal retry logic.
+    return await client.getTokenSilently();
   } catch (e) {
-    // On iOS Safari, silent refresh via iframe fails due to ITP.
-    // If it's a login_required or timeout error, the user needs to re-auth.
-    // Return null — apiFetch will omit the header and endpoints will 401 cleanly.
+    const code = e?.error || e?.message || '';
+    // login_required / consent_required mean the session genuinely expired.
+    // Surface those so the caller can handle re-auth.
+    if (code === 'login_required' || code === 'consent_required') {
+      throw e;
+    }
+    // Any other error (network blip, iframe blocked by ITP, etc.) — return null.
+    // apiFetch will omit the auth header and endpoints will 401 cleanly.
     return null;
   }
 }
