@@ -292,7 +292,7 @@ def handle_admin_list_invites():
         user, err = _require_admin()
         if err: return err
         invites = serialize_list(
-            db["invites"].find({"active": True}).sort("created_at", -1)
+            db["invites"].find({"active": True})
         )
         return ok(invites)
     except Exception as e:

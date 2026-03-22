@@ -175,8 +175,12 @@ async function renderOverview(container) {
   // Load Chart.js and render
   await loadChartJs();
   const labels = chartData.map(r => {
-    const d = new Date(r.date);
-    return `${d.getMonth()+1}/${d.getDate()}`;
+    // Postgres returns date as "2026-03-22" or full ISO — parse safely
+    const raw = r.date || r.full_date || '';
+    const parts = String(raw).slice(0, 10).split('-');
+    if (parts.length === 3) return `${parseInt(parts[1])}/${parseInt(parts[2])}`;
+    const d = new Date(raw);
+    return isNaN(d) ? raw : `${d.getUTCMonth()+1}/${d.getUTCDate()}`;
   });
   const values = chartData.map(r => r.count);
 
