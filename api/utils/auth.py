@@ -67,16 +67,15 @@ def extract_user(req=None):
     except Exception:
         user_doc = None
 
-    username = user_doc.get("username") if user_doc else None
-    is_admin = sub in ADMIN_LIST
+    username  = user_doc.get("username")  if user_doc else None
+    is_admin  = sub in ADMIN_LIST
+    is_author = user_doc.get("is_author", False) if user_doc else False
 
-    # Note: email is NOT included in the returned user dict.
-    # It is stored encrypted and only accessed via get_decrypted_email()
-    # in the account linking flow.
     return {
         "id":           sub,
         "username":     username,
         "roles":        [],
         "is_admin":     is_admin,
+        "is_author":    is_author,
         "has_username": bool(username),
     }

@@ -1,8 +1,8 @@
 /**
- * navbar.js — Nav bar
- *   Left:   𝔅 (home) · theme toggle · profile icon (with dropdown)
+ * navbar.js - Nav bar
+ *   Left:   B (home), theme toggle, profile icon (with dropdown)
  *   Center: empty
- *   Right:  Studio
+ *   Right:  Studio / Create Your Project / Admin (context-dependent)
  */
 
 import { getUser, getNovelsCache, getNovelsMeta } from '../core/appState.js';
@@ -15,28 +15,26 @@ export async function renderNavbar() {
 
   const user = await getUser();
 
-  // ── Left zone ─────────────────────────────────────────────────────────────
+  // Left zone
   const left = document.createElement('div');
   left.className = 'nav-left';
 
-  // 𝔅 home
   const homeBtn = document.createElement('button');
   homeBtn.className = 'nav-icon-btn';
   homeBtn.title = 'Library';
-  homeBtn.innerHTML = '𝔅';
+  homeBtn.innerHTML = '\u{1D505}';
   homeBtn.style.fontSize = '1.4em';
   homeBtn.style.fontWeight = 'bold';
   homeBtn.style.color = 'var(--accent-color)';
   homeBtn.onclick = () => { window.location.href = '/'; };
   left.appendChild(homeBtn);
 
-  // Theme toggle
   const themeBtn = document.createElement('button');
   themeBtn.className = 'nav-icon-btn';
   themeBtn.title = 'Toggle theme';
   themeBtn.style.color = 'var(--accent-color)';
   themeBtn.innerHTML = `
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
       <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
       <path d="M8 1a7 7 0 0 1 0 14V1z" fill="currentColor"/>
     </svg>
@@ -51,7 +49,6 @@ export async function renderNavbar() {
   };
   left.appendChild(themeBtn);
 
-  // Profile button + dropdown
   if (user) {
     const profileWrap = document.createElement('div');
     profileWrap.className = 'nav-profile-wrap';
@@ -61,7 +58,7 @@ export async function renderNavbar() {
     profileBtn.title = `@${user.username}`;
     profileBtn.style.color = 'var(--accent-color)';
     profileBtn.innerHTML = `
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
         <circle cx="8" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.4"/>
         <path d="M2.5 13.5c0-2.485 2.462-4.5 5.5-4.5s5.5 2.015 5.5 4.5"
               stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
@@ -72,6 +69,7 @@ export async function renderNavbar() {
     dropdown.className = 'nav-profile-dropdown';
     dropdown.innerHTML = `
       <div class="nav-dropdown-username">@${user.username}</div>
+      <button class="nav-dropdown-item" id="nav-profile-btn">My Profile</button>
       <button class="nav-dropdown-item" id="nav-logout-btn">Log out</button>
     `;
 
@@ -80,13 +78,16 @@ export async function renderNavbar() {
       dropdown.classList.toggle('open');
     };
 
+    dropdown.querySelector('#nav-profile-btn').onclick = () => {
+      window.location.href = '/?profile=1';
+    };
+
     dropdown.querySelector('#nav-logout-btn').onclick = () => {
       document.getElementById('main-content').innerHTML =
-        '<div style="display:flex;align-items:center;justify-content:center;height:40vh;color:var(--text-subtle);font-size:0.9em;">Logging out…</div>';
+        '<div style="display:flex;align-items:center;justify-content:center;height:40vh;color:var(--text-subtle);font-size:0.9em;">Logging out\u2026</div>';
       setTimeout(() => logout(), 300);
     };
 
-    // Close on outside click
     document.addEventListener('click', () => dropdown.classList.remove('open'));
 
     profileWrap.appendChild(profileBtn);
@@ -94,16 +95,19 @@ export async function renderNavbar() {
     left.appendChild(profileWrap);
   }
 
-  // ── Center zone (empty) ───────────────────────────────────────────────────
+  // Center zone
   const center = document.createElement('div');
   center.className = 'nav-center';
 
-  // ── Right zone ────────────────────────────────────────────────────────────
+  // Right zone
   const right = document.createElement('div');
   right.className = 'nav-right';
 
   if (user) {
-    let isAdmin = !!user?.is_admin;
+    let isAdmin  = !!user?.is_admin;
+    let isAuthor = !!user?.is_author;
+    let hasProject = false;
+
     try {
       await getNovelsCache(async () => {
         const res = await getNovels();
@@ -113,6 +117,15 @@ export async function renderNavbar() {
       const meta = getNovelsMeta();
       isAdmin = isAdmin || !!meta?.is_admin;
     } catch {}
+
+    // Check if author already has a manuscript
+    if (isAuthor && !isAdmin) {
+      try {
+        const { getAuthoredManuscripts } = await import('../services/authorService.js');
+        const manuscripts = await getAuthoredManuscripts();
+        hasProject = Array.isArray(manuscripts) && manuscripts.length > 0;
+      } catch {}
+    }
 
     if (isAdmin) {
       const studioBtn = document.createElement('button');
@@ -128,6 +141,21 @@ export async function renderNavbar() {
       adminBtn.textContent = 'Admin';
       adminBtn.onclick = () => { window.location.href = '/?admin=1'; };
       right.appendChild(adminBtn);
+
+    } else if (isAuthor && hasProject) {
+      const studioBtn = document.createElement('button');
+      studioBtn.className = 'nav-btn';
+      studioBtn.id = 'nav-studio-btn';
+      studioBtn.textContent = 'Studio';
+      studioBtn.onclick = () => { window.location.href = '/?studio=1'; };
+      right.appendChild(studioBtn);
+
+    } else if (isAuthor && !hasProject) {
+      const createBtn = document.createElement('button');
+      createBtn.className = 'nav-btn nav-btn-accent';
+      createBtn.textContent = 'Create Your Project';
+      createBtn.onclick = () => { window.location.href = '/?newproject=1'; };
+      right.appendChild(createBtn);
     }
   }
 

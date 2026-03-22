@@ -192,14 +192,30 @@ def handle_admin_review_application():
 
         set_application_status(application_id, status, admin["id"], review_note)
 
+        # Note: is_author is granted automatically on the applicant's next login
+        # via _check_approved_application() in pg_user_repo.upsert_user()
+
+        set_application_status(application_id, status, admin["id"], review_note)
+
         # Email applicant with decision
         try:
-            send_application_decision(
-                to_email=app["email"],
-                applicant_name=app["name"],
-                status=status,
-                review_note=review_note or None,
-            )
+            if status == "approved":
+                from repositories.pg_application_repo import create_author_invite_token
+                invite_token = create_author_invite_token(application_id)
+                from utils.email import send_application_approved_with_invite
+                send_application_approved_with_invite(
+                    to_email=app["email"],
+                    applicant_name=app["name"],
+                    invite_token=invite_token,
+                    review_note=review_note or None,
+                )
+            else:
+                send_application_decision(
+                    to_email=app["email"],
+                    applicant_name=app["name"],
+                    status=status,
+                    review_note=review_note or None,
+                )
         except Exception:
             pass
 

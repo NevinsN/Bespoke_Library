@@ -154,3 +154,54 @@ def send_application_decision(to_email, applicant_name, status, review_note=None
     subject = "Your Bespoke Library application has been approved" if approved \
               else "Update on your Bespoke Library application"
     return send_email(to_email, subject, html)
+
+
+def send_application_approved_with_invite(to_email, applicant_name, invite_token, review_note=None):
+    """Notify approved applicant with their unique author invite link."""
+    link = f"{APP_BASE_URL}/?author_invite={invite_token}"
+
+    note_block = ""
+    if review_note:
+        note_block = f"""
+        <p style="color:#555;font-size:0.85em;font-weight:bold;margin:20px 0 4px;">
+            Note from the team
+        </p>
+        <p style="color:#333;line-height:1.6;font-size:0.9em;
+                  background:#f5f5f5;padding:12px;border-radius:4px;">
+            {review_note}
+        </p>
+        """
+
+    html = f"""
+    <div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;padding:32px;color:#222;">
+        <h2 style="font-size:1.2em;margin-bottom:4px;">You've been approved!</h2>
+        <p style="color:#888;font-size:0.85em;margin-top:0;">Bespoke Library</p>
+
+        <div style="border-left:3px solid #2ecc71;padding:12px 16px;margin:20px 0;
+                    background:#fafafa;border-radius:0 4px 4px 0;">
+            <p style="margin:0;font-size:0.95em;">
+                Hi {applicant_name} — your application to be an author on Bespoke Library
+                has been <strong>approved</strong>.
+            </p>
+        </div>
+
+        <p style="color:#555;line-height:1.6;font-size:0.9em;">
+            Click the button below to activate your author account and create your first project.
+            You'll be prompted to log in or register if you haven't already.
+            This link expires in 30 days and can only be used once.
+        </p>
+
+        {note_block}
+
+        <a href="{link}" style="display:inline-block;margin-top:20px;
+           padding:12px 24px;background:#3498db;color:#fff;text-decoration:none;
+           border-radius:6px;font-size:0.9em;font-weight:bold;">
+            Activate Author Account &rarr;
+        </a>
+
+        <p style="color:#bbb;font-size:0.75em;margin-top:32px;">
+            Bespoke Library &middot; bespoke.nicholasnevins.org
+        </p>
+    </div>
+    """
+    return send_email(to_email, "You've been approved — Bespoke Library", html)

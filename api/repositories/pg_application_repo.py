@@ -108,3 +108,54 @@ def get_pending_count():
             "SELECT COUNT(*) AS count FROM applications WHERE status = 'pending'"
         )
         return cur.fetchone()["count"]
+
+
+# ─── Author invite tokens ─────────────────────────────────────────────────────
+
+def create_author_invite_token(application_id):
+    """
+    Generate a single-use author invite token tied to an approved application.
+    Stored in Postgres. Expires in 30 days.
+    """
+    import secrets
+    from datetime import datetime, timezone, timedelta
+    token = secrets.token_urlsafe(32)
+    with pg_cursor() as cur:
+        cur.execute("""
+            INSERT INTO author_invite_tokens
+                (token, application_id, expires_at, used)
+            VALUES (%s, %s, %s, FALSE)
+        """, (
+            token,
+            application_id,
+            datetime.now(timezone.utc) + timedelta(days=30),
+        ))
+    return token
+
+
+def consume_author_invite_token(token):
+    """
+    Validate and consume an author invite token.
+    Returns application_id or None if invalid/expired/used.
+    """
+    from datetime import datetime, timezone
+    with pg_cursor() as cur:
+        cur.execute("""
+            SELECT token, application_id, expires_at, used
+            FROM author_invite_tokens
+            WHERE token = %s
+        """, (token,))
+        row = cur.fetchone()
+        if not row:
+            return None
+        if row["used"]:
+            return None
+        if row["expires_at"] < datetime.now(timezone.utc):
+            return None
+
+        # Mark used
+        cur.execute("""
+            UPDATE author_invite_tokens SET used = TRUE, used_at = NOW()
+            WHERE token = %s
+        """, (token,))
+        return row["application_id"]
