@@ -117,12 +117,6 @@ def get_platform_stats(since_days=30):
         cur.execute("SELECT COUNT(*) AS total_users FROM dim_users")
         stats["total_users"] = cur.fetchone()["total_users"]
 
-        cur.execute("SELECT COUNT(*) AS total_manuscripts FROM manuscripts")
-        try:
-            stats["total_manuscripts"] = cur.fetchone()["total_manuscripts"]
-        except Exception:
-            stats["total_manuscripts"] = 0
-
         stats["period_days"] = since_days
         return stats
 
