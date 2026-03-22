@@ -62,7 +62,7 @@ def extract_user(req=None):
     email_from_token = (payload.get("email") or "").lower() or None
 
     try:
-        upsert_user_by_sub(sub, email_from_token)
+        upsert_user(sub, is_admin=(sub in ADMIN_LIST))
         user_doc = get_user_by_sub(sub)
     except Exception:
         user_doc = None
