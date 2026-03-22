@@ -46,7 +46,10 @@ export async function getUser() {
     const data = await res.json();
     _user = data?.data?.user ?? null;
   } catch (e) {
-    console.error('getUser error:', e);
+    // Suppress Auth0 SDK's internal empty TypeErrors (iOS Safari ITP)
+    if (!(e instanceof TypeError && !e.message)) {
+      console.error('getUser error:', e);
+    }
     _user = null;
   }
 

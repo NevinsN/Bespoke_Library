@@ -118,16 +118,32 @@ export async function renderNavbar() {
       isAdmin = isAdmin || !!meta?.is_admin;
     } catch {}
 
-    // Check if author already has a manuscript
+    // Check if author already has a manuscript — non-blocking, updates nav after load
     if (isAuthor && !isAdmin) {
-      try {
-        const { getAuthoredManuscripts } = await import('../services/authorService.js');
-        const manuscripts = await getAuthoredManuscripts();
-        hasProject = Array.isArray(manuscripts) && manuscripts.length > 0;
-      } catch {}
-    }
+      // Render the Create button optimistically, then check for existing project
+      // and swap to Studio if they already have one
+      const createBtn = document.createElement('button');
+      createBtn.className = 'nav-btn nav-btn-accent';
+      createBtn.textContent = 'Create Your Project';
+      createBtn.onclick = () => { window.location.href = '/?newproject=1'; };
+      right.appendChild(createBtn);
 
-    if (isAdmin) {
+      // Check in background — swap button if they already have a project
+      import('../services/authorService.js').then(async ({ getAuthoredManuscripts }) => {
+        try {
+          const manuscripts = await getAuthoredManuscripts();
+          if (Array.isArray(manuscripts) && manuscripts.length > 0) {
+            const studioBtn = document.createElement('button');
+            studioBtn.className = 'nav-btn';
+            studioBtn.id = 'nav-studio-btn';
+            studioBtn.textContent = 'Studio';
+            studioBtn.onclick = () => { window.location.href = '/?studio=1'; };
+            createBtn.replaceWith(studioBtn);
+          }
+        } catch {}
+      }).catch(() => {});
+
+    } else if (isAdmin) {
       const studioBtn = document.createElement('button');
       studioBtn.className = 'nav-btn';
       studioBtn.id = 'nav-studio-btn';
@@ -141,21 +157,6 @@ export async function renderNavbar() {
       adminBtn.textContent = 'Admin';
       adminBtn.onclick = () => { window.location.href = '/?admin=1'; };
       right.appendChild(adminBtn);
-
-    } else if (isAuthor && hasProject) {
-      const studioBtn = document.createElement('button');
-      studioBtn.className = 'nav-btn';
-      studioBtn.id = 'nav-studio-btn';
-      studioBtn.textContent = 'Studio';
-      studioBtn.onclick = () => { window.location.href = '/?studio=1'; };
-      right.appendChild(studioBtn);
-
-    } else if (isAuthor && !hasProject) {
-      const createBtn = document.createElement('button');
-      createBtn.className = 'nav-btn nav-btn-accent';
-      createBtn.textContent = 'Create Your Project';
-      createBtn.onclick = () => { window.location.href = '/?newproject=1'; };
-      right.appendChild(createBtn);
     }
   }
 
