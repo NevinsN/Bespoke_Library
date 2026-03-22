@@ -331,6 +331,8 @@ async function renderApplications(container) {
       approveBtn.className = 'admin-action-btn success';
       approveBtn.textContent = 'Approve';
       approveBtn.onclick = async () => {
+        approveBtn.disabled = true;
+        rejectBtn.disabled  = true;
         try {
           await adminFetch('ReviewApplication', {
             method: 'POST',
@@ -339,13 +341,19 @@ async function renderApplications(container) {
           });
           showBanner(container, 'Application approved.');
           await renderApplications(container);
-        } catch (e) { showBanner(container, e.message, 'error'); }
+        } catch (e) {
+          showBanner(container, e.message, 'error');
+          approveBtn.disabled = false;
+          rejectBtn.disabled  = false;
+        }
       };
 
       const rejectBtn = document.createElement('button');
       rejectBtn.className = 'admin-action-btn danger';
       rejectBtn.textContent = 'Reject';
       rejectBtn.onclick = async () => {
+        approveBtn.disabled = true;
+        rejectBtn.disabled  = true;
         try {
           await adminFetch('ReviewApplication', {
             method: 'POST',
@@ -354,7 +362,11 @@ async function renderApplications(container) {
           });
           showBanner(container, 'Application rejected.');
           await renderApplications(container);
-        } catch (e) { showBanner(container, e.message, 'error'); }
+        } catch (e) {
+          showBanner(container, e.message, 'error');
+          approveBtn.disabled = false;
+          rejectBtn.disabled  = false;
+        }
       };
 
       actions.appendChild(approveBtn);
