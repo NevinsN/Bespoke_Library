@@ -103,3 +103,16 @@ def handle_redeem_author_invite():
         return ok({"is_author": True})
     except Exception as e:
         return error(str(e))
+
+
+def handle_get_profile():
+    """Return reading stats and activity for the authenticated user."""
+    try:
+        user = extract_user()
+        if not user:
+            return error("Unauthorized", 401)
+        from repositories.pg_event_repo import get_user_reading_stats
+        stats = get_user_reading_stats(user["id"])
+        return ok(stats)
+    except Exception as e:
+        return error(str(e))
