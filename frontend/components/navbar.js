@@ -124,6 +124,7 @@ export async function renderNavbar() {
 
       const adminBtn = document.createElement('button');
       adminBtn.className = 'nav-btn';
+      adminBtn.id = 'nav-admin-btn';
       adminBtn.textContent = 'Admin';
       adminBtn.onclick = () => { window.location.href = '/?admin=1'; };
       right.appendChild(adminBtn);

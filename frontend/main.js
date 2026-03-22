@@ -3,7 +3,7 @@ import { route } from './core/router.js';
 import { renderFooter } from './components/footer.js';
 import { renderNavbar } from './components/navbar.js';
 import { renderUsernameInterstitial, renderLinkVerification } from './views/usernameView.js';
-import { AuthError } from './core/api.js';
+import { AuthError, apiFetch } from './core/api.js';
 import { loginWithRedirect, isAuthenticated } from './core/auth0Client.js';
 import { getUnreadCommentCount } from './services/commentService.js';
 
@@ -70,6 +70,31 @@ async function refreshCommentBadge() {
   }
 }
 
+async function refreshAdminBadge() {
+  const adminBtn = document.getElementById('nav-admin-btn');
+  if (!adminBtn) return;
+  try {
+    const [appsData, msgsData] = await Promise.all([
+      apiFetch('/admin/Applications?status=pending'),
+      apiFetch('/admin/Messages?status=unread'),
+    ]);
+    const pendingApps    = Array.isArray(appsData) ? appsData.length : 0;
+    const unreadMessages = Array.isArray(msgsData) ? msgsData.length : 0;
+    const total = pendingApps + unreadMessages;
+
+    adminBtn.querySelector('.comment-badge')?.remove();
+    if (total > 0) {
+      const badge = document.createElement('span');
+      badge.className = 'comment-badge';
+      badge.textContent = total > 99 ? '99+' : total;
+      adminBtn.style.position = 'relative';
+      adminBtn.appendChild(badge);
+    }
+  } catch {
+    // Silent — badge is non-critical
+  }
+}
+
 window.addEventListener('load', async () => {
   await initAppAuth();
 
@@ -87,6 +112,7 @@ window.addEventListener('load', async () => {
       await route();
       renderFooter();
       refreshCommentBadge();
+  refreshAdminBadge();
     });
     return;
   }
@@ -112,6 +138,7 @@ window.addEventListener('load', async () => {
       await route();
       renderFooter();
       refreshCommentBadge();
+  refreshAdminBadge();
     });
     return;
   }
@@ -121,4 +148,5 @@ window.addEventListener('load', async () => {
 
   // Lazy-load the comment badge after page is rendered and token is warm
   refreshCommentBadge();
+  refreshAdminBadge();
 });
