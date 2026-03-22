@@ -12,7 +12,6 @@ def grant_access(auth0_sub, scope_type, scope_id, role, granted_by_sub=None):
     Upserts — if grant already exists, updates the role.
     """
     with pg_cursor() as cur:
-        # Resolve user_key
         cur.execute(
             "SELECT user_key FROM dim_users WHERE auth0_sub = %s", (auth0_sub,)
         )
@@ -20,12 +19,10 @@ def grant_access(auth0_sub, scope_type, scope_id, role, granted_by_sub=None):
         if not user:
             raise ValueError(f"User not found: {auth0_sub}")
 
-        # Resolve granter key
         granter_key = None
         if granted_by_sub:
             cur.execute(
-                "SELECT user_key FROM dim_users WHERE auth0_sub = %s",
-                (granted_by_sub,)
+                "SELECT user_key FROM dim_users WHERE auth0_sub = %s", (granted_by_sub,)
             )
             granter = cur.fetchone()
             granter_key = granter["user_key"] if granter else None
@@ -59,10 +56,15 @@ def revoke_access(auth0_sub, scope_type, scope_id):
 
 
 def get_grants_for_user(auth0_sub):
-    """All active grants for a user."""
+    """
+    All active grants for a user.
+    Returns scope_id (aliased from mongo_scope_id) for compatibility
+    with permission_service and other consumers.
+    """
     with pg_cursor() as cur:
         cur.execute("""
-            SELECT ag.grant_id, ag.scope_type, ag.mongo_scope_id,
+            SELECT ag.grant_id, ag.scope_type,
+                   ag.mongo_scope_id AS scope_id,
                    ag.role, ag.granted_at
             FROM access_grants ag
             JOIN dim_users u ON u.user_key = ag.user_key
@@ -77,6 +79,7 @@ def get_grants_for_scope(scope_type, scope_id):
     with pg_cursor() as cur:
         cur.execute("""
             SELECT ag.grant_id, ag.role, ag.granted_at,
+                   ag.mongo_scope_id AS scope_id,
                    u.auth0_sub, u.username
             FROM access_grants ag
             JOIN dim_users u ON u.user_key = ag.user_key
@@ -104,10 +107,10 @@ def get_user_role_for_scope(auth0_sub, scope_type, scope_id):
 
 
 def get_scope_ids_for_user(auth0_sub, scope_type, role=None):
-    """Returns list of mongo_scope_ids the user has access to."""
+    """Returns list of scope_ids the user has access to."""
     with pg_cursor() as cur:
         query = """
-            SELECT ag.mongo_scope_id
+            SELECT ag.mongo_scope_id AS scope_id
             FROM access_grants ag
             JOIN dim_users u ON u.user_key = ag.user_key
             WHERE u.auth0_sub   = %s
@@ -119,4 +122,18 @@ def get_scope_ids_for_user(auth0_sub, scope_type, role=None):
             query += " AND ag.role = %s"
             params.append(role)
         cur.execute(query, params)
-        return [r["mongo_scope_id"] for r in cur.fetchall()]
+        return [r["scope_id"] for r in cur.fetchall()]
+
+
+# ── Convenience helpers matching old access_repo interface ────────────────────
+
+def get_series_ids_for_user(auth0_sub, role=None):
+    return get_scope_ids_for_user(auth0_sub, "series", role)
+
+
+def get_manuscript_ids_for_user(auth0_sub, role=None):
+    return get_scope_ids_for_user(auth0_sub, "manuscript", role)
+
+
+def get_draft_ids_for_user(auth0_sub, role=None):
+    return get_scope_ids_for_user(auth0_sub, "draft", role)

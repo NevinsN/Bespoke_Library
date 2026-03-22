@@ -5,7 +5,7 @@ invite_service.py — Invite links grant reader access by user_id (auth0_sub).
 from repositories.invite_repo import (
     create_invite, get_invite, redeem_invite, revoke_invite, get_invites_for_scope,
 )
-from repositories.access_repo import grant_access
+from repositories.pg_access_repo import grant_access
 from repositories.draft_repo import get_draft_by_id
 from repositories.manuscript_repo import get_manuscript_by_id
 from services.permission_service import can_manage
@@ -55,15 +55,15 @@ def redeem_invite_link(token, user_id):
         raise ValueError("This invite link is no longer valid.")
 
     grant_access(
-        user_id=user_id,
+        auth0_sub=user_id,
         scope_type=invite["scope_type"],
         scope_id=invite["scope_id"],
         role=invite["role"],
-        granted_by=invite["created_by"],
+        granted_by_sub=invite["created_by"],
     )
 
     try:
-        from repositories.event_repo import record_event
+        from repositories.pg_event_repo import record_event
         record_event("invite_redeemed", user_id=user_id,
                      meta={"scope_type": invite["scope_type"],
                            "scope_id": invite["scope_id"]})

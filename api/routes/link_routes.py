@@ -6,7 +6,8 @@ from flask import request
 from utils.auth import extract_user
 from utils.email import send_link_verification
 from utils.response import ok, error
-from repositories.user_repo import get_user_by_username, link_sub_to_user, get_decrypted_email
+from repositories.pg_user_repo import get_user_by_username
+from repositories.user_repo import link_sub_to_user, get_decrypted_email
 from repositories.link_repo import create_link_token, consume_link_token
 
 

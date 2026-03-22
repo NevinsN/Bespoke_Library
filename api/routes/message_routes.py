@@ -5,7 +5,7 @@ message_routes.py — Public endpoint for users to send support messages.
 from flask import request
 from utils.auth import extract_user
 from utils.response import ok, error
-from repositories.message_repo import create_message
+from repositories.pg_message_repo import create_message
 
 
 def handle_send_message():
@@ -14,8 +14,8 @@ def handle_send_message():
         if not user:
             return error("Unauthorized", 401)
 
-        body    = request.get_json(silent=True) or {}
-        subject = (body.get("subject") or "").strip()
+        body     = request.get_json(silent=True) or {}
+        subject  = (body.get("subject") or "").strip()
         msg_body = (body.get("body") or "").strip()
 
         if not subject or not msg_body:
@@ -26,8 +26,7 @@ def handle_send_message():
             return error("Message too long (max 4000 chars)", 400)
 
         message_id = create_message(
-            user_id=user["id"],
-            username=user.get("username") or "unknown",
+            auth0_sub=user["id"],
             subject=subject,
             body=msg_body,
         )

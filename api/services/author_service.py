@@ -8,7 +8,7 @@ from repositories.chapter_repo import (
     insert_chapter, update_chapter, get_chapter_by_filename,
     get_next_order, get_chapters_for_draft,
 )
-from repositories.access_repo import grant_access, get_grants_for_user
+from repositories.pg_access_repo import grant_access, get_grants_for_user
 
 ADMIN_SUBS = [s.strip() for s in os.getenv("ADMIN_SUB", "").split(",") if s]
 
@@ -74,14 +74,14 @@ def create_new_project(body, owner_id):
             raise PermissionError(f"You do not own the series '{series_name}'.")
     else:
         series_id = str(create_series(series_name, owner_id))
-        grant_access(user_id=owner_id, scope_type="series", scope_id=series_id,
-                     role="owner", granted_by=owner_id)
+        grant_access(auth0_sub=owner_id, scope_type="series", scope_id=series_id,
+                     role="owner", granted_by_sub=owner_id)
 
     manuscript_id = str(create_manuscript(series_id, book, display_name, owner_id))
     draft_id      = str(create_draft(manuscript_id, draft_name))
 
-    grant_access(user_id=owner_id, scope_type="manuscript", scope_id=manuscript_id,
-                 role="owner", granted_by=owner_id)
+    grant_access(auth0_sub=owner_id, scope_type="manuscript", scope_id=manuscript_id,
+                 role="owner", granted_by_sub=owner_id)
 
     return {
         "series_id":    series_id,

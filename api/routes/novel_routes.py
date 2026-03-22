@@ -2,7 +2,7 @@ from flask import request
 from services.novel_service import get_authorized_novels, get_manuscript_toc, get_full_chapter
 from utils.auth import extract_user
 from utils.response import ok, error
-from repositories.event_repo import record_event
+from repositories.pg_event_repo import record_event
 
 
 def handle_get_novels():

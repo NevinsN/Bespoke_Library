@@ -1,9 +1,9 @@
 """
-permission_service.py — Access control using auth0_sub (user_id) as identifier.
+permission_service.py — Access control using auth0_sub as identifier.
 """
 
 import os
-from repositories.access_repo import (
+from repositories.pg_access_repo import (
     get_grants_for_user,
     get_series_ids_for_user,
     get_manuscript_ids_for_user,
@@ -34,7 +34,7 @@ def resolve_effective_role(user_id, series_id=None, manuscript_id=None, draft_id
     if user_id in ADMIN_SUBS:
         return "owner"
 
-    grants = get_grants_for_user(user_id)
+    grants    = get_grants_for_user(user_id)
     grant_map = {(g["scope_type"], g["scope_id"]): g["role"] for g in grants}
 
     if series_id:
@@ -80,7 +80,7 @@ def get_visible_manuscripts(user_id):
     grants = get_grants_for_user(user_id)
 
     visible_manuscript_ids = set()
-    draft_only_ids = set()
+    draft_only_ids         = set()
 
     for grant in grants:
         scope_type = grant["scope_type"]
@@ -112,7 +112,7 @@ def get_visible_manuscripts(user_id):
             {str(d["_id"]) for d in public_drafts}, visible_manuscript_ids
         ))
 
-    seen = set()
+    seen   = set()
     deduped = []
     for m in result:
         if m["_id"] not in seen:
@@ -125,9 +125,10 @@ def get_visible_manuscripts(user_id):
 def _attach_all_drafts(manuscripts):
     result = []
     for m in manuscripts:
-        m["_id"] = str(m["_id"])
-        drafts = get_drafts_for_manuscript(m["_id"])
-        m["drafts"] = [{"_id": str(d["_id"]), "name": d["name"], "public": d.get("public", False)} for d in drafts]
+        m["_id"]    = str(m["_id"])
+        drafts      = get_drafts_for_manuscript(m["_id"])
+        m["drafts"] = [{"_id": str(d["_id"]), "name": d["name"],
+                        "public": d.get("public", False)} for d in drafts]
         result.append(m)
     return result
 
@@ -136,7 +137,7 @@ def _build_draft_only_entries(draft_ids, already_visible_manuscript_ids):
     from repositories.draft_repo import get_drafts_by_ids
     from repositories.manuscript_repo import get_manuscript_by_id
 
-    drafts = get_drafts_by_ids(list(draft_ids))
+    drafts       = get_drafts_by_ids(list(draft_ids))
     by_manuscript = {}
     for d in drafts:
         mid = d["manuscript_id"]
@@ -145,14 +146,14 @@ def _build_draft_only_entries(draft_ids, already_visible_manuscript_ids):
         by_manuscript.setdefault(mid, []).append(d)
 
     result = []
-    for manuscript_id, drafts in by_manuscript.items():
+    for manuscript_id, manuscript_drafts in by_manuscript.items():
         manuscript = get_manuscript_by_id(manuscript_id)
         if not manuscript:
             continue
-        manuscript["_id"] = str(manuscript["_id"])
+        manuscript["_id"]    = str(manuscript["_id"])
         manuscript["drafts"] = [
             {"_id": str(d["_id"]), "name": d["name"], "public": d.get("public", False)}
-            for d in drafts
+            for d in manuscript_drafts
         ]
         result.append(manuscript)
     return result
@@ -176,7 +177,8 @@ def add_access(granted_by_id, user_id, scope_type, scope_id, role):
     if role == "author" and scope_type == "draft":
         raise ValueError("Author access cannot be granted at draft level.")
 
-    grant_access(user_id, scope_type, scope_id, role, granted_by=granted_by_id)
+    grant_access(auth0_sub=user_id, scope_type=scope_type,
+                 scope_id=scope_id, role=role, granted_by_sub=granted_by_id)
 
 
 def remove_access(granted_by_id, user_id, scope_type, scope_id):
@@ -186,7 +188,7 @@ def remove_access(granted_by_id, user_id, scope_type, scope_id):
     if not can_manage(granted_by_id, series_id=series_id, manuscript_id=manuscript_id):
         raise PermissionError(f"{granted_by_id} does not have owner rights to revoke access here.")
 
-    revoke_access(user_id, scope_type, scope_id)
+    revoke_access(auth0_sub=user_id, scope_type=scope_type, scope_id=scope_id)
 
 
 def list_access_for_scope(requesting_id, scope_type, scope_id):

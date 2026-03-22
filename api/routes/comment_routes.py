@@ -1,4 +1,4 @@
-from repositories.event_repo import record_event
+from repositories.pg_event_repo import record_event
 from flask import request
 from utils.auth import extract_user
 from utils.response import ok, error
