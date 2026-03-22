@@ -2,7 +2,7 @@ import os
 import requests as http_requests
 from flask import request
 from jose import jwt, JWTError
-from repositories.user_repo import upsert_user_by_sub, get_user_by_sub
+from repositories.pg_user_repo import upsert_user, get_user_by_sub
 
 AUTH0_DOMAIN   = os.getenv("AUTH0_DOMAIN", "")
 AUTH0_AUDIENCE = os.getenv("AUTH0_AUDIENCE", "")
