@@ -6,7 +6,7 @@ import re
 from flask import request
 from utils.auth import extract_user
 from utils.response import ok, error
-from repositories.user_repo import set_username, get_user_by_username, get_user_by_sub
+from repositories.pg_user_repo import get_user_by_sub, set_username, check_username_available
 
 USERNAME_RE = re.compile(r'^[a-zA-Z0-9_]{3,20}$')
 
@@ -43,19 +43,12 @@ def handle_set_username():
 
 
 def handle_check_username():
-    """Check if a username is available."""
     try:
         username = request.args.get("username", "").strip()
         if not username:
-            return error("Username is required", 400)
-
-        existing = get_user_by_username(username)
-        available = existing is None
-
-        valid = bool(USERNAME_RE.match(username))
-
-        return ok({"available": available, "valid": valid})
-
+            return error("username is required", 400)
+        available = check_username_available(username)
+        return ok({"available": available})
     except Exception as e:
         return error(str(e))
 
