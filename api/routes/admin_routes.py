@@ -6,6 +6,7 @@ Every handler checks is_admin before proceeding.
 from flask import request
 from utils.auth import extract_user
 from utils.response import ok, error
+from utils.email import send_application_decision
 from repositories.pg_event_repo import get_platform_stats, get_events, get_events_by_day
 from repositories.pg_audit_repo import log_action, get_audit_log
 from repositories.pg_application_repo import (
@@ -190,6 +191,17 @@ def handle_admin_review_application():
             return error("Application not found", 404)
 
         set_application_status(application_id, status, admin["id"], review_note)
+
+        # Email applicant with decision
+        try:
+            send_application_decision(
+                to_email=app["email"],
+                applicant_name=app["name"],
+                status=status,
+                review_note=review_note or None,
+            )
+        except Exception:
+            pass
 
         log_action(
             admin_sub=admin["id"],

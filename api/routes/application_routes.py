@@ -5,7 +5,11 @@ application_routes.py — Public author application submission.
 from flask import request
 from utils.auth import extract_user
 from utils.response import ok, error
+from utils.email import send_application_received
 from repositories.pg_application_repo import create_application
+import os
+
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "nevins.nicholas@gmail.com")
 
 
 def handle_submit_application():
@@ -40,6 +44,13 @@ def handle_submit_application():
             project_description=project,
             links=links,
         )
+
+        # Notify admin
+        try:
+            send_application_received(ADMIN_EMAIL, name, email, project)
+        except Exception:
+            pass
+
         return ok({"application_id": application_id})
     except Exception as e:
         return error(str(e))
