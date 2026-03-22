@@ -10,3 +10,4 @@ requests
 opencensus-ext-azure
 opencensus-ext-flask
 applicationinsights
+psycopg2-binary
