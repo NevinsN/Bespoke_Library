@@ -1,6 +1,5 @@
 """
 pg_event_repo.py — Analytics events in PostgreSQL.
-Replaces the Mongo event_repo for all new event writes and queries.
 """
 
 from .pg import pg_cursor
@@ -8,13 +7,11 @@ from datetime import datetime, timezone
 
 
 def get_or_create_date_key(cur, dt):
-    """Get the date_key for a given datetime, inserting if missing."""
     date_only = dt.date()
     cur.execute("SELECT date_key FROM dim_date WHERE full_date = %s", (date_only,))
     row = cur.fetchone()
     if row:
         return row["date_key"]
-    # Fallback insert for dates outside our pre-populated spine
     cur.execute("""
         INSERT INTO dim_date (
             full_date, day_of_week, day_name, day_of_month,
@@ -40,22 +37,16 @@ def get_or_create_date_key(cur, dt):
 
 
 def get_or_create_user_key(cur, auth0_sub):
-    """Get user_key for a sub, or None if sub is None."""
     if not auth0_sub:
         return None
-    cur.execute(
-        "SELECT user_key FROM dim_users WHERE auth0_sub = %s", (auth0_sub,)
-    )
+    cur.execute("SELECT user_key FROM dim_users WHERE auth0_sub = %s", (auth0_sub,))
     row = cur.fetchone()
     return row["user_key"] if row else None
 
 
 def record_event(event_type, user_id=None, manuscript_id=None,
                  draft_id=None, chapter_id=None, meta=None):
-    """
-    Write a platform event to the fact table.
-    Drop-in replacement for mongo event_repo.record_event().
-    """
+    """Write a platform event to the fact table."""
     now = datetime.now(timezone.utc)
     try:
         with pg_cursor() as cur:
@@ -79,28 +70,58 @@ def record_event(event_type, user_id=None, manuscript_id=None,
         pass  # Never let analytics break the main request
 
 
+def has_completed_chapter(user_id, chapter_id):
+    """
+    Returns True if this user has already completed this chapter.
+    Used to distinguish first reads from rereads.
+    """
+    try:
+        with pg_cursor() as cur:
+            cur.execute("""
+                SELECT 1 FROM fact_events f
+                JOIN dim_users u ON u.user_key = f.user_key
+                WHERE u.auth0_sub          = %s
+                  AND f.mongo_chapter_id   = %s
+                  AND f.event_type         IN ('chapter_completed', 'chapter_reread')
+                LIMIT 1
+            """, (user_id, str(chapter_id)))
+            return cur.fetchone() is not None
+    except Exception:
+        return False
+
+
 def get_platform_stats(since_days=30):
     """Overview numbers for the admin panel."""
     with pg_cursor() as cur:
         cur.execute("""
             SELECT
-                COUNT(*) FILTER (WHERE event_type = 'chapter_opened')    AS chapters_opened,
-                COUNT(*) FILTER (WHERE event_type = 'chapter_completed') AS chapters_completed,
-                COUNT(*) FILTER (WHERE event_type = 'comment_created')   AS comments_created,
-                COUNT(*) FILTER (WHERE event_type = 'invite_redeemed')   AS invites_redeemed,
-                COUNT(*) FILTER (WHERE event_type = 'draft_published')   AS drafts_published,
-                COUNT(*) FILTER (WHERE event_type = 'user_registered')   AS new_registrations,
+                COUNT(*) FILTER (WHERE event_type = 'chapter_opened')      AS chapters_opened,
+                COUNT(*) FILTER (WHERE event_type = 'chapter_completed')   AS chapters_completed,
+                COUNT(*) FILTER (WHERE event_type = 'chapter_reread')      AS chapters_reread,
+                COUNT(*) FILTER (WHERE event_type = 'chapter_navigation')  AS chapter_navigations,
+                COUNT(*) FILTER (WHERE event_type = 'comment_created')     AS comments_created,
+                COUNT(*) FILTER (WHERE event_type = 'invite_redeemed')     AS invites_redeemed,
+                COUNT(*) FILTER (WHERE event_type = 'draft_published')     AS drafts_published,
+                COUNT(*) FILTER (WHERE event_type = 'manuscript_created')  AS manuscripts_created,
+                COUNT(*) FILTER (WHERE event_type = 'chapters_uploaded')   AS upload_sessions,
+                COUNT(*) FILTER (WHERE event_type = 'user_registered')     AS new_registrations,
+                COUNT(*) FILTER (WHERE event_type = 'session_start')       AS sessions,
                 COUNT(DISTINCT user_key) FILTER (
                     WHERE event_type = 'chapter_opened'
-                )                                                         AS active_readers
+                )                                                           AS active_readers
             FROM fact_events
             WHERE created_at >= NOW() - INTERVAL '%s days'
         """, (since_days,))
         stats = dict(cur.fetchone())
 
-        # Total counts from operational tables
         cur.execute("SELECT COUNT(*) AS total_users FROM dim_users")
         stats["total_users"] = cur.fetchone()["total_users"]
+
+        cur.execute("SELECT COUNT(*) AS total_manuscripts FROM manuscripts")
+        try:
+            stats["total_manuscripts"] = cur.fetchone()["total_manuscripts"]
+        except Exception:
+            stats["total_manuscripts"] = 0
 
         stats["period_days"] = since_days
         return stats
@@ -126,7 +147,7 @@ def get_events_by_day(event_type, since_days=30):
 def get_events(event_type=None, user_id=None, manuscript_id=None,
                draft_id=None, since_days=30, limit=500):
     """Filtered event log."""
-    conditions = ["f.created_at >= NOW() - INTERVAL '%s days'" ]
+    conditions = ["f.created_at >= NOW() - INTERVAL '%s days'"]
     params     = [since_days]
 
     if event_type:
@@ -156,4 +177,29 @@ def get_events(event_type=None, user_id=None, manuscript_id=None,
             ORDER BY f.created_at DESC
             LIMIT %s
         """, params)
+        return [dict(r) for r in cur.fetchall()]
+
+
+def get_completion_rate_by_chapter(draft_id, since_days=90):
+    """
+    Per-chapter: opens vs completions vs rereads.
+    Useful for identifying drop-off points.
+    """
+    with pg_cursor() as cur:
+        cur.execute("""
+            SELECT
+                f.mongo_chapter_id                                          AS chapter_id,
+                COUNT(*) FILTER (WHERE event_type = 'chapter_opened')      AS opens,
+                COUNT(*) FILTER (WHERE event_type = 'chapter_completed')   AS completions,
+                COUNT(*) FILTER (WHERE event_type = 'chapter_reread')      AS rereads,
+                COUNT(DISTINCT f.user_key) FILTER (
+                    WHERE event_type = 'chapter_opened'
+                )                                                           AS unique_readers
+            FROM fact_events f
+            WHERE f.mongo_draft_id = %s
+              AND f.created_at >= NOW() - INTERVAL '%s days'
+              AND f.mongo_chapter_id IS NOT NULL
+            GROUP BY f.mongo_chapter_id
+            ORDER BY opens DESC
+        """, (str(draft_id), since_days))
         return [dict(r) for r in cur.fetchall()]

@@ -9,6 +9,7 @@ from repositories.chapter_repo import get_chapter_by_id, set_chapter_status, pub
 from services.permission_service import can_manage
 from utils.auth import extract_user
 from utils.response import ok, error
+from repositories.pg_event_repo import record_event
 
 
 def handle_get_authored_manuscripts():
@@ -75,6 +76,13 @@ def handle_set_draft_visibility():
             return error("Forbidden", 403)
 
         set_draft_visibility(draft_id, public)
+
+        try:
+            record_event("draft_visibility_changed", user_id=user["id"],
+                         manuscript_id=draft["manuscript_id"], draft_id=draft_id)
+        except Exception:
+            pass
+
         return ok({"draft_id": draft_id, "public": public})
     except Exception as e:
         return error(str(e))
@@ -126,6 +134,13 @@ def handle_publish_draft():
             return error("Forbidden", 403)
 
         publish_all_chapters(draft_id)
+
+        try:
+            record_event("draft_published", user_id=user["id"],
+                         manuscript_id=draft["manuscript_id"], draft_id=draft_id)
+        except Exception:
+            pass
+
         return ok({"draft_id": draft_id, "status": "published"})
     except Exception as e:
         return error(str(e))

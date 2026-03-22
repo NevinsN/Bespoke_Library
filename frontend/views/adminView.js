@@ -141,12 +141,16 @@ async function renderOverview(container) {
   cards.className = 'admin-stat-cards';
 
   const statDefs = [
-    { label: 'Total Users',        value: stats.total_users,        accent: false },
-    { label: 'Active Readers',     value: stats.active_readers,     accent: true  },
-    { label: 'Chapters Read',      value: stats.chapters_opened,    accent: false },
-    { label: 'Comments',           value: stats.comments_created,   accent: false },
-    { label: 'Invites Redeemed',   value: stats.invites_redeemed,   accent: false },
-    { label: 'New Registrations',  value: stats.new_registrations,  accent: false },
+    { label: 'Total Users',        value: stats.total_users,         accent: false },
+    { label: 'Active Readers',     value: stats.active_readers,      accent: true  },
+    { label: 'Chapters Opened',    value: stats.chapters_opened,     accent: false },
+    { label: 'Chapters Completed', value: stats.chapters_completed,  accent: false },
+    { label: 'Rereads',            value: stats.chapters_reread,     accent: false },
+    { label: 'Comments',           value: stats.comments_created,    accent: false },
+    { label: 'Invites Redeemed',   value: stats.invites_redeemed,    accent: false },
+    { label: 'New Registrations',  value: stats.new_registrations,   accent: false },
+    { label: 'Sessions',           value: stats.sessions,            accent: false },
+    { label: 'Drafts Published',   value: stats.drafts_published,    accent: false },
   ];
 
   statDefs.forEach(s => {

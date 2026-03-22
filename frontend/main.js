@@ -98,6 +98,14 @@ window.addEventListener('load', async () => {
     window.appInsights.setAuthenticatedUserContext(user.username);
   }
 
+  // Fire session_start once per browser session
+  if (user && !sessionStorage.getItem('bespoke_session_started')) {
+    sessionStorage.setItem('bespoke_session_started', '1');
+    import('./services/novelService.js').then(({ recordEvent }) => {
+      recordEvent('session_start');
+    }).catch(() => {});
+  }
+
   if (user && !user.has_username) {
     renderUsernameInterstitial(async () => {
       await mountNav();

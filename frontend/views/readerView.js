@@ -1,4 +1,4 @@
-import { getChapter } from '../services/novelService.js';
+import { getChapter, recordEvent } from '../services/novelService.js';
 import { initCommentPanel, destroyCommentPanel } from '../components/commentPanel.js';
 import {
   markChapterRead,
@@ -86,6 +86,12 @@ export async function renderReader(chapterId) {
       prev.href = `/?id=${chapter.prev_id}`;
       prev.className = 'reader-nav-btn';
       prev.textContent = '← Previous Chapter';
+      prev.addEventListener('click', () => {
+        recordEvent('chapter_navigation', {
+          chapter_id: chapterId, draft_id: draftId,
+          manuscript_id: chapter.manuscript_id,
+        });
+      });
       bottomNav.appendChild(prev);
     }
 
@@ -94,6 +100,12 @@ export async function renderReader(chapterId) {
       next.href = `/?id=${chapter.next_id}`;
       next.className = 'reader-nav-btn';
       next.textContent = 'Next Chapter →';
+      next.addEventListener('click', () => {
+        recordEvent('chapter_navigation', {
+          chapter_id: chapterId, draft_id: draftId,
+          manuscript_id: chapter.manuscript_id,
+        });
+      });
       bottomNav.appendChild(next);
     }
 
@@ -122,11 +134,38 @@ export async function renderReader(chapterId) {
     saveScrollPosition(draftId, chapterId, pct);
   }, 300);
 
-  window.addEventListener('scroll', onScroll);
+  // ── Chapter completion tracking ──
+  // Fires chapter_completed at 90% scroll depth.
+  // Resets when reader scrolls back above 10%, so a genuine reread
+  // will fire again — the backend decides if it's a first read or reread.
+  let completionArmed = true;  // ready to fire
+  const onScrollComplete = debounce(() => {
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    if (maxScroll <= 0) return;
+    const pct = window.scrollY / maxScroll;
 
-  // Clean up scroll listener when navigating away
+    if (completionArmed && pct >= 0.9) {
+      completionArmed = false;
+      recordEvent('chapter_completed', {
+        chapter_id: chapterId,
+        draft_id: draftId,
+        manuscript_id: chapter.manuscript_id,
+      });
+    }
+
+    // Re-arm when reader scrolls back to top — enables reread detection
+    if (!completionArmed && pct < 0.1) {
+      completionArmed = true;
+    }
+  }, 200);
+
+  window.addEventListener('scroll', onScroll);
+  window.addEventListener('scroll', onScrollComplete);
+
+  // Clean up scroll listeners when navigating away
   window.addEventListener('popstate', () => {
     window.removeEventListener('scroll', onScroll);
+    window.removeEventListener('scroll', onScrollComplete);
     destroyCommentPanel();
   }, { once: true });
 }

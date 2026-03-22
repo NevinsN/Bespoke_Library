@@ -2,7 +2,7 @@ from flask import request
 from services.novel_service import get_authorized_novels, get_manuscript_toc, get_full_chapter
 from utils.auth import extract_user
 from utils.response import ok, error
-from repositories.pg_event_repo import record_event
+from repositories.pg_event_repo import record_event, has_completed_chapter
 
 
 def handle_get_novels():
@@ -43,7 +43,6 @@ def handle_get_chapter_content():
         if err:
             return error(err, 404)
 
-        # Record chapter_opened event
         try:
             record_event(
                 "chapter_opened",
@@ -53,8 +52,47 @@ def handle_get_chapter_content():
                 chapter_id=chapter_id,
             )
         except Exception:
-            pass  # never let analytics break the read
+            pass
 
         return ok(chapter)
+    except Exception as e:
+        return error(str(e))
+
+
+def handle_record_event():
+    """
+    Client-side event recorder.
+    Handles: chapter_completed, chapter_navigation, session_start.
+    For chapter_completed, detects rereads by checking prior completions.
+    """
+    try:
+        user = extract_user()
+        body = request.get_json(silent=True) or {}
+
+        event_type    = body.get("event_type", "")
+        manuscript_id = body.get("manuscript_id")
+        draft_id      = body.get("draft_id")
+        chapter_id    = body.get("chapter_id")
+
+        ALLOWED = {"chapter_completed", "chapter_navigation", "session_start"}
+        if event_type not in ALLOWED:
+            return error(f"Unknown event type: {event_type}", 400)
+
+        user_id = user["id"] if user else None
+
+        # chapter_completed: check if this user has completed this chapter before
+        if event_type == "chapter_completed" and user_id and chapter_id:
+            already_completed = has_completed_chapter(user_id, chapter_id)
+            if already_completed:
+                event_type = "chapter_reread"
+
+        record_event(
+            event_type,
+            user_id=user_id,
+            manuscript_id=manuscript_id,
+            draft_id=draft_id,
+            chapter_id=chapter_id,
+        )
+        return ok({"recorded": True, "event_type": event_type})
     except Exception as e:
         return error(str(e))

@@ -3,7 +3,7 @@ from flask import Flask
 from flask_cors import CORS
 from utils.telemetry import init_telemetry
 
-from routes.novel_routes  import handle_get_novels, handle_get_chapters, handle_get_chapter_content
+from routes.novel_routes  import handle_get_novels, handle_get_chapters, handle_get_chapter_content, handle_record_event
 from routes.upload_files  import handle_upload_files
 from routes.author_routes import (handle_get_authored_manuscripts, handle_create_project,
     handle_get_drafts, handle_set_draft_visibility, handle_set_chapter_status,
@@ -49,6 +49,9 @@ def get_chapters(): return handle_get_chapters()
 
 @app.get("/api/GetChapterContent")
 def get_chapter_content(): return handle_get_chapter_content()
+
+@app.post("/api/RecordEvent")
+def record_event_route(): return handle_record_event()
 
 # ── Author routes ─────────────────────────────────────────────────────────────
 @app.get("/api/GetAuthoredManuscripts")

@@ -83,6 +83,13 @@ def create_new_project(body, owner_id):
     grant_access(auth0_sub=owner_id, scope_type="manuscript", scope_id=manuscript_id,
                  role="owner", granted_by_sub=owner_id)
 
+    try:
+        from repositories.pg_event_repo import record_event
+        record_event("manuscript_created", user_id=owner_id,
+                     manuscript_id=manuscript_id, draft_id=draft_id)
+    except Exception:
+        pass
+
     return {
         "series_id":    series_id,
         "manuscript_id": manuscript_id,
@@ -131,6 +138,13 @@ def process_uploaded_chapters(user_id, draft_id, files, sequential=True):
 
         if sequential:
             current_order += 1
+
+    try:
+        from repositories.pg_event_repo import record_event
+        record_event("chapters_uploaded", user_id=user_id,
+                     manuscript_id=manuscript_id, draft_id=draft_id)
+    except Exception:
+        pass
 
     return result
 
