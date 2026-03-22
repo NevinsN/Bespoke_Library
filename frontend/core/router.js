@@ -6,6 +6,7 @@ import { renderReader } from '../views/readerView.js';
 import { renderChapterList } from '../views/chapterListView.js';
 import { renderAuthorStudio } from '../views/authorStudioView.js';
 import { renderHealthDashboard } from '../views/healthView.js';
+import { renderApplyView } from '../views/applyView.js';
 
 const PENDING_INVITE_KEY = 'bespoke_pending_invite';
 
@@ -18,6 +19,7 @@ export async function route() {
   const inviteToken = params.get('invite');
   const health      = params.get('health');
   const admin       = params.get('admin');
+  const apply       = params.get('apply');
 
   // ── Health dashboard ───────────────────────────────────────────────────────
   if (health === '1') {
@@ -34,6 +36,12 @@ export async function route() {
     } else {
       renderBookshelf();
     }
+    return;
+  }
+
+  // ── Author application ─────────────────────────────────────────────────────
+  if (apply === '1') {
+    renderApplyView();
     return;
   }
 

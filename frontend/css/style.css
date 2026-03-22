@@ -2837,3 +2837,166 @@ h2, h3 {
   background: var(--bg-sunken);
   border-radius: 4px;
 }
+
+/* ── Author application form ────────────────────────────────────── */
+
+.apply-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+
+.apply-header {
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.apply-header h1 {
+  font-size: 1.6em;
+  color: var(--text-heading);
+  margin: 0 0 10px;
+}
+
+.apply-subtitle {
+  color: var(--text-muted);
+  font-size: 0.9em;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.apply-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.apply-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.apply-label {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.apply-required {
+  color: var(--accent-color);
+  margin-left: 2px;
+}
+
+.apply-muted {
+  color: var(--text-muted);
+  font-weight: normal;
+}
+
+.apply-hint {
+  font-size: 0.78em;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.apply-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
+  border-radius: 6px;
+  color: var(--text-color);
+  font-family: inherit;
+  font-size: 0.9em;
+  padding: 10px 12px;
+  transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.apply-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.apply-textarea {
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
+  border-radius: 6px;
+  color: var(--text-color);
+  font-family: inherit;
+  font-size: 0.9em;
+  line-height: 1.6;
+  padding: 10px 12px;
+  resize: vertical;
+  transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.apply-textarea:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.apply-char-count {
+  font-size: 0.72em;
+  color: var(--text-faint);
+  text-align: right;
+}
+
+.apply-error {
+  color: var(--error-color);
+  font-size: 0.85em;
+  min-height: 1em;
+}
+
+.apply-submit {
+  background: var(--accent-color);
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9em;
+  font-weight: 600;
+  padding: 12px 24px;
+  transition: opacity 0.15s;
+  align-self: flex-start;
+}
+
+.apply-submit:hover   { opacity: 0.85; }
+.apply-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Success state ──────────────────────────────────────────────── */
+
+.apply-success {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.apply-success-icon {
+  font-size: 2.5em;
+  color: var(--success-color);
+  margin-bottom: 16px;
+}
+
+.apply-success h2 {
+  color: var(--text-heading);
+  margin: 0 0 10px;
+  font-size: 1.3em;
+}
+
+.apply-success p {
+  color: var(--text-muted);
+  font-size: 0.9em;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+.apply-back-link {
+  color: var(--accent-color);
+  font-size: 0.85em;
+  text-decoration: none;
+}
+
+.apply-back-link:hover { text-decoration: underline; }

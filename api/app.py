@@ -16,6 +16,7 @@ from routes.comment_routes import handle_create_comment, handle_get_comments, ha
 from routes.user_routes   import handle_set_username, handle_check_username, handle_get_me
 from routes.link_routes   import handle_request_account_link, handle_verify_account_link
 from routes.message_routes import handle_send_message
+from routes.application_routes import handle_submit_application
 from routes.admin_routes  import (
     handle_admin_stats, handle_admin_events_by_day,
     handle_admin_list_users, handle_admin_get_user,
@@ -136,6 +137,9 @@ def verify_account_link(): return handle_verify_account_link()
 # ── Messaging ─────────────────────────────────────────────────────────────────
 @app.post("/api/SendMessage")
 def send_message(): return handle_send_message()
+
+@app.post("/api/SubmitApplication")
+def submit_application(): return handle_submit_application()
 
 # ── Admin routes ──────────────────────────────────────────────────────────────
 @app.get("/api/admin/Stats")
