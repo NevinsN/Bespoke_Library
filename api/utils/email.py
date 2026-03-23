@@ -15,6 +15,20 @@ SMTP_HOST = "smtp.resend.com"
 SMTP_PORT = 587
 
 
+def send_email_async(to_address, subject, html_body):
+    """
+    Send email in a background thread so it never blocks a request
+    or gets killed by gunicorn's worker timeout.
+    """
+    import threading
+    t = threading.Thread(
+        target=send_email,
+        args=(to_address, subject, html_body),
+        daemon=True,
+    )
+    t.start()
+
+
 def send_email(to_address, subject, html_body):
     """Send an email via Resend SMTP."""
     if not RESEND_API_KEY:
@@ -64,7 +78,7 @@ def send_link_verification(to_email, username, token):
         </p>
     </div>
     """
-    return send_email(to_email, "Link your Bespoke Library accounts", html)
+    return send_email_async(to_email, "Link your Bespoke Library accounts", html)
 
 
 def send_application_received(admin_email, applicant_name, applicant_email, project_desc):
@@ -98,7 +112,7 @@ def send_application_received(admin_email, applicant_name, applicant_email, proj
         </a>
     </div>
     """
-    return send_email(admin_email, f"New application: {applicant_name}", html)
+    return send_email_async(admin_email, f"New application: {applicant_name}", html)
 
 
 def send_application_decision(to_email, applicant_name, status, review_note=None):
@@ -153,7 +167,7 @@ def send_application_decision(to_email, applicant_name, status, review_note=None
     """
     subject = "Your Bespoke Library application has been approved" if approved \
               else "Update on your Bespoke Library application"
-    return send_email(to_email, subject, html)
+    return send_email_async(to_email, subject, html)
 
 
 def send_application_approved_with_invite(to_email, applicant_name, invite_token, review_note=None):
@@ -204,4 +218,4 @@ def send_application_approved_with_invite(to_email, applicant_name, invite_token
         </p>
     </div>
     """
-    return send_email(to_email, "You've been approved — Bespoke Library", html)
+    return send_email_async(to_email, "You've been approved — Bespoke Library", html)
