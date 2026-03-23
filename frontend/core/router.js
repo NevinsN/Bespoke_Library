@@ -36,7 +36,8 @@ export async function route() {
   // ── Admin panel ────────────────────────────────────────────────────────────
   if (admin === '1') {
     const user = await getUser();
-    if (user?.is_admin) {
+    const { getAdminMode } = await import('../components/navbar.js');
+    if (user?.is_admin && getAdminMode() === 'admin') {
       const { renderAdminPanel } = await import('../views/adminView.js');
       renderAdminPanel();
     } else {

@@ -2,12 +2,27 @@
  * navbar.js - Nav bar
  *   Left:   B (home), theme toggle, profile icon (with dropdown)
  *   Center: empty
- *   Right:  Studio / Create Your Project / Admin (context-dependent)
+ *   Right:  context-dependent buttons based on role + mode
+ *
+ * Admin mode toggle:
+ *   Admins can switch between Author mode (Studio only) and
+ *   Admin mode (Studio + Admin). Persisted in localStorage.
+ *   Default: author mode.
  */
 
 import { getUser, getNovelsCache, getNovelsMeta } from '../core/appState.js';
 import { loginWithRedirect, logout } from '../core/auth0Client.js';
 import { getNovels } from '../services/novelService.js';
+
+const MODE_KEY = 'bespoke-admin-mode'; // 'author' | 'admin'
+
+export function getAdminMode() {
+  return localStorage.getItem(MODE_KEY) || 'author';
+}
+
+function setAdminMode(mode) {
+  localStorage.setItem(MODE_KEY, mode);
+}
 
 export async function renderNavbar() {
   const nav = document.createElement('nav');
@@ -67,9 +82,16 @@ export async function renderNavbar() {
 
     const dropdown = document.createElement('div');
     dropdown.className = 'nav-profile-dropdown';
+
+    const isAdmin = !!user?.is_admin;
+    const currentMode = getAdminMode();
+
     dropdown.innerHTML = `
       <div class="nav-dropdown-username">@${user.username}</div>
       <button class="nav-dropdown-item" id="nav-profile-btn">My Profile</button>
+      ${isAdmin ? `<button class="nav-dropdown-item" id="nav-mode-btn">
+        ${currentMode === 'admin' ? 'Switch to Author View' : 'Switch to Admin View'}
+      </button>` : ''}
       <button class="nav-dropdown-item" id="nav-logout-btn">Log out</button>
     `;
 
@@ -81,6 +103,15 @@ export async function renderNavbar() {
     dropdown.querySelector('#nav-profile-btn').onclick = () => {
       window.location.href = '/?profile=1';
     };
+
+    if (isAdmin) {
+      dropdown.querySelector('#nav-mode-btn').onclick = () => {
+        const next = getAdminMode() === 'admin' ? 'author' : 'admin';
+        setAdminMode(next);
+        // Reload current page to re-render nav in new mode
+        window.location.reload();
+      };
+    }
 
     dropdown.querySelector('#nav-logout-btn').onclick = () => {
       document.getElementById('main-content').innerHTML =
@@ -106,7 +137,7 @@ export async function renderNavbar() {
   if (user) {
     let isAdmin  = !!user?.is_admin;
     let isAuthor = !!user?.is_author;
-    let hasProject = false;
+    const mode   = getAdminMode(); // 'author' | 'admin'
 
     try {
       await getNovelsCache(async () => {
@@ -118,32 +149,8 @@ export async function renderNavbar() {
       isAdmin = isAdmin || !!meta?.is_admin;
     } catch {}
 
-    // Check if author already has a manuscript — non-blocking, updates nav after load
-    if (isAuthor && !isAdmin) {
-      // Render the Create button optimistically, then check for existing project
-      // and swap to Studio if they already have one
-      const createBtn = document.createElement('button');
-      createBtn.className = 'nav-btn nav-btn-accent';
-      createBtn.textContent = 'Create Your Project';
-      createBtn.onclick = () => { window.location.href = '/?newproject=1'; };
-      right.appendChild(createBtn);
-
-      // Check in background — swap button if they already have a project
-      import('../services/authorService.js').then(async ({ getAuthoredManuscripts }) => {
-        try {
-          const manuscripts = await getAuthoredManuscripts();
-          if (Array.isArray(manuscripts) && manuscripts.length > 0) {
-            const studioBtn = document.createElement('button');
-            studioBtn.className = 'nav-btn';
-            studioBtn.id = 'nav-studio-btn';
-            studioBtn.textContent = 'Studio';
-            studioBtn.onclick = () => { window.location.href = '/?studio=1'; };
-            createBtn.replaceWith(studioBtn);
-          }
-        } catch {}
-      }).catch(() => {});
-
-    } else if (isAdmin) {
+    if (isAdmin && mode === 'admin') {
+      // Admin mode: Studio + Admin buttons
       const studioBtn = document.createElement('button');
       studioBtn.className = 'nav-btn';
       studioBtn.id = 'nav-studio-btn';
@@ -157,6 +164,37 @@ export async function renderNavbar() {
       adminBtn.textContent = 'Admin';
       adminBtn.onclick = () => { window.location.href = '/?admin=1'; };
       right.appendChild(adminBtn);
+
+    } else if (isAdmin && mode === 'author') {
+      // Author mode: Studio only
+      const studioBtn = document.createElement('button');
+      studioBtn.className = 'nav-btn';
+      studioBtn.id = 'nav-studio-btn';
+      studioBtn.textContent = 'Studio';
+      studioBtn.onclick = () => { window.location.href = '/?studio=1'; };
+      right.appendChild(studioBtn);
+
+    } else if (isAuthor && !isAdmin) {
+      // Non-admin author — check for project in background
+      const createBtn = document.createElement('button');
+      createBtn.className = 'nav-btn nav-btn-accent';
+      createBtn.textContent = 'Create Your Project';
+      createBtn.onclick = () => { window.location.href = '/?newproject=1'; };
+      right.appendChild(createBtn);
+
+      import('../services/authorService.js').then(async ({ getAuthoredManuscripts }) => {
+        try {
+          const manuscripts = await getAuthoredManuscripts();
+          if (Array.isArray(manuscripts) && manuscripts.length > 0) {
+            const studioBtn = document.createElement('button');
+            studioBtn.className = 'nav-btn';
+            studioBtn.id = 'nav-studio-btn';
+            studioBtn.textContent = 'Studio';
+            studioBtn.onclick = () => { window.location.href = '/?studio=1'; };
+            createBtn.replaceWith(studioBtn);
+          }
+        } catch {}
+      }).catch(() => {});
     }
   }
 
