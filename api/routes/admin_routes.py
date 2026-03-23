@@ -192,11 +192,6 @@ def handle_admin_review_application():
 
         set_application_status(application_id, status, admin["id"], review_note)
 
-        # Note: is_author is granted automatically on the applicant's next login
-        # via _check_approved_application() in pg_user_repo.upsert_user()
-
-        set_application_status(application_id, status, admin["id"], review_note)
-
         # Email applicant with decision
         try:
             if status == "approved":
