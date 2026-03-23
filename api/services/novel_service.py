@@ -8,13 +8,20 @@ from repositories.chapter_repo import (
 from repositories.draft_repo import get_draft_by_id
 
 
-def get_authorized_novels(user):
+def get_authorized_novels(user, author_mode=False):
     """
     Returns the full library view for a user — series → manuscripts → drafts.
-    Enriches each manuscript with its series name for display.
+    If author_mode=True, admins see only their own manuscripts (not all).
     """
     user_id = user.get("id")
-    manuscripts = get_visible_manuscripts(user_id)
+    is_admin = user.get("is_admin", False)
+
+    if is_admin and author_mode:
+        # Author mode — use grant-based lookup so admin only sees their own work
+        from services.author_service import get_authored_manuscripts
+        manuscripts = get_authored_manuscripts(user_id)
+    else:
+        manuscripts = get_visible_manuscripts(user_id)
 
     # Attach series name to each manuscript for the frontend grouping
     series_cache = {}

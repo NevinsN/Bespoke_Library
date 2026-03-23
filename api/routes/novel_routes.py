@@ -8,7 +8,8 @@ from repositories.pg_event_repo import record_event, has_completed_chapter
 def handle_get_novels():
     try:
         user   = extract_user()
-        novels = get_authorized_novels(user or {})
+        mode   = request.args.get("mode", "admin")  # 'author' | 'admin'
+        novels = get_authorized_novels(user or {}, author_mode=(mode == "author"))
         meta   = {"is_admin": user.get("is_admin", False) if user else False}
         return ok(novels, meta=meta)
     except Exception as e:

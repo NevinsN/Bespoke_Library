@@ -108,8 +108,11 @@ export async function renderNavbar() {
       dropdown.querySelector('#nav-mode-btn').onclick = () => {
         const next = getAdminMode() === 'admin' ? 'author' : 'admin';
         setAdminMode(next);
-        // Reload current page to re-render nav in new mode
-        window.location.reload();
+        // Invalidate novels cache so bookshelf re-fetches in new mode
+        import('../core/appState.js').then(({ invalidateNovels }) => {
+          invalidateNovels();
+          window.location.reload();
+        }).catch(() => window.location.reload());
       };
     }
 

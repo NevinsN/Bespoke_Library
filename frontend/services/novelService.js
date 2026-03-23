@@ -1,7 +1,9 @@
 import { apiFetch } from '../core/api.js';
+import { getAdminMode } from '../components/navbar.js';
 
 export async function getNovels() {
-  return await apiFetch('/GetNovels', {}, { returnFull: true });
+  const mode = getAdminMode(); // 'author' | 'admin'
+  return await apiFetch(`/GetNovels?mode=${mode}`, {}, { returnFull: true });
 }
 
 export async function getChapters(draftId) {
